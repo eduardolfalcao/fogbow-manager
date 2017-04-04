@@ -1480,11 +1480,13 @@ public class ManagerController {
 		benchmarkExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
-				Instance instance = null;
+				Instance instance = new Instance(order.getInstanceId());
+				//FIXME commented by Eduardo
+				/*Instance instance = null;
 				if (getManagerSSHPublicKey() != null) {
 					instance = waitForSSHPublicAddress(order);
-					waitForSSHConnectivity(instance);
-				}
+					waitForSSHConnectivity(instance);	
+				}*/
 
 				try {
 					benchmarkingPlugin.run(order.getGlobalInstanceId(), instance);
@@ -1494,7 +1496,7 @@ public class ManagerController {
 
 				if (instance != null) {
 					LOGGER.debug("Replacing public keys on " + order.getId());
-					replacePublicKeys(instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT), order);
+					//replacePublicKeys(instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT), order);	// FIXME commented by Eduardo
 					LOGGER.debug("Public keys replaced on " + order.getId());
 				}
 
@@ -1516,6 +1518,14 @@ public class ManagerController {
 			}
 		});
 
+		//FIXME
+		try {
+			Thread.sleep(100000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		if (order.isLocal() && !instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
 		}
@@ -2212,5 +2222,6 @@ public class ManagerController {
 	}
 
 	protected enum FailedBatchType { FEDERATION_USER }
-
+	
 }
+
