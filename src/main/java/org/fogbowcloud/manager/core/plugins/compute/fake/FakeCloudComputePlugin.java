@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.simulation;
+package org.fogbowcloud.manager.core.plugins.compute.fake;
 
 import java.util.ArrayList;
 import java.util.List;

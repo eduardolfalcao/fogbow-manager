@@ -9,7 +9,7 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.common.azure.AzureAttributes;
-import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
+import org.fogbowcloud.manager.core.plugins.localcredentials.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.util.Credential;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;

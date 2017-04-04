@@ -3,8 +3,8 @@ package org.fogbowcloud.manager.core.plugins.localcredentails;
 import java.util.Map;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
-import org.fogbowcloud.manager.core.plugins.localcredentails.MemberBasedMapperPlugin;
+import org.fogbowcloud.manager.core.plugins.localcredentials.MapperHelper;
+import org.fogbowcloud.manager.core.plugins.localcredentials.MemberBasedMapperPlugin;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.junit.Assert;

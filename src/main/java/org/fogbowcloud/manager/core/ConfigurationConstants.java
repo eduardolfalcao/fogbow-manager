@@ -24,9 +24,10 @@ public class ConfigurationConstants {
 	public static final String MEMBER_PICKER_PLUGIN_CLASS_KEY = "member_picker_class";
 	public static final String IDENTITY_CLASS_KEY = "identity_class";
 	public static final String MEMBER_VALIDATOR_CLASS_KEY = "member_validator_class";
-	public static final String LOCAL_CREDENTIALS_CLASS_KEY = "federation_user_credentail_class";
+	public static final String LOCAL_CREDENTIALS_CLASS_KEY = "federation_user_credential_class";
 	public static final String STORAGE_CLASS_KEY = "storage_class";
 	public static final String CAPACITY_CONTROLLER_PLUGIN_CLASS = "capacity_controller_class";
+	public static final String PRIORITIZATION_PLUGIN_CLASS = "prioritization_class";
 	public static final String NETWORK_CLASS_KEY = "network_class";
 
 	// prefixs

@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.core.plugins.localcredentails;
+package org.fogbowcloud.manager.core.plugins.localcredentials;
 
 import java.util.Arrays;
 import java.util.Date;

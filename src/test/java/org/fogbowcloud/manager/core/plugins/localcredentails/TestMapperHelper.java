@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.fogbowcloud.manager.core.plugins.localcredentials.MapperHelper;
 import org.junit.Assert;
 import org.junit.Test;
 

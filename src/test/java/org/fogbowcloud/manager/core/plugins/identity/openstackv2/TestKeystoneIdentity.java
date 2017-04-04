@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
+import org.fogbowcloud.manager.core.plugins.localcredentials.MapperHelper;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;

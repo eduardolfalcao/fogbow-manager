@@ -55,8 +55,8 @@ import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
-import org.fogbowcloud.manager.core.plugins.localcredentails.MapperHelper;
-import org.fogbowcloud.manager.core.plugins.localcredentails.SingleMapperPlugin;
+import org.fogbowcloud.manager.core.plugins.localcredentials.MapperHelper;
+import org.fogbowcloud.manager.core.plugins.localcredentials.SingleMapperPlugin;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.occi.ManagerDataStoreController;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -1518,13 +1518,13 @@ public class ManagerController {
 			}
 		});
 
-		//FIXME
-		try {
-			Thread.sleep(100000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		//FIXME used to debug the thread above
+//		try {
+//			Thread.sleep(100000);
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		
 		if (order.isLocal() && !instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
