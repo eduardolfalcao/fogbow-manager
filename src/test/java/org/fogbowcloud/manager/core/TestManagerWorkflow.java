@@ -1,53 +1,30 @@
 package org.fogbowcloud.manager.core;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 
-import org.dom4j.Element;
-import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
+import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.TestDataStorageHelper;
-import org.fogbowcloud.manager.occi.instance.Instance;
-import org.fogbowcloud.manager.occi.instance.InstanceState;
-import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.model.Category;
-import org.fogbowcloud.manager.occi.model.ErrorType;
-import org.fogbowcloud.manager.occi.model.OCCIException;
-import org.fogbowcloud.manager.occi.model.Resource;
-import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderState;
-import org.fogbowcloud.manager.simulation.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.xmpp.AsyncPacketSender;
-import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
-import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
-import org.jamppa.component.PacketCallback;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
-import org.mockito.internal.verification.VerificationModeFactory;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.IQ.Type;
 
 public class TestManagerWorkflow {
 	

@@ -29,6 +29,16 @@ import org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerP
 import org.fogbowcloud.manager.core.plugins.prioritization.TwoFoldPrioritizationPlugin;
 import org.fogbowcloud.manager.occi.DataStoreHelper;
 import org.fogbowcloud.manager.occi.ManagerDataStore;
+import org.fogbowcloud.manager.occi.OCCIApplication;
+import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
+import org.restlet.Component;
+import org.restlet.Server;
+import org.restlet.data.Parameter;
+import org.restlet.data.Protocol;
+import org.restlet.engine.Engine;
+import org.restlet.ext.slf4j.Slf4jLoggerFacade;
+import org.restlet.util.Series;
+import org.xmpp.component.ComponentException;
 
 public class SimpleManagerFactory {
 	
@@ -48,22 +58,23 @@ public class SimpleManagerFactory {
 		
 		Properties prop = (Properties) properties.clone();
 		
-		String managerId = "", memberPickerPlugin = "", capacityControllerPlugin = "";		
+		String managerId = "", memberPickerPlugin = "", computePlugin = "", capacityControllerPlugin = "";		
 		if(freeRider){
 			managerId = XMPP_JID_FREERIDER+id;
 			memberPickerPlugin = BASE_PLUGINS+"memberpicker.RoundRobinMemberPickerPlugin";
+			computePlugin = BASE_PLUGINS+"compute.nocloud.NoCloudComputePlugin";
 			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.freerider.FreeRiderCapacityControllerPlugin";
-			prop.put(ConfigurationConstants.COMPUTE_ACCOUNTING_PLUGIN_CLASS_KEY, BASE_PLUGINS+"compute.nocloud.NoCloudComputePlugin");
 		}
 		else{
 			managerId = XMPP_JID_COOPERATIVE+id;
 			memberPickerPlugin = BASE_PLUGINS+"memberpicker.NoFMemberPickerPlugin";
-			prop.put(ConfigurationConstants.CAPACITY_CONTROLLER_PLUGIN_CLASS, BASE_PLUGINS+"capacitycontroller.fairnessdriven.TwoFoldCapacityController");
-			prop.put(ConfigurationConstants.COMPUTE_ACCOUNTING_PLUGIN_CLASS_KEY, BASE_PLUGINS+"compute.fake.FakeCloudComputePlugin");
+			computePlugin = BASE_PLUGINS+"compute.fake.FakeCloudComputePlugin";
+			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.fairnessdriven.TwoFoldCapacityController";
 		}
 		
 		prop.put(ConfigurationConstants.XMPP_JID_KEY, managerId);
 		prop.put(ConfigurationConstants.MEMBER_PICKER_PLUGIN_CLASS_KEY, memberPickerPlugin);
+		prop.put(ConfigurationConstants.COMPUTE_CLASS_KEY, computePlugin);
 		prop.put(ConfigurationConstants.CAPACITY_CONTROLLER_PLUGIN_CLASS, capacityControllerPlugin);
 		
 		
@@ -79,7 +90,7 @@ public class SimpleManagerFactory {
 		prop.put("storage_datastore_url", DataStoreHelper.PREFIX_DATASTORE_URL+storageDatastoreUrl);
 		prop.put("network_datastore_url", DataStoreHelper.PREFIX_DATASTORE_URL+networkDatastoreUrl);
 		
-		prop.put("http_port", HTTP_PORT+id);		
+		prop.put(ConfigurationConstants.HTTP_PORT_KEY, String.valueOf(HTTP_PORT+id));		
 		
 		return prop;
 	}
@@ -256,6 +267,93 @@ public class SimpleManagerFactory {
 		fm.setStoragePlugin(storagePlugin);
 		fm.setCapacityControllerPlugin(capacityControllerPlugin);
 		fm.setNetworkPlugin(networkPlugin);
+		
+		String xmppHost = properties.getProperty(ConfigurationConstants.XMPP_HOST_KEY);
+		String xmppJid = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
+		
+		if (xmppHost != null && xmppJid != null) {
+			long timeout = MainHelper.getXMPPTimeout(properties);
+			ManagerXmppComponent xmpp = new ManagerXmppComponent(
+					xmppJid,
+					properties.getProperty(ConfigurationConstants.XMPP_PASS_KEY),
+					xmppHost,
+					Integer.parseInt(properties.getProperty(ConfigurationConstants.XMPP_PORT_KEY)),
+					fm, 
+					timeout);
+			xmpp.setRendezvousAddress(properties.getProperty(ConfigurationConstants.RENDEZVOUS_JID_KEY));
+			try {
+				xmpp.connect();			
+			} catch (ComponentException e) {
+				LOGGER.error("Conflict in the initialization of xmpp component.", e);
+				System.exit(MainHelper.EXIT_ERROR_CODE);
+			}
+			xmpp.process(false);
+			xmpp.init();
+			fm.setPacketSender(xmpp);
+		}
+		
+		OCCIApplication application = new OCCIApplication(fm);
+
+		Slf4jLoggerFacade loggerFacade = new Slf4jLoggerFacade();
+		Engine.getInstance().setLoggerFacade(loggerFacade);
+		
+		try {
+			Component http = new Component();
+			
+			System.out.println(properties.get(ConfigurationConstants.HTTP_PORT_KEY));
+			
+			String httpPort = properties.getProperty(ConfigurationConstants.HTTP_PORT_KEY, 
+					String.valueOf(MainHelper.DEFAULT_HTTP_PORT));
+			String httpsPort = properties.getProperty(ConfigurationConstants.HTTPS_PORT_KEY, 
+					String.valueOf(MainHelper.DEFAULT_HTTPS_PORT));
+			String httpsKeystorePath = properties.getProperty(ConfigurationConstants.HTTPS_KEYSTORE_PATH);
+			String httpsKeystorePassword = properties.getProperty(ConfigurationConstants.HTTPS_KEYSTORE_PASSWORD);
+			String httpsKeyPassword = properties.getProperty(ConfigurationConstants.HTTPS_KEY_PASSWORD);
+			String httpsKeystoreType = properties.getProperty(ConfigurationConstants.HTTPS_KEYSTORE_TYPE, "JKS");
+			Boolean httpsEnabled = Boolean.valueOf(properties.getProperty(ConfigurationConstants.HTTPS_ENABLED, 
+					String.valueOf(MainHelper.DEFAULT_HTTPS_ENABLED)));
+			String requestHeaderSize = String.valueOf(Integer.parseInt(
+					properties.getProperty(ConfigurationConstants.HTTP_REQUEST_HEADER_SIZE_KEY, 
+					String.valueOf(MainHelper.DEFAULT_REQUEST_HEADER_SIZE))));
+			String responseHeaderSize = String.valueOf(Integer.parseInt(properties.getProperty(
+					ConfigurationConstants.HTTP_RESPONSE_HEADER_SIZE_KEY, 
+					String.valueOf(MainHelper.DEFAULT_RESPONSE_HEADER_SIZE))));
+			
+			//Adding HTTP server
+			Server httpServer = http.getServers().add(Protocol.HTTP, Integer.parseInt(httpPort));
+			Series<Parameter> httpParameters = httpServer.getContext().getParameters();
+			httpParameters.add("http.requestHeaderSize", requestHeaderSize);
+			httpParameters.add("http.responseHeaderSize", responseHeaderSize);
+			
+			if (httpsEnabled) {
+				//Adding HTTPS server
+				Server httpsServer = http.getServers().add(Protocol.HTTPS, Integer.parseInt(httpsPort));
+				
+				@SuppressWarnings("rawtypes")
+				Series parameters = httpsServer.getContext().getParameters();
+				parameters.add("sslContextFactory", "org.restlet.engine.ssl.DefaultSslContextFactory");
+				if (httpsKeystorePath != null) {
+					parameters.add("keyStorePath", httpsKeystorePath);
+				}
+				if (httpsKeystorePassword != null) {
+					parameters.add("keyStorePassword", httpsKeystorePassword);
+				}
+				if (httpsKeyPassword != null) {
+					parameters.add("keyPassword", httpsKeyPassword);
+				}
+				if (httpsKeystoreType != null) {
+					parameters.add("keyStoreType", httpsKeystoreType);
+				}
+				parameters.add("http.requestHeaderSize", requestHeaderSize);
+				parameters.add("http.responseHeaderSize", responseHeaderSize);
+			}
+			
+			http.getDefaultHost().attach(application);
+			http.start();
+		} catch (Exception e) {
+			LOGGER.error("Conflict in the initialization of the HTTP component.", e);
+			System.exit(MainHelper.EXIT_ERROR_CODE);
+		}
 		
 		return fm;
 	}

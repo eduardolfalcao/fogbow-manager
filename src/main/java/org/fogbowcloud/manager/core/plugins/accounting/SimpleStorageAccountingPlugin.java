@@ -30,8 +30,8 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 		this.dateUtils = dateUtils;
 		this.lastUpdate = dateUtils.currentTimeMillis();
 
-		properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, 
-				properties.getProperty(getDataStoreUrl()));
+		if(properties.get(AccountingDataStore.ACCOUNTING_DATASTORE_URL)==null)
+			properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, properties.getProperty(getDataStoreUrl()));
 		db = new AccountingDataStore(properties);
 	}
 
