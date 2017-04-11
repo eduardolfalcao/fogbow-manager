@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.occi.DataStoreHelper;
 
 public class AccountingDataStore {
@@ -31,9 +33,12 @@ public class AccountingDataStore {
 
 	private String dataStoreURL;
 
-	public static final Logger LOGGER = Logger.getLogger(AccountingDataStore.class);
+	public static Logger LOGGER;
 	
 	public AccountingDataStore(Properties properties) {		
+		
+		LOGGER = MainHelper.getLogger(AccountingDataStore.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		
 		String dataStoreURLProperties = properties.getProperty(ACCOUNTING_DATASTORE_URL);
 		this.dataStoreURL = DataStoreHelper.getDataStoreUrl(dataStoreURLProperties,
 				DEFAULT_DATASTORE_NAME);

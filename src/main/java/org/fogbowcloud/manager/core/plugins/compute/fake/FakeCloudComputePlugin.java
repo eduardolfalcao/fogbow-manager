@@ -52,7 +52,10 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	@Override
 	public ResourcesInfo getResourcesInfo(Token token) {
 		//instancesInUse + instancesIdle must be equal to quota
-		return new ResourcesInfo(null, null, null, null, null, String.valueOf(quota));
+		ResourcesInfo ri = new ResourcesInfo();
+		ri.setInstancesIdle("0");
+		ri.setInstancesInUse(String.valueOf(quota));
+		return ri;
 	}
 
 	/**

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -16,11 +18,14 @@ import org.fogbowcloud.manager.occi.storage.StorageLink;
 
 public class ManagerDataStoreController {
 
-	private static final Logger LOGGER = Logger.getLogger(ManagerDataStoreController.class);
+	private Logger LOGGER;
 	
 	private ManagerDataStore managerDatabase;
 
 	public ManagerDataStoreController(Properties properties) {
+		
+		LOGGER = MainHelper.getLogger(ManagerDataStoreController.class.getName(), properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		
 		this.managerDatabase = new ManagerDataStore(properties);
 	}
 	

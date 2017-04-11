@@ -8,6 +8,7 @@ import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.Flavor;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
@@ -16,12 +17,13 @@ import org.json.JSONObject;
 
 public class ResourceRepository {
 	
-	private static final Logger LOGGER = Logger.getLogger(ResourceRepository.class);
+	private static Logger LOGGER;
 	private static ResourceRepository instance;
 	private static final String FOGBOWCLOUD_ENDPOINT = "http://localhost:8182";
 	private List<Resource> resources = new ArrayList<Resource>();
 	
 	public static void init(Properties properties) {
+		LOGGER = MainHelper.getLogger(ResourceRepository.class.getName(), properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		instance = new ResourceRepository(properties);
 	}
 	

@@ -42,7 +42,7 @@ import org.xmpp.component.ComponentException;
 
 public class SimpleManagerFactory {
 	
-	private static final Logger LOGGER = Logger.getLogger(SimpleManagerFactory.class);
+	private static Logger LOGGER;
 	
 	private static final String BASE_PLUGINS = "org.fogbowcloud.manager.core.plugins.";
 	private static final String XMPP_JID_FREERIDER = "free-rider-manager";
@@ -50,6 +50,7 @@ public class SimpleManagerFactory {
 	
 	private static final String PATH_FOGBOW_MANAGER = System.getProperty("user.dir");
 	private static final String PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/experiments/datastores/";
+	private static final String PATH_LOG = PATH_FOGBOW_MANAGER+"/experiments/log/";
 	
 	private static final int HTTP_PORT = 9192;
 	
@@ -90,7 +91,9 @@ public class SimpleManagerFactory {
 		prop.put("storage_datastore_url", DataStoreHelper.PREFIX_DATASTORE_URL+storageDatastoreUrl);
 		prop.put("network_datastore_url", DataStoreHelper.PREFIX_DATASTORE_URL+networkDatastoreUrl);
 		
-		prop.put(ConfigurationConstants.HTTP_PORT_KEY, String.valueOf(HTTP_PORT+id));		
+		prop.put(ConfigurationConstants.HTTP_PORT_KEY, String.valueOf(HTTP_PORT+id));	
+		
+		LOGGER = MainHelper.getLogger(SimpleManagerFactory.class.getName(), prop.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		
 		return prop;
 	}

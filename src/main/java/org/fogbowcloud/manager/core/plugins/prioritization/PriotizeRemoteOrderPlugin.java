@@ -6,16 +6,18 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.occi.order.Order;
 
 public class PriotizeRemoteOrderPlugin implements PrioritizationPlugin {
 
-	private static final Logger LOGGER = Logger.getLogger(PriotizeRemoteOrderPlugin.class);
+	private static Logger LOGGER;
 	
 	public PriotizeRemoteOrderPlugin(Properties properties, AccountingPlugin accountingPlugin){
-		
+		LOGGER = MainHelper.getLogger(PriotizeRemoteOrderPlugin.class.getName(), properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 	}
 	
 	@Override

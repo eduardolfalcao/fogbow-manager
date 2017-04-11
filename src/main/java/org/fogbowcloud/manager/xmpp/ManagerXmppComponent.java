@@ -6,8 +6,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
+import org.fogbowcloud.manager.occi.model.ResourceRepository;
 import org.jamppa.component.XMPPComponent;
 import org.xmpp.packet.Packet;
 
@@ -25,7 +28,7 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	public static final String GETREMOTEUSERQUOTA_NAMESPACE = "http://fogbowcloud.org/manager/getremoteuserquota";
 
 	private static long PERIOD = 30000;
-	private static Logger LOGGER = Logger.getLogger(ManagerXmppComponent.class);
+	private static Logger LOGGER;
 	private ManagerController managerFacade;
 	private final Timer timer = new Timer();
 	private String rendezvousAddress;
@@ -34,6 +37,9 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	public ManagerXmppComponent(String jid, String password, String server,
 			int port, ManagerController managerFacade, long timeout) {
 		super(jid, password, server, port, timeout);
+		
+		LOGGER = MainHelper.getLogger(ManagerXmppComponent.class.getName(), managerFacade.getProperties().getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		
 		this.managerFacade = managerFacade;
 		if (managerFacade.getMaxWhoIsAliveManagerCount() != null) {
 			this.maxWhoIsAliveManagerCount = managerFacade.getMaxWhoIsAliveManagerCount();

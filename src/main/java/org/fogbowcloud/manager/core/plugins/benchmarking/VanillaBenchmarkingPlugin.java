@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.occi.instance.Instance;
 
@@ -12,9 +14,10 @@ public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 	
 	Map<String, Double> instanceToPower = new HashMap<String, Double>();
 	
-	private static final Logger LOGGER = Logger.getLogger(VanillaBenchmarkingPlugin.class);
+	private static Logger LOGGER;
 	
 	public VanillaBenchmarkingPlugin(Properties properties) {
+		LOGGER = MainHelper.getLogger(VanillaBenchmarkingPlugin.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 	}
 
 	@Override

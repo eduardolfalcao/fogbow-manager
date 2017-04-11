@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
@@ -23,9 +24,11 @@ public class NoFMemberPickerPlugin implements FederationMemberPickerPlugin {
 	private String localMemberId;
 	private boolean trustworthy = false;
 
-	private static final Logger LOGGER = Logger.getLogger(NoFMemberPickerPlugin.class);
+	private static Logger LOGGER;
 	
 	public NoFMemberPickerPlugin(Properties properties, AccountingPlugin accoutingPlugin) {
+		LOGGER = MainHelper.getLogger(NoFMemberPickerPlugin.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		
 		this.accoutingPlugin = accoutingPlugin;
 		this.localMemberId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		try {
@@ -43,7 +46,8 @@ public class NoFMemberPickerPlugin implements FederationMemberPickerPlugin {
 		LinkedList<FederationMemberDebt> reputableMembers = new LinkedList<FederationMemberDebt>();
 
 		for (FederationMember currentMember : members) {			
-			String memberId = currentMember.getResourcesInfo().getId();			
+//			String memberId = currentMember.getResourcesInfo().getId();		//FIXME ADDED BY EDUARDO	
+			String memberId = currentMember.getId();
 			if (localMemberId.equals(memberId)) {
 				continue;
 			}

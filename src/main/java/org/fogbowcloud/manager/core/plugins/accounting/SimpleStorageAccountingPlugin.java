@@ -8,6 +8,8 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -20,7 +22,7 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 	private DateUtils dateUtils;
 	private long lastUpdate;
 
-	private static final Logger LOGGER = Logger.getLogger(SimpleStorageAccountingPlugin.class);
+	private static Logger LOGGER;
 
 	public SimpleStorageAccountingPlugin(Properties properties) {
 		this(properties, new DateUtils());
@@ -33,6 +35,8 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 		if(properties.get(AccountingDataStore.ACCOUNTING_DATASTORE_URL)==null)
 			properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, properties.getProperty(getDataStoreUrl()));
 		db = new AccountingDataStore(properties);
+		
+		LOGGER = MainHelper.getLogger(SimpleStorageAccountingPlugin.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 	}
 
 	@Override

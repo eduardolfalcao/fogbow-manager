@@ -1,9 +1,17 @@
 package org.fogbowcloud.manager;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Properties;
 
 import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.log4j.spi.LoggingEvent;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -19,6 +27,8 @@ public class MainHelper {
 	protected static final boolean DEFAULT_HTTPS_ENABLED = false;
 	protected static final int DEFAULT_REQUEST_HEADER_SIZE = 1024*1024;
 	protected static final int DEFAULT_RESPONSE_HEADER_SIZE = 1024*1024;
+	
+	private static Properties props = new Properties();
 	
 	public static long getXMPPTimeout(Properties properties) {
 		String timeoutStr = properties.getProperty(ConfigurationConstants.XMPP_TIMEOUT);
@@ -78,10 +88,32 @@ public class MainHelper {
 	}	
 
 	protected static void configureLog4j() {
-		ConsoleAppender console = new ConsoleAppender();
-		console.setThreshold(org.apache.log4j.Level.OFF);
-		console.activateOptions();
-		Logger.getRootLogger().addAppender(console);
+		try {
+			props.load(new FileInputStream("experiments/confs/log4j.properties"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		PropertyConfigurator.configure(props);		
 	}	
+	
+	public static Logger getLogger(String className, String managerId){
+	
+		Logger log = Logger.getLogger(className);
+				
+		FileAppender fa = new FileAppender();
+		fa.setFile(System.getProperty("user.dir")+"/experiments/log/"+managerId+".log");
+		fa.setAppend(true);
+		fa.setThreshold(Level.DEBUG);
+		fa.setLayout(new PatternLayout("%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n"));
+		fa.activateOptions();		
+		log.addAppender(fa);
+		
+		return log;
+		
+	}
 	
 }

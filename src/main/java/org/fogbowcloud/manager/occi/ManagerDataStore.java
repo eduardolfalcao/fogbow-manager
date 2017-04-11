@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderState;
@@ -24,7 +26,7 @@ import org.sqlite.SQLiteConfig;
 public class ManagerDataStore {
 
 	public static final String ERROR_WHILE_INITIALIZING_THE_DATA_STORE = "Error while initializing the Manager DataStore.";
-	private static final Logger LOGGER = Logger.getLogger(ManagerDataStore.class);
+	private static Logger LOGGER;
 	public static final String MANAGER_DATASTORE_URL = "manager_datastore_url";
 	private static final String DEFAULT_DATASTORE_NAME = "datastore_manager.slite";
 	protected static final String MANAGER_DATASTORE_SQLITE_DRIVER = "org.sqlite.JDBC";
@@ -55,6 +57,9 @@ public class ManagerDataStore {
 	private String dataStoreURL;
 
 	public ManagerDataStore(Properties properties) {
+		
+		LOGGER = MainHelper.getLogger(ManagerDataStore.class.getName(), properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		
 		String dataStoreURLProperties = properties.getProperty(MANAGER_DATASTORE_URL);
 		this.dataStoreURL = DataStoreHelper.getDataStoreUrl(dataStoreURLProperties,
 				DEFAULT_DATASTORE_NAME);
@@ -123,7 +128,7 @@ public class ManagerDataStore {
 			orderStmt.setString(2, order.getInstanceId());
 			orderStmt.setString(3, order.getProvidingMemberId());
 			orderStmt.setString(4, order.getRequestingMemberId());
-			orderStmt.setString(5, order.getFederationToken().toJSON().toString());
+			orderStmt.setString(5, order.getFederationToken() != null ? order.getFederationToken().toJSON().toString() : null);
 			orderStmt.setLong(6, order.getFulfilledTime());
 			orderStmt.setBoolean(7, order.isLocal());
 			orderStmt.setString(8, order.getState() != null ? 

@@ -8,11 +8,13 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
+import org.fogbowcloud.manager.core.plugins.prioritization.TwoFoldPrioritizationPlugin;
 import org.fogbowcloud.manager.occi.order.Order;
 
 public class NoFPrioritizationPlugin implements PrioritizationPlugin {
@@ -22,9 +24,12 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 	private boolean trustworthy = false;
 	private boolean prioritizeLocal = true;
 	
-	private static final Logger LOGGER = Logger.getLogger(NoFPrioritizationPlugin.class);
+	private static Logger LOGGER;
 
 	public NoFPrioritizationPlugin(Properties properties, AccountingPlugin accountingPlugin) {
+		
+		LOGGER = MainHelper.getLogger(NoFPrioritizationPlugin.class.getName(), properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		
 		this.accountingPlugin = accountingPlugin;
 		this.localMemberId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		try {

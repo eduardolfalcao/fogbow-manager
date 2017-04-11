@@ -37,6 +37,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
+import org.fogbowcloud.manager.SimpleManagerFactory;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -83,6 +85,8 @@ import org.json.JSONObject;
 import org.restlet.Response;
 
 public class ManagerController {
+	
+	private String managerId;
 
 	private static final String SSH_SERVICE_NAME = "ssh";
 	protected final int MAX_ORDERS_PER_THREAD = 25;
@@ -137,7 +141,7 @@ public class ManagerController {
 
 	private PoolingHttpClientConnectionManager cm;
 	
-	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
+	private static Logger LOGGER;
 
 	public ManagerController(Properties properties) {
 		this(properties, null);
@@ -147,6 +151,8 @@ public class ManagerController {
 		if (properties == null) {
 			throw new IllegalArgumentException();
 		}
+		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
+		LOGGER = MainHelper.getLogger(SimpleManagerFactory.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		this.properties = properties;
 		this.monitoringHelper = new ManagerControllerHelper().new MonitoringHelper(this.properties);
 		setFlavorsProvided(ResourceRepository.getStaticFlavors(properties));
@@ -1083,7 +1089,8 @@ public class ManagerController {
 		
 		//TODO different instances sizes should be considered?
 		//TODO remove this magic number
-		return (instancesFulfilled + 1) <= capacityControllerPlugin.getMaxCapacityToSupply(requestingMember);
+		boolean res = (instancesFulfilled + 1) <= capacityControllerPlugin.getMaxCapacityToSupply(requestingMember);
+		return res;
 	}
 
 	protected String createUserDataUtilsCommand(Order order) throws IOException, MessagingException {

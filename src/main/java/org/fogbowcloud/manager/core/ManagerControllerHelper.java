@@ -7,6 +7,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.occi.order.Order;
 
@@ -15,7 +16,7 @@ public class ManagerControllerHelper {
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_SERVED_ORDER_MONITORING_PERIOD = 120000; // 2 minutes
 	
-	private static final Logger LOGGER = Logger.getLogger(ManagerControllerHelper.class);
+	private static Logger LOGGER;
 	
 	public ManagerControllerHelper() {}
 	
@@ -53,6 +54,7 @@ public class ManagerControllerHelper {
 			} catch (Exception e) {
 				this.maximumAttempts = MAXIMUM_ORDER_ATTEMPTS_DEFAULT;
 			}
+			LOGGER = MainHelper.getLogger(ManagerControllerHelper.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		}
 		
 		public synchronized void addFailedMonitoringAttempt(Order order) {

@@ -6,6 +6,7 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.prioritization.fcfs.FCFSPrioritizationPlugin;
@@ -18,9 +19,12 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 	private PrioritizationPlugin localPrioritizationPlugin;
 	private PrioritizationPlugin remotePrioritizationPlugin;
 	
-	private static final Logger LOGGER = Logger.getLogger(TwoFoldPrioritizationPlugin.class);
+	private static Logger LOGGER;
 	
 	public TwoFoldPrioritizationPlugin(Properties properties, AccountingPlugin accountingPlugin) {
+		
+		LOGGER = MainHelper.getLogger(TwoFoldPrioritizationPlugin.class.getName(), properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		
 		try {
 			localPrioritizationPlugin = (PrioritizationPlugin) MainHelper.createInstanceWithAccountingPlugin(
 					LOCAL_PRIORITIZATION_PLUGIN_CLASS, properties, accountingPlugin);
