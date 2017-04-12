@@ -1,0 +1,34 @@
+##################################
+##################################
+####### MEMBER OPERATIONS ########
+##################################
+##################################
+
+# LISTAR MEMBROS
+./fogbow-cli member --url http://localhost:9193 --auth-token a
+
+# PEGAR QUOTA
+./fogbow-cli member --url http://localhost:9193 --quota --id cooperative-manager2 --auth-token a
+
+# PEGAR USO
+./fogbow-cli member --url http://localhost:9193 --usage --id cooperative-manager2 --auth-token a
+
+##################################
+##################################
+####### ORDER OPERATIONS #########
+##################################
+##################################
+
+# CRIAR ORDER
+./fogbow-cli order --url http://localhost:9193 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
+./fogbow-cli order --url http://localhost:9194 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
+
+# PEGAR ORDER: aqui dá pra pegar a instância
+./fogbow-cli order --url http://localhost:9193 --get --auth-token a --id a95dc66b-3e46-421a-a07a-e28bd6800021
+./fogbow-cli order --url http://localhost:9194 --get --auth-token a --id 1937278e-8cf6-4b8d-908b-d3bcf0c73929
+
+# DELETAR UMA ORDER E UMA INSTÂNCIA: DEVEM SER REALIZADAS JUNTAS POIS A REMOÇÃO DA ORDER NÃO REMOVE A INSTÂNCIA
+./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id a95dc66b-3e46-421a-a07a-e28bd6800021
+./fogbow-cli instance --delete --auth-token mytoken --url http://localhost:9193 --id instance1@cooperative-manager2
+
+
