@@ -65,7 +65,9 @@ public class AccountingDataStore {
 			LOGGER.error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 		} finally {
-			close(statement, connection);
+			List<Statement> statements = new ArrayList<Statement>();
+			statements.add(statement);
+			close(statements, connection);
 		}
 	}
 	
@@ -118,8 +120,10 @@ public class AccountingDataStore {
 			}
 			return false;
 		} finally {
-			close(updateMemberStatement, connection);
-			close(insertMemberStatement, connection);
+			List<Statement> statements = new ArrayList<Statement>();
+			statements.add(updateMemberStatement);
+			statements.add(insertMemberStatement);
+			close(statements, connection);
 		}
 	}
 	
@@ -260,7 +264,9 @@ public class AccountingDataStore {
 			LOGGER.error("Couldn't get keys from DB.", e);
 			return null;
 		} finally {
-			close(statement, conn);
+			List<Statement> statements = new ArrayList<Statement>();
+			statements.add(statement);
+			close(statements, conn);
 		}
 
 		return null;
@@ -279,14 +285,15 @@ public class AccountingDataStore {
 		}
 	}
 	
-	private void close(Statement statement, Connection conn) {
-		if (statement != null) {
-			try {
-				if (!statement.isClosed()) {
-					statement.close();
+	private void close(List<Statement> statements, Connection conn) {
+		if (statements != null) {
+			for(Statement s : statements){
+				try {
+					if (!s.isClosed())
+						s.close();//
+				} catch (SQLException e) {
+					LOGGER.error("Couldn't close statement"+s, e);
 				}
-			} catch (SQLException e) {
-				LOGGER.error("Couldn't close statement", e);
 			}
 		}
 

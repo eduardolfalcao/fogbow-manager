@@ -1647,7 +1647,9 @@ public class ManagerController {
 
 						if (!isFulfilled
 								&& !failedBatch.batchExists(order.getBatchId(), FailedBatchType.FEDERATION_USER)) {
-							isFulfilled = createLocalInstanceWithFederationUser(order);
+							//added by eduardo TODO
+							if(!order.getRequestingMemberId().equals(managerId))
+								isFulfilled = createLocalInstanceWithFederationUser(order);
 							if (!isFulfilled) {
 								failedBatch.failBatch(order.getBatchId(), FailedBatchType.FEDERATION_USER);
 							}
@@ -1812,15 +1814,16 @@ public class ManagerController {
 		
 		if (isComputeOrder) {
 			try {
-				try {
-					String command = createUserDataUtilsCommand(order);
-					order.putAttValue(OrderAttribute.USER_DATA_ATT.getValue(), command);
-					order.addCategory(new Category(OrderConstants.USER_DATA_TERM, OrderConstants.SCHEME,
-							OrderConstants.MIXIN_CLASS));
-				} catch (Exception e) {
-					LOGGER.warn("Exception while creating userdata.", e);
-					return false;
-				}
+//				REVERSE TUNNEL MUST NOT BE CREATED SINCE WE ARE NOT WORKING WITH REAL VMS
+//				try {
+//					String command = createUserDataUtilsCommand(order);
+//					order.putAttValue(OrderAttribute.USER_DATA_ATT.getValue(), command);
+//					order.addCategory(new Category(OrderConstants.USER_DATA_TERM, OrderConstants.SCHEME,
+//							OrderConstants.MIXIN_CLASS));
+//				} catch (Exception e) {
+//					LOGGER.warn("Exception while creating userdata.", e);
+//					return false;
+//				}
 				
 				String localImageId = getLocalImageId(order.getCategories(), federationUserToken);
 				List<Category> categories = new LinkedList<Category>();
