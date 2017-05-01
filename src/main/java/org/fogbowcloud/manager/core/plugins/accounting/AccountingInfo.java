@@ -10,12 +10,14 @@ public class AccountingInfo {
 	private String requestingMember;
 	private String providingMember;
 	private double usage;
+	private int currentInstances;
 	
 	public AccountingInfo(String user, String requestingMember, String providingMember) {
 		this.user = user;
 		this.requestingMember = requestingMember;
 		this.providingMember = providingMember;
 		this.usage = 0;
+		this.currentInstances = 0;
 	}
 	
 	public void addConsumption(double consuption) {
@@ -36,6 +38,18 @@ public class AccountingInfo {
 
 	public double getUsage() {
 		return usage;
+	}
+	
+	public int getCurrentInstances(){
+		return currentInstances;
+	}
+	
+	public void incrementCurrentInstances(){
+		this.currentInstances++;
+	}
+	
+	public void setCurrentInstances(int currentInstances) {
+		this.currentInstances = currentInstances;
 	}
 	
 	@Override

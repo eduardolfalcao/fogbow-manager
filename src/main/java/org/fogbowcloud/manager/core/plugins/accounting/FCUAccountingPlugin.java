@@ -71,9 +71,12 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 				AccountingInfo accountingInfo = new AccountingInfo(current.getUser(),
 						current.getRequestingMember(), current.getProvidingMember());
 				usage.put(current, accountingInfo);
-			}
+			} 			
 
 			double instanceUsage = getUsage(order, updatingInterval, consumptionInterval);
+			
+			//added by Eduardo for debugging purposes
+			usage.get(current).incrementCurrentInstances();
 
 			usage.get(current).addConsumption(instanceUsage);
 		}

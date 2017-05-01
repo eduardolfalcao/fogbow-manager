@@ -10,6 +10,8 @@ import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.ErrorType;
+import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.restlet.Request;
 import org.restlet.Response;
@@ -29,6 +31,8 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	@Override
 	public String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt, String imageId) {
+		if(instanceCounter>=quota)
+			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, "There is no more quota in the underlying cloud.");
 		String name = "instance"+(++instanceCounter);
 		instances.add(name);
 		return name;

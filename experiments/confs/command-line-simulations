@@ -1,5 +1,26 @@
 ##################################
 ##################################
+######### CONFIGURATION ##########
+##################################
+##################################
+#XMPP
+/etc/prosody/prosody.cfg.lua
+service prosody restart
+
+#Rendezvouz
+/usr/share/fogbow-rendezvous/rendezvous.conf
+/usr/share/fogbow-rendezvous/log4j.properties
+sudo service fogbow-rendezvous start
+
+##################################
+# Roteiro
+##################################
+./fogbow-cli order --url http://localhost:9193 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu & ./fogbow-cli order --url http://localhost:9194 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
+./fogbow-cli order --url http://localhost:9195 --create --n 2 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
+./fogbow-cli order --url http://localhost:9193 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu & ./fogbow-cli order --url http://localhost:9194 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
+
+##################################
+##################################
 ####### MEMBER OPERATIONS ########
 ##################################
 ##################################

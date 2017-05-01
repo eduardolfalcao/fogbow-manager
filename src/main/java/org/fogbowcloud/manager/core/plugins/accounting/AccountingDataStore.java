@@ -27,6 +27,7 @@ public class AccountingDataStore {
 	protected static final String REQUESTING_MEMBER_COL = "requesting_member";
 	protected static final String PROVIDING_MEMBER_COL = "providing_member";
 	protected static final String USAGE_COL = "usage";
+	protected static final String INSTANCES_COL = "instances";
 	private static final String DEFAULT_DATASTORE_NAME = "datastore_accounting.slite";
 	protected static final String ERROR_WHILE_INITIALIZING_THE_DATA_STORE = 
 			"Error while initializing the Accouting DataStore.";
@@ -58,6 +59,7 @@ public class AccountingDataStore {
 							+ "requesting_member VARCHAR(255) NOT NULL, "
 							+ "providing_member VARCHAR(255) NOT NULL, "
 							+ "usage DOUBLE,"
+							+ "instances INTEGER,"
 							+ "PRIMARY KEY (user, requesting_member, providing_member)"
 							+ ")");
 			statement.close();
@@ -75,7 +77,7 @@ public class AccountingDataStore {
 			+ " SET usage = usage + ? WHERE user = ? AND requesting_member = ? AND providing_member = ?";
 	
 	private static final String INSERT_MEMBER_USAGE_SQL = "INSERT INTO " + USAGE_TABLE_NAME
-			+ " VALUES(?, ?, ?, ?)";
+			+ " VALUES(?, ?, ?, ?, ?)";
 	
 	public boolean update(List<AccountingInfo> usage) {
 		LOGGER.debug("Updating usage into database.");
@@ -174,6 +176,7 @@ public class AccountingDataStore {
 				insertMemberStatement.setString(2, accountingEntry.getRequestingMember());
 				insertMemberStatement.setString(3, accountingEntry.getProvidingMember());
 				insertMemberStatement.setDouble(4, accountingEntry.getUsage());
+				insertMemberStatement.setInt(5, accountingEntry.getCurrentInstances());
 				insertMemberStatement.addBatch();
 				
 			} else { // updating an existing entry
@@ -182,6 +185,7 @@ public class AccountingDataStore {
 				updateMemberStatement.setString(2, accountingEntry.getUser());
 				updateMemberStatement.setString(3, accountingEntry.getRequestingMember());
 				updateMemberStatement.setString(4, accountingEntry.getProvidingMember());
+				updateMemberStatement.setInt(5, accountingEntry.getCurrentInstances());
 				updateMemberStatement.addBatch();
 			}
 		}
@@ -254,10 +258,12 @@ public class AccountingDataStore {
 				String requestingMember = rs.getString(REQUESTING_MEMBER_COL);
 				String providingMember = rs.getString(PROVIDING_MEMBER_COL);
 				double usage = rs.getDouble(USAGE_COL);
+				int instances = rs.getInt(INSTANCES_COL);
 
 				AccountingInfo accountingInfo = new AccountingInfo(user, requestingMember,
 						providingMember);
 				accountingInfo.addConsumption(usage);
+				accountingInfo.setCurrentInstances(instances);
 				return accountingInfo;
 			}
 		} catch (SQLException e) {
@@ -319,6 +325,7 @@ public class AccountingDataStore {
 						providingMember);
 				userAccounting.addConsumption(rs.getDouble(USAGE_COL));
 				accounting.add(userAccounting);
+				userAccounting.setCurrentInstances(rs.getInt(INSTANCES_COL));
 			}
 		} catch (SQLException e) {
 			LOGGER.error("Error while creating accounting from ResultSet.", e);

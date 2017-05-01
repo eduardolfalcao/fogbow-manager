@@ -70,7 +70,8 @@ public class SimpleManagerFactory {
 			managerId = XMPP_JID_COOPERATIVE+id;
 			memberPickerPlugin = BASE_PLUGINS+"memberpicker.NoFMemberPickerPlugin";
 			computePlugin = BASE_PLUGINS+"compute.fake.FakeCloudComputePlugin";
-			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.fairnessdriven.TwoFoldCapacityController";
+			//capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.fairnessdriven.TwoFoldCapacityController";
+			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin";
 		}
 		
 		prop.put(ConfigurationConstants.XMPP_JID_KEY, managerId);

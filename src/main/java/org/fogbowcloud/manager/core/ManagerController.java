@@ -1088,8 +1088,8 @@ public class ManagerController {
 		}
 		
 		//TODO different instances sizes should be considered?
-		//TODO remove this magic number
-		boolean res = (instancesFulfilled + 1) <= capacityControllerPlugin.getMaxCapacityToSupply(requestingMember);
+		double virtualQuota = capacityControllerPlugin.getMaxCapacityToSupply(requestingMember);
+		boolean res = instancesFulfilled < virtualQuota;
 		return res;
 	}
 
