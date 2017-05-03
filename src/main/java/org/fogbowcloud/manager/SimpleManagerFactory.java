@@ -26,7 +26,6 @@ import org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageS
 import org.fogbowcloud.manager.core.plugins.localcredentials.SingleMapperPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerPlugin;
-import org.fogbowcloud.manager.core.plugins.prioritization.TwoFoldPrioritizationPlugin;
 import org.fogbowcloud.manager.occi.DataStoreHelper;
 import org.fogbowcloud.manager.occi.ManagerDataStore;
 import org.fogbowcloud.manager.occi.OCCIApplication;
@@ -59,23 +58,20 @@ public class SimpleManagerFactory {
 		
 		Properties prop = (Properties) properties.clone();
 		
-		String managerId = "", memberPickerPlugin = "", computePlugin = "", capacityControllerPlugin = "";		
+		String managerId = "", computePlugin = "", capacityControllerPlugin = "";		
 		if(freeRider){
 			managerId = XMPP_JID_FREERIDER+id;
-			memberPickerPlugin = BASE_PLUGINS+"memberpicker.RoundRobinMemberPickerPlugin";
 			computePlugin = BASE_PLUGINS+"compute.nocloud.NoCloudComputePlugin";
 			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.freerider.FreeRiderCapacityControllerPlugin";
 		}
 		else{
 			managerId = XMPP_JID_COOPERATIVE+id;
-			memberPickerPlugin = BASE_PLUGINS+"memberpicker.NoFMemberPickerPlugin";
 			computePlugin = BASE_PLUGINS+"compute.fake.FakeCloudComputePlugin";
 			//capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.fairnessdriven.TwoFoldCapacityController";
 			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin";
 		}
 		
 		prop.put(ConfigurationConstants.XMPP_JID_KEY, managerId);
-		prop.put(ConfigurationConstants.MEMBER_PICKER_PLUGIN_CLASS_KEY, memberPickerPlugin);
 		prop.put(ConfigurationConstants.COMPUTE_CLASS_KEY, computePlugin);
 		prop.put(ConfigurationConstants.CAPACITY_CONTROLLER_PLUGIN_CLASS, capacityControllerPlugin);
 		

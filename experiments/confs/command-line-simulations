@@ -10,7 +10,8 @@ service prosody restart
 #Rendezvouz
 /usr/share/fogbow-rendezvous/rendezvous.conf
 /usr/share/fogbow-rendezvous/log4j.properties
-sudo service fogbow-rendezvous start
+sudo ./bin/start-rendezvous				-- when installed from source code
+#sudo service fogbow-rendezvous start 	-- when installed from dpkg
 
 ##################################
 # Roteiro
@@ -51,5 +52,7 @@ sudo service fogbow-rendezvous start
 # DELETAR UMA ORDER E UMA INSTÂNCIA: DEVEM SER REALIZADAS JUNTAS POIS A REMOÇÃO DA ORDER NÃO REMOVE A INSTÂNCIA
 ./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id a95dc66b-3e46-421a-a07a-e28bd6800021
 ./fogbow-cli instance --delete --auth-token mytoken --url http://localhost:9193 --id instance1@cooperative-manager2
+
+./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id 825d33f4-6f2f-4678-9a90-2f4c282d8037 & ./fogbow-cli instance --delete --auth-token mytoken --url http://localhost:9193 --id instance1@cooperative-manager2 
 
 

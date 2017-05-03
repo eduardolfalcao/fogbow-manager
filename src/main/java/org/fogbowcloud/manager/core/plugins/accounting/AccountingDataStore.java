@@ -74,12 +74,15 @@ public class AccountingDataStore {
 	}
 	
 	private static final String UPDATE_MEMBER_USAGE_SQL = "UPDATE " + USAGE_TABLE_NAME
-			+ " SET usage = usage + ? WHERE user = ? AND requesting_member = ? AND providing_member = ?";
+			+ " SET usage = usage + ?, instances = ? WHERE user = ? AND requesting_member = ? AND providing_member = ?";
 	
 	private static final String INSERT_MEMBER_USAGE_SQL = "INSERT INTO " + USAGE_TABLE_NAME
 			+ " VALUES(?, ?, ?, ?, ?)";
 	
 	public boolean update(List<AccountingInfo> usage) {
+		
+		setInstancesCountToZero();
+		
 		LOGGER.debug("Updating usage into database.");
 		LOGGER.debug("Usage=" + usage);
 
@@ -128,6 +131,39 @@ public class AccountingDataStore {
 			close(statements, connection);
 		}
 	}
+	
+	
+	//TODO for debugging purposes
+	private static final String SET_INSTANCES_COUNT_ZERO_SQL = "UPDATE " + USAGE_TABLE_NAME + " SET instances = 0";	
+	private boolean setInstancesCountToZero() {
+		LOGGER.debug("Updating instance count into database to ZERO.");
+
+		Statement updateStatement = null;		
+		Connection connection = null;
+
+		try {
+			connection = getConnection();
+			updateStatement = connection.createStatement();
+			updateStatement.execute(SET_INSTANCES_COUNT_ZERO_SQL);
+			return true;
+		} catch (SQLException e) {
+			LOGGER.error("Couldn't set instances count to zero.", e);
+			try {
+				if (connection != null) {
+					connection.rollback();
+				}
+			} catch (SQLException e1) {
+				LOGGER.error("Couldn't rollback transaction.", e1);
+			}
+			return false;
+		} finally {
+			List<Statement> statements = new ArrayList<Statement>();
+			statements.add(updateStatement);
+			close(statements, connection);
+		}
+	}
+	
+	
 	
 	private boolean hasBatchExecutionError(int[] executeBatch) {
 		for (int i : executeBatch) {
@@ -182,10 +218,10 @@ public class AccountingDataStore {
 			} else { // updating an existing entry
 				LOGGER.debug("Existing accountingEntry=" + accountingEntry);
 				updateMemberStatement.setDouble(1, accountingEntry.getUsage());
-				updateMemberStatement.setString(2, accountingEntry.getUser());
-				updateMemberStatement.setString(3, accountingEntry.getRequestingMember());
-				updateMemberStatement.setString(4, accountingEntry.getProvidingMember());
-				updateMemberStatement.setInt(5, accountingEntry.getCurrentInstances());
+				updateMemberStatement.setInt(2, accountingEntry.getCurrentInstances());
+				updateMemberStatement.setString(3, accountingEntry.getUser());
+				updateMemberStatement.setString(4, accountingEntry.getRequestingMember());
+				updateMemberStatement.setString(5, accountingEntry.getProvidingMember());				
 				updateMemberStatement.addBatch();
 			}
 		}
@@ -324,8 +360,8 @@ public class AccountingDataStore {
 				AccountingInfo userAccounting = new AccountingInfo(user, requestingMember,
 						providingMember);
 				userAccounting.addConsumption(rs.getDouble(USAGE_COL));
-				accounting.add(userAccounting);
 				userAccounting.setCurrentInstances(rs.getInt(INSTANCES_COL));
+				accounting.add(userAccounting);				
 			}
 		} catch (SQLException e) {
 			LOGGER.error("Error while creating accounting from ResultSet.", e);

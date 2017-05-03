@@ -77,9 +77,11 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 			
 			//added by Eduardo for debugging purposes
 			usage.get(current).incrementCurrentInstances();
-
 			usage.get(current).addConsumption(instanceUsage);
-		}
+		}		
+		
+//		//added by Eduardo for debugging purposes
+//		updateMapWithOrderWithZeroInstances(usage);
 
 		LOGGER.debug("current usage=" + usage);
 
@@ -88,6 +90,17 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 			LOGGER.debug("Updating lastUpdate to " + this.lastUpdate);
 		}
 	}
+	
+//	private void updateMapWithOrderWithZeroInstances(Map<AccountingEntryKey, AccountingInfo> usage){
+//		List<AccountingInfo> all = getAccountingInfo();
+//		for(AccountingInfo acc : all){
+//			AccountingEntryKey key = new AccountingEntryKey(acc.getUser(), acc.getRequestingMember(), acc.getProvidingMember());
+//			if(!usage.containsKey(key)){
+//				acc.setCurrentInstances(0);
+//				usage.put(key, acc);
+//			}
+//		}		
+//	}
 
 	private double getUsage(Order order, double updatingInterval , double consumptionInterval) {
 		double instancePower = benchmarkingPlugin.getPower(order.getGlobalInstanceId());

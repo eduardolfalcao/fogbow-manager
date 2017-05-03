@@ -19,11 +19,15 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 	private PrioritizationPlugin localPrioritizationPlugin;
 	private PrioritizationPlugin remotePrioritizationPlugin;
 	
+	private String managerId;	//for debugging purposes
+	
 	private static Logger LOGGER;
 	
 	public TwoFoldPrioritizationPlugin(Properties properties, AccountingPlugin accountingPlugin) {
 		
 		LOGGER = MainHelper.getLogger(TwoFoldPrioritizationPlugin.class.getName(), properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		
+		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		
 		try {
 			localPrioritizationPlugin = (PrioritizationPlugin) MainHelper.createInstanceWithAccountingPlugin(

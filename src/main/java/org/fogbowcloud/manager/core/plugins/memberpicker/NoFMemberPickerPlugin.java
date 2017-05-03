@@ -45,8 +45,7 @@ public class NoFMemberPickerPlugin implements FederationMemberPickerPlugin {
 				accounting);
 		LinkedList<FederationMemberDebt> reputableMembers = new LinkedList<FederationMemberDebt>();
 
-		for (FederationMember currentMember : members) {			
-//			String memberId = currentMember.getResourcesInfo().getId();		//FIXME ADDED BY EDUARDO	
+		for (FederationMember currentMember : members) {				
 			String memberId = currentMember.getId();
 			if (localMemberId.equals(memberId)) {
 				continue;
