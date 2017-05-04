@@ -58,22 +58,25 @@ public class SimpleManagerFactory {
 		
 		Properties prop = (Properties) properties.clone();
 		
-		String managerId = "", computePlugin = "", capacityControllerPlugin = "";		
+		String managerId = "", computePlugin = "", capacityControllerPlugin = "", prioritizationPlugin = "";		
 		if(freeRider){
 			managerId = XMPP_JID_FREERIDER+id;
 			computePlugin = BASE_PLUGINS+"compute.nocloud.NoCloudComputePlugin";
 			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.freerider.FreeRiderCapacityControllerPlugin";
+			prioritizationPlugin = BASE_PLUGINS+"prioritization.fcfs.FCFSPrioritizationPlugin";
 		}
 		else{
 			managerId = XMPP_JID_COOPERATIVE+id;
 			computePlugin = BASE_PLUGINS+"compute.fake.FakeCloudComputePlugin";
-			//capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.fairnessdriven.TwoFoldCapacityController";
-			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin";
+			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.fairnessdriven.TwoFoldCapacityController";
+			//capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin";
+			prioritizationPlugin = BASE_PLUGINS+"prioritization.nof.NoFPrioritizationPlugin";
 		}
 		
 		prop.put(ConfigurationConstants.XMPP_JID_KEY, managerId);
 		prop.put(ConfigurationConstants.COMPUTE_CLASS_KEY, computePlugin);
 		prop.put(ConfigurationConstants.CAPACITY_CONTROLLER_PLUGIN_CLASS, capacityControllerPlugin);
+		prop.put(ConfigurationConstants.PRIORITIZATION_PLUGIN_CLASS, prioritizationPlugin);
 		
 		
 		String accountingDatastoreUrl = PATH_DATASTORES+"accounting-"+managerId+".sqlite";

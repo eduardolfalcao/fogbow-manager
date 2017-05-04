@@ -53,6 +53,8 @@ sudo ./bin/start-rendezvous				-- when installed from source code
 ./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id a95dc66b-3e46-421a-a07a-e28bd6800021
 ./fogbow-cli instance --delete --auth-token mytoken --url http://localhost:9193 --id instance1@cooperative-manager2
 
+./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id 6a378891-eb83-44dd-beb5-d49ce85e7cfb & ./fogbow-cli instance --delete --auth-token mytoken --url http://localhost:9193 --id instance1@cooperative-manager2 
+
 ./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id 825d33f4-6f2f-4678-9a90-2f4c282d8037 & ./fogbow-cli instance --delete --auth-token mytoken --url http://localhost:9193 --id instance1@cooperative-manager2 
 
 

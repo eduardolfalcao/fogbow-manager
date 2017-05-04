@@ -57,6 +57,7 @@ import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
+import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.core.plugins.localcredentials.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.localcredentials.SingleMapperPlugin;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
@@ -139,7 +140,7 @@ public class ManagerController {
 	
 	private DateUtils dateUtils = new DateUtils();
 
-	private PoolingHttpClientConnectionManager cm;
+	private PoolingHttpClientConnectionManager cm; 
 	
 	private static Logger LOGGER;
 
@@ -228,6 +229,11 @@ public class ManagerController {
 		if (!accountingUpdaterTimer.isScheduled()) {
 			triggerAccountingUpdater();
 		}		
+	}
+	
+	@Override
+	public String toString() {
+		return managerId;
 	}
 
 	private void recoverPreviousOrders() {
@@ -375,8 +381,13 @@ public class ManagerController {
 		}
 	}
 
+	//FIXME adjusted for experimentation purposes
 	protected int getMaxCapacityDefaultUser() {
-		try {
+		if(computePlugin instanceof FakeCloudComputePlugin)
+			return ((FakeCloudComputePlugin)computePlugin).getQuota();
+		else return CapacityControllerPlugin.MAXIMUM_CAPACITY_VALUE_ERROR;
+			
+		/*try {
 			SingleMapperPlugin singleMapperPlugin = new SingleMapperPlugin(this.properties);
 			Order emptyOrder = null;
 			Map<String, String> defaultUserLocalCredentials = singleMapperPlugin
@@ -393,7 +404,7 @@ public class ManagerController {
 		} catch (Exception e) {
 			LOGGER.warn("Could not possible get maximum capacity.", e);
 			return CapacityControllerPlugin.MAXIMUM_CAPACITY_VALUE_ERROR;
-		}
+		}*/
 	}
 
 	public void setAuthorizationPlugin(AuthorizationPlugin authorizationPlugin) {

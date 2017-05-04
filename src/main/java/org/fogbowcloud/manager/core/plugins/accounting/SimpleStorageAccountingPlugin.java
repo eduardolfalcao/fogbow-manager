@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.DateUtils;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
@@ -85,6 +86,11 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 			this.lastUpdate = now;
 			LOGGER.debug("Updating lastUpdate to " + this.lastUpdate);
 		}
+	}
+	
+	@Override
+	public void update(FederationMember member, double capacity){
+		//TODO to be implemented
 	}
 
 	private double getUsage(Order order, double updatingInterval, double consumptionInterval) {

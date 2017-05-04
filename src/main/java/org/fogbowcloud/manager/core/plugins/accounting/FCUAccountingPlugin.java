@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.DateUtils;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -78,10 +79,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 			//added by Eduardo for debugging purposes
 			usage.get(current).incrementCurrentInstances();
 			usage.get(current).addConsumption(instanceUsage);
-		}		
-		
-//		//added by Eduardo for debugging purposes
-//		updateMapWithOrderWithZeroInstances(usage);
+		}
 
 		LOGGER.debug("current usage=" + usage);
 
@@ -91,16 +89,10 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 		}
 	}
 	
-//	private void updateMapWithOrderWithZeroInstances(Map<AccountingEntryKey, AccountingInfo> usage){
-//		List<AccountingInfo> all = getAccountingInfo();
-//		for(AccountingInfo acc : all){
-//			AccountingEntryKey key = new AccountingEntryKey(acc.getUser(), acc.getRequestingMember(), acc.getProvidingMember());
-//			if(!usage.containsKey(key)){
-//				acc.setCurrentInstances(0);
-//				usage.put(key, acc);
-//			}
-//		}		
-//	}
+	@Override
+	public void update(FederationMember member, double capacity){
+		db.updateQuota(member, capacity);
+	}
 
 	private double getUsage(Order order, double updatingInterval , double consumptionInterval) {
 		double instancePower = benchmarkingPlugin.getPower(order.getGlobalInstanceId());

@@ -47,8 +47,13 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 
 	@Override
 	public void removeInstance(Token token, String instanceId) {
+		instanceCounter--;
 		instances.remove(instanceId);		
-	}		
+	}
+	
+	public int getQuota(){
+		return quota;
+	}
 
 	/**
 	 * Here we have to return the quota of the cloud.

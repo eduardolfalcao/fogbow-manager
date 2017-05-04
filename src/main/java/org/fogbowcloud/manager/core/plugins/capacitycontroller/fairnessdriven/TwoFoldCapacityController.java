@@ -10,10 +10,12 @@ public class TwoFoldCapacityController implements CapacityControllerPlugin {
 
 	private FairnessDrivenCapacityController pairwiseController;
 	private FairnessDrivenCapacityController globalController;
+	private AccountingPlugin accountingPlugin;
 		
 	protected TwoFoldCapacityController() {}
 	
 	public TwoFoldCapacityController(Properties properties, AccountingPlugin accountingPlugin) {
+		this.accountingPlugin = accountingPlugin;
 		this.pairwiseController = new PairwiseFairnessDrivenController(properties, accountingPlugin);
 		this.globalController = new GlobalFairnessDrivenController(properties, accountingPlugin);
 	}
@@ -29,9 +31,9 @@ public class TwoFoldCapacityController implements CapacityControllerPlugin {
 	
 	@Override
 	public void updateCapacity(FederationMember member, double maximumCapacity) {
-		this.pairwiseController.updateCapacity(member, maximumCapacity);
-		
-		this.globalController.updateCapacity(member, maximumCapacity);		
+		this.pairwiseController.updateCapacity(member, maximumCapacity);		
+		this.globalController.updateCapacity(member, maximumCapacity);
+		this.accountingPlugin.update(member,getMaxCapacityToSupply(member));
 	}
 	
 	protected void setGlobalController(

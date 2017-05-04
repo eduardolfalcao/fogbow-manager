@@ -15,6 +15,7 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.DataStoreHelper;
 
 public class AccountingDataStore {
@@ -33,6 +34,7 @@ public class AccountingDataStore {
 			"Error while initializing the Accouting DataStore.";
 
 	private String dataStoreURL;
+	private String managerId;
 
 	public static Logger LOGGER;
 	
@@ -40,6 +42,7 @@ public class AccountingDataStore {
 		
 		LOGGER = MainHelper.getLogger(AccountingDataStore.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		
+		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);		
 		String dataStoreURLProperties = properties.getProperty(ACCOUNTING_DATASTORE_URL);
 		this.dataStoreURL = DataStoreHelper.getDataStoreUrl(dataStoreURLProperties,
 				DEFAULT_DATASTORE_NAME);
@@ -60,6 +63,7 @@ public class AccountingDataStore {
 							+ "providing_member VARCHAR(255) NOT NULL, "
 							+ "usage DOUBLE,"
 							+ "instances INTEGER,"
+							+ "virtual_quota DOUBLE,"
 							+ "PRIMARY KEY (user, requesting_member, providing_member)"
 							+ ")");
 			statement.close();
@@ -77,7 +81,7 @@ public class AccountingDataStore {
 			+ " SET usage = usage + ?, instances = ? WHERE user = ? AND requesting_member = ? AND providing_member = ?";
 	
 	private static final String INSERT_MEMBER_USAGE_SQL = "INSERT INTO " + USAGE_TABLE_NAME
-			+ " VALUES(?, ?, ?, ?, ?)";
+			+ " VALUES(?, ?, ?, ?, ?, ?)";
 	
 	public boolean update(List<AccountingInfo> usage) {
 		
@@ -163,6 +167,51 @@ public class AccountingDataStore {
 		}
 	}
 	
+	private static final String UPDATE_QUOTA_SQL = "UPDATE " + USAGE_TABLE_NAME
+			+ " SET virtual_quota = ? WHERE providing_member = ? AND requesting_member = ?";
+	
+	public boolean updateQuota(FederationMember member, double capacity) {
+		
+		LOGGER.debug("Updating quota into database.");
+		LOGGER.debug("Member=" + member+", quota="+capacity);
+
+		if (member == null) {
+			LOGGER.warn("Member must not be null.");
+			return false;
+		}
+		
+		PreparedStatement updateQuotaStatement = null;		
+		Connection connection = null;
+
+		try {
+			connection = getConnection();
+			connection.setAutoCommit(false);
+
+			updateQuotaStatement = connection.prepareStatement(UPDATE_QUOTA_SQL);
+			updateQuotaStatement.setDouble(1, capacity);
+			updateQuotaStatement.setString(2, managerId);
+			updateQuotaStatement.setString(3, member.getId());
+			updateQuotaStatement.execute();
+		
+			connection.commit();
+			return true;
+		} catch (SQLException e) {
+			LOGGER.error("Couldn't update quotas.", e);
+			try {
+				if (connection != null) {
+					connection.rollback();
+				}
+			} catch (SQLException e1) {
+				LOGGER.error("Couldn't rollback transaction.", e1);
+			}
+			return false;
+		} finally {
+			List<Statement> statements = new ArrayList<Statement>();
+			statements.add(updateQuotaStatement);
+			close(statements, connection);
+		}
+	} 
+	
 	
 	
 	private boolean hasBatchExecutionError(int[] executeBatch) {
@@ -213,6 +262,7 @@ public class AccountingDataStore {
 				insertMemberStatement.setString(3, accountingEntry.getProvidingMember());
 				insertMemberStatement.setDouble(4, accountingEntry.getUsage());
 				insertMemberStatement.setInt(5, accountingEntry.getCurrentInstances());
+				insertMemberStatement.setDouble(6, -1.0);
 				insertMemberStatement.addBatch();
 				
 			} else { // updating an existing entry
