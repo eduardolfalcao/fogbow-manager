@@ -34,7 +34,7 @@ public abstract class FairnessDrivenCapacityController implements CapacityContro
 	public abstract double getCurrentFairness(FederationMember member);
 	public abstract double getLastFairness(FederationMember member);
 	
-	public double getFairness(double consumed, double donated){
+	public static double getFairness(double consumed, double donated){
 		if(donated < 0 || consumed < 0) {
 			throw new IllegalArgumentException("Donated and consumed can not be negative. "
 					+ " Donated(" + donated + ") and Consumed(" + consumed + ")");			

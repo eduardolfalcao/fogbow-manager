@@ -1,17 +1,24 @@
-package org.fogbowcloud.manager;
+package org.fogbowcloud.manager.experiments;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.TimerTask;
+import java.util.concurrent.Executors;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.ManagerControllerHelper;
+import org.fogbowcloud.manager.core.ManagerTimer;
+import org.fogbowcloud.manager.experiments.data.MonitorExperimentMetrics;
 
 public class MainExperiments {
 
 	private static final Logger LOGGER = Logger.getLogger(MainExperiments.class);
+	private static final ManagerTimer experimentMetricsMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));;
 
 	public static void main(String[] args) throws Exception {
 		
@@ -75,6 +82,25 @@ public class MainExperiments {
 		for(Properties prop : propertiesList)
 			fms.add(SimpleManagerFactory.createFM(prop));
 		
+		
+		MonitorExperimentMetrics monitorMetrics = new MonitorExperimentMetrics(fms);
+		triggerExperimentMetricsMonitoring(monitorMetrics, properties);
+		
+	}
+	
+	private static void triggerExperimentMetricsMonitoring(final MonitorExperimentMetrics monitorMetrics , Properties prop) {
+		final long metricsMonitoringPeriod = ManagerControllerHelper.getServerOrderMonitoringPeriod(prop);
+
+		experimentMetricsMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {	
+				try {
+					monitorMetrics.saveMetrics();
+				} catch (Throwable e) {
+					LOGGER.error("Error while monitoring experiment metrics", e);
+				}
+			}
+		}, 0, metricsMonitoringPeriod);
 	}
 	
 }

@@ -38,7 +38,7 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
-import org.fogbowcloud.manager.SimpleManagerFactory;
+import org.fogbowcloud.manager.experiments.SimpleManagerFactory;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.Flavor;
@@ -231,6 +231,15 @@ public class ManagerController {
 		}		
 	}
 	
+	public String getManagerId() {
+		return managerId;
+	}
+	
+	@Override
+	public int hashCode() {
+		return managerId.hashCode();
+	}
+	
 	@Override
 	public String toString() {
 		return managerId;
@@ -382,7 +391,7 @@ public class ManagerController {
 	}
 
 	//FIXME adjusted for experimentation purposes
-	protected int getMaxCapacityDefaultUser() {
+	public int getMaxCapacityDefaultUser() {
 		if(computePlugin instanceof FakeCloudComputePlugin)
 			return ((FakeCloudComputePlugin)computePlugin).getQuota();
 		else return CapacityControllerPlugin.MAXIMUM_CAPACITY_VALUE_ERROR;
@@ -1207,6 +1216,8 @@ public class ManagerController {
 			}
 		}, 0, servedOrderMonitoringPeriod);
 	}
+	
+	
 
 	private String getLocalImageId(List<Category> categories, Token federationUserToken) {
 		if (imageStoragePlugin == null) {
@@ -1959,6 +1970,14 @@ public class ManagerController {
 	
 	public Token getToken(Map<String, String> attributesToken) {
 		return localIdentityPlugin.createToken(attributesToken);
+	}
+	
+	public AccountingPlugin getComputeAccountingPlugin() {
+		return computeAccountingPlugin;
+	}
+	
+	public CapacityControllerPlugin getCapacityControllerPlugin() {
+		return capacityControllerPlugin;
 	}
 
 	public Properties getProperties() {

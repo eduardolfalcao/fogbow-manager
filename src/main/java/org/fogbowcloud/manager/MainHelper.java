@@ -20,13 +20,13 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 public class MainHelper {
 
 	private static final int MINIMUM_XMPP_TIMEOUT = 4000;
-	protected static final int EXIT_ERROR_CODE = 128;
-	protected static final int DEFAULT_XMPP_TIMEOUT = 15000; // 15 segundos
-	protected static final int DEFAULT_HTTP_PORT = 8182;
-	protected static final int DEFAULT_HTTPS_PORT = 8183;
-	protected static final boolean DEFAULT_HTTPS_ENABLED = false;
-	protected static final int DEFAULT_REQUEST_HEADER_SIZE = 1024*1024;
-	protected static final int DEFAULT_RESPONSE_HEADER_SIZE = 1024*1024;
+	public static final int EXIT_ERROR_CODE = 128;
+	public static final int DEFAULT_XMPP_TIMEOUT = 15000; // 15 segundos
+	public static final int DEFAULT_HTTP_PORT = 8182;
+	public static final int DEFAULT_HTTPS_PORT = 8183;
+	public static final boolean DEFAULT_HTTPS_ENABLED = false;
+	public static final int DEFAULT_REQUEST_HEADER_SIZE = 1024*1024;
+	public static final int DEFAULT_RESPONSE_HEADER_SIZE = 1024*1024;
 	
 	private static Properties props = new Properties();
 	
@@ -62,18 +62,18 @@ public class MainHelper {
 		return createInstance(prefix + ConfigurationConstants.IDENTITY_CLASS_KEY, pluginProperties);
 	}
 
-	protected static Object createInstance(String propName, Properties properties) throws Exception {
+	public static Object createInstance(String propName, Properties properties) throws Exception {
 		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class)
 				.newInstance(properties);
 	}
 	
-	protected static Object createInstanceWithComputePlugin(String propName, 
+	public static Object createInstanceWithComputePlugin(String propName, 
 			Properties properties, ComputePlugin computePlugin) throws Exception {
 		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, ComputePlugin.class)
 				.newInstance(properties, computePlugin);
 	}
 	
-	protected static Object createInstanceWithBenchmarkingPlugin(
+	public static Object createInstanceWithBenchmarkingPlugin(
 			String propName, Properties properties,
 			BenchmarkingPlugin benchmarkingPlugin) throws Exception {
 		return Class.forName(properties.getProperty(propName)).getConstructor(Properties.class, BenchmarkingPlugin.class)
@@ -87,7 +87,7 @@ public class MainHelper {
 				.newInstance(properties, accoutingPlugin);
 	}	
 
-	protected static void configureLog4j() {
+	public static void configureLog4j() {
 		try {
 			props.load(new FileInputStream("experiments/confs/log4j.properties"));
 		} catch (FileNotFoundException e) {

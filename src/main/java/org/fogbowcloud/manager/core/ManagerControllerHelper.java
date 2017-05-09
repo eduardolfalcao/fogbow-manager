@@ -15,6 +15,7 @@ public class ManagerControllerHelper {
 
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_SERVED_ORDER_MONITORING_PERIOD = 120000; // 2 minutes
+	private static final long DEFAULT_EXPERIMENT_METRICS_ORDER_MONITORING_PERIOD = 30000; // 30 seconds
 	
 	private static Logger LOGGER;
 	
@@ -28,13 +29,21 @@ public class ManagerControllerHelper {
 		return instanceMonitoringPeriod;
 	}
 	
+	public static long getExperimentMetricsMonitoringPeriod(Properties properties) {
+		String metricsMonitoringPeriodStr = properties
+				.getProperty(ConfigurationConstants.EXPERIMENT_METRICS_MONITORING_PERIOD_KEY);
+		final long metricsMonitoringPeriod = metricsMonitoringPeriodStr == null
+				? DEFAULT_EXPERIMENT_METRICS_ORDER_MONITORING_PERIOD : Long.valueOf(metricsMonitoringPeriodStr);
+		return metricsMonitoringPeriod;
+	}	
+	
 	public static long getServerOrderMonitoringPeriod(Properties properties) {
 		String servedOrderMonitoringPeriodStr = properties
 				.getProperty(ConfigurationConstants.SERVED_ORDER_MONITORING_PERIOD_KEY);
 		final long servedOrderMonitoringPeriod = servedOrderMonitoringPeriodStr == null
 				? DEFAULT_SERVED_ORDER_MONITORING_PERIOD : Long.valueOf(servedOrderMonitoringPeriodStr);
 		return servedOrderMonitoringPeriod;
-	}	
+	}
 	
 	// inner classes
 	public class MonitoringHelper {
