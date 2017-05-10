@@ -22,6 +22,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	private AccountingDataStore db;
 	private DateUtils dateUtils;
 	private long lastUpdate;
+	private String managerId;
 
 	private static Logger LOGGER;
 	public static final String ACCOUNTING_DATASTORE_URL = "fcu_accounting_datastore_url";
@@ -41,6 +42,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 		db = new AccountingDataStore(properties);
 		
 		LOGGER = MainHelper.getLogger(FCUAccountingPlugin.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 
 	@Override

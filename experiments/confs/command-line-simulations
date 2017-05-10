@@ -5,7 +5,7 @@
 ##################################
 #XMPP
 /etc/prosody/prosody.cfg.lua
-service prosody restart
+sudo service prosody restart
 
 #Rendezvouz
 /usr/share/fogbow-rendezvous/rendezvous.conf
@@ -19,6 +19,7 @@ sudo ./bin/start-rendezvous				-- when installed from source code
 ./fogbow-cli order --url http://localhost:9193 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu & ./fogbow-cli order --url http://localhost:9194 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
 ./fogbow-cli order --url http://localhost:9195 --create --n 2 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
 ./fogbow-cli order --url http://localhost:9193 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu & ./fogbow-cli order --url http://localhost:9194 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
+./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id 047adce9-cb3d-4ec9-8b3f-050bba74dcc1 & ./fogbow-cli instance --delete --auth-token mytoken --url http://localhost:9193 --id instance1@cooperative-manager2
 
 ##################################
 ##################################

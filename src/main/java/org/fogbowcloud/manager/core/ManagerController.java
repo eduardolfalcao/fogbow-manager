@@ -1248,13 +1248,14 @@ public class ManagerController {
 			if (orderResourceKind == null || orderResourceKind.equals(OrderConstants.COMPUTE_TERM)) {
 				instance = computePlugin.getInstance(federationUserToken, instanceId);
 				if (servedOrder != null) {
-					Map<String, String> serviceAddresses = getExternalServiceAddresses(servedOrder.getId());
-					if (serviceAddresses != null) {
-						instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
-						instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
-						serviceAddresses.remove(SSH_SERVICE_NAME);
-						instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
-					}
+					// commented by Eduardo since in this experiments there wont exist any VM
+//					Map<String, String> serviceAddresses = getExternalServiceAddresses(servedOrder.getId());
+//					if (serviceAddresses != null) {
+//						instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, serviceAddresses.get(SSH_SERVICE_NAME));
+//						instance.addAttribute(Instance.SSH_USERNAME_ATT, getSSHCommonUser());
+//						serviceAddresses.remove(SSH_SERVICE_NAME);
+//						instance.addAttribute(Instance.EXTRA_PORTS_ATT, new JSONObject(serviceAddresses).toString());
+//					}
 					
 					Category osCategory = getImageCategory(servedOrder.getCategories());
 					if (osCategory != null) {

@@ -33,8 +33,12 @@ public class Instance {
 	 */
 	private Map<String, String> attributes;
 
+	// constructor added by Eduardo
 	public Instance(String id) {
 		this.id = id;
+		this.resources = new ArrayList<Resource>();
+		this.links = new ArrayList<Link>();
+		this.attributes = new HashMap<String, String>();
 	}
 
 	public Instance(String id, List<Resource> resources, Map<String, String> attributes,
