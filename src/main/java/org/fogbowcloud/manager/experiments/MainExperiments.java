@@ -14,11 +14,12 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.experiments.data.MonitorExperimentMetrics;
+import org.fogbowcloud.manager.experiments.data.MonitorPeerState;
 
 public class MainExperiments {
 
 	private static final Logger LOGGER = Logger.getLogger(MainExperiments.class);
-	private static final ManagerTimer experimentMetricsMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));;
+	private static final ManagerTimer dataMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 
 	public static void main(String[] args) throws Exception {
 		
@@ -84,20 +85,22 @@ public class MainExperiments {
 		
 		
 		MonitorExperimentMetrics monitorMetrics = new MonitorExperimentMetrics(fms);
-		triggerExperimentMetricsMonitoring(monitorMetrics, properties);
+		MonitorPeerState monitorPeerState = new MonitorPeerState(fms);
+		triggerDataMonitoring(monitorMetrics, monitorPeerState, properties);
 		
 	}
 	
-	private static void triggerExperimentMetricsMonitoring(final MonitorExperimentMetrics monitorMetrics , Properties prop) {
+	private static void triggerDataMonitoring(final MonitorExperimentMetrics monitorMetrics , final MonitorPeerState monitorPeers, Properties prop) {
 		final long metricsMonitoringPeriod = ManagerControllerHelper.getServerOrderMonitoringPeriod(prop);
 
-		experimentMetricsMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
+		dataMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {	
 				try {
 					monitorMetrics.saveMetrics();
+					monitorPeers.savePeerState();
 				} catch (Throwable e) {
-					LOGGER.error("Error while monitoring experiment metrics", e);
+					LOGGER.error("Error while monitoring experiment metrics or peer states", e);
 				}
 			}
 		}, 0, metricsMonitoringPeriod);

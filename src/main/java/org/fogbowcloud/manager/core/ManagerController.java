@@ -241,6 +241,16 @@ public class ManagerController {
 	}
 	
 	@Override
+	public boolean equals(Object obj) {
+		if(obj instanceof ManagerController){
+			ManagerController mc = (ManagerController) obj;
+			if(mc.getManagerId().equals(this.managerId))
+				return true;
+		}			
+		return false;
+	}
+	
+	@Override
 	public String toString() {
 		return managerId;
 	}

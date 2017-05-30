@@ -30,7 +30,7 @@ public class MonitorExperimentMetrics {
 		for(ManagerController fm : fms){			
 			innerMap.put(fm, getMetrics(fm));
 		}
-		print(innerMap);
+		//print(innerMap);
 		timeStep++;		
 	}
 	

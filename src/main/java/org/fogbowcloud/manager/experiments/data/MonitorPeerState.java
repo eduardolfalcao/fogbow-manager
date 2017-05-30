@@ -1,0 +1,115 @@
+package org.fogbowcloud.manager.experiments.data;
+
+import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.model.DateUtils;
+import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderState;
+
+public class MonitorPeerState {
+	
+	private static final String OUTPUT_DATA_MONITORING_PERIOD_KEY = "output_data_monitoring_period";
+	private static final String OUTPUT_FOLDER = "output_folder";
+	private static final long CONVERSION_VALUE = 1000;
+	
+	private DateUtils date = new DateUtils();
+	private long initialTime, lastWrite, outputTime;
+	
+	private Map<ManagerController, List<PeerState>> data;
+	private List<ManagerController> fms;
+	
+	private String path;
+	
+	public MonitorPeerState(List<ManagerController> fms) {
+		this.fms = fms;
+		lastWrite = initialTime = date.currentTimeMillis();
+		data = new HashMap<ManagerController, List<PeerState>>();
+		outputTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_MONITORING_PERIOD_KEY))/CONVERSION_VALUE;
+		path = fms.get(0).getProperties().getProperty(OUTPUT_FOLDER);
+		
+		for(ManagerController fm : fms){
+			List<PeerState> states = new ArrayList<PeerState>();
+			states.add(new PeerState((long)0, 0, fm.getMaxCapacityDefaultUser()));
+			data.put(fm, states);			
+			writeStates(fm,states);
+		}
+	}
+	
+	public void savePeerState() {		
+		for(ManagerController fm : fms){
+			int last = data.get(fm).size()-1;
+			PeerState lastState = data.get(fm).get(last);
+			PeerState currentState = getPeerState(fm);
+			
+			if(lastState.getDemand() != currentState.getDemand() ||
+					lastState.getSupply() != currentState.getSupply())
+				data.get(fm).add(currentState);			
+		}
+		//print();
+		
+		long now = (date.currentTimeMillis()-initialTime)/CONVERSION_VALUE;
+		if((now - lastWrite)>outputTime){
+			write();
+			lastWrite = now;
+		}
+	}
+	
+	private PeerState getPeerState(ManagerController fm){		
+		int demand = 0;
+		List<Order> orders = fm.getManagerDataStoreController().getOrdersIn(OrderState.FULFILLED, OrderState.OPEN, OrderState.PENDING, OrderState.SPAWNING);
+		for(Order o : orders){
+			if(o.getRequestingMemberId().equals(fm.getManagerId()))
+				demand++;
+		}		
+		int supply = Math.max(0, fm.getMaxCapacityDefaultUser() - demand);		
+		long now = (date.currentTimeMillis()-initialTime)/CONVERSION_VALUE;
+		return new PeerState(now, demand, supply);
+	}
+	
+	private void print(){
+		Iterator<Entry<ManagerController, List<PeerState>>> it = data.entrySet().iterator();
+		while(it.hasNext()){
+			Entry<ManagerController, List<PeerState>> e = it.next();
+			
+			int last = e.getValue().size()-1;
+			PeerState lastState = e.getValue().get(last);
+			
+			System.out.println(e.getKey()+" - time="+lastState.getTime()+", demand="+lastState.getDemand()+", supply="+lastState.getSupply());
+		}			
+	}
+	
+	private void write(){		
+		Iterator<Entry<ManagerController, List<PeerState>>> it = data.entrySet().iterator();
+		while(it.hasNext()){
+			Entry<ManagerController, List<PeerState>> e = it.next();
+			
+			ManagerController fm = e.getKey();
+			List<PeerState> states = e.getValue();
+			
+			writeStates(fm, states);
+			
+			
+			
+		}	
+		
+	}
+	
+	private void writeStates(ManagerController fm, List<PeerState> states){
+		String filePath = path + fm.getManagerId()+".csv";
+		FileWriter w = null;
+		if(lastWrite == initialTime)	//first write
+			w = CsvGenerator.createHeader(filePath, "time", "demand", "supply");
+		else
+			w = CsvGenerator.getFile(filePath);
+		CsvGenerator.outputPeerStates(w, states);
+		CsvGenerator.flushFile(w);
+	}
+
+}
