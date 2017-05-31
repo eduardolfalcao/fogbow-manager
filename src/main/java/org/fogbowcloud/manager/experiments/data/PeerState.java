@@ -1,18 +1,28 @@
 package org.fogbowcloud.manager.experiments.data;
 
-public class PeerState {
+public class PeerState implements Comparable<PeerState>{
 	
-	private long time;
+	private String id;
+	private int time;
 	private int demand, supply;
 	
-	public PeerState(long time, int demand, int supply) {
+	public PeerState(String id, int time, int demand, int supply) {
 		super();
+		this.id = id;
 		this.time = time;
 		this.demand = demand;
 		this.supply = supply;
 	}
 	
-	public long getTime() {
+	public String getId() {
+		return id;
+	}
+	
+	public void setTime(int time) {
+		this.time = time;
+	}
+	
+	public int getTime() {
 		return time;
 	}
 	
@@ -22,6 +32,21 @@ public class PeerState {
 	
 	public int getSupply() {
 		return supply;
-	}	
+	}
+	
+	@Override
+	public String toString() {
+		return "id:"+id+", time:"+time+", demand:"+demand+", supply:"+supply;
+	}
+
+	@Override
+	public int compareTo(PeerState p) {
+		if(time < p.getTime())
+			return -1;
+		else if(time == p.getTime())
+			return 0;
+		else
+			return 1;
+	}
 	
 }

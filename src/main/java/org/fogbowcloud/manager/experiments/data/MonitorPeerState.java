@@ -16,8 +16,8 @@ import org.fogbowcloud.manager.occi.order.OrderState;
 public class MonitorPeerState {
 	
 	private static final String OUTPUT_DATA_MONITORING_PERIOD_KEY = "output_data_monitoring_period";
-	private static final String OUTPUT_FOLDER = "output_folder";
-	private static final long CONVERSION_VALUE = 1000;
+	public static final String OUTPUT_FOLDER = "output_folder";
+	private static final int CONVERSION_VALUE = 1000;
 	
 	private DateUtils date = new DateUtils();
 	private long initialTime, lastWrite, outputTime;
@@ -28,18 +28,26 @@ public class MonitorPeerState {
 	private String path;
 	
 	public MonitorPeerState(List<ManagerController> fms) {
-		this.fms = fms;
-		lastWrite = initialTime = date.currentTimeMillis();
+		this.fms = new ArrayList<ManagerController>();	//only cooperative fm matters
+		for(ManagerController fm : fms)
+			if(!fm.getManagerId().contains("free-rider"))
+				this.fms.add(fm);
+		
+		initialTime = date.currentTimeMillis();
+		lastWrite = -1;
 		data = new HashMap<ManagerController, List<PeerState>>();
 		outputTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_MONITORING_PERIOD_KEY))/CONVERSION_VALUE;
 		path = fms.get(0).getProperties().getProperty(OUTPUT_FOLDER);
 		
-		for(ManagerController fm : fms){
+		for(ManagerController fm : this.fms){
 			List<PeerState> states = new ArrayList<PeerState>();
-			states.add(new PeerState((long)0, 0, fm.getMaxCapacityDefaultUser()));
+			PeerState temp = getPeerState(fm);
+			temp.setTime(0);
+			states.add(temp);
 			data.put(fm, states);			
-			writeStates(fm,states);
+			writeStates(fm,states);			
 		}
+		lastWrite = (date.currentTimeMillis()-initialTime)/CONVERSION_VALUE;
 	}
 	
 	public void savePeerState() {		
@@ -57,7 +65,7 @@ public class MonitorPeerState {
 		long now = (date.currentTimeMillis()-initialTime)/CONVERSION_VALUE;
 		if((now - lastWrite)>outputTime){
 			write();
-			lastWrite = now;
+			lastWrite = now;	//debugar o last write
 		}
 	}
 	
@@ -69,18 +77,16 @@ public class MonitorPeerState {
 				demand++;
 		}		
 		int supply = Math.max(0, fm.getMaxCapacityDefaultUser() - demand);		
-		long now = (date.currentTimeMillis()-initialTime)/CONVERSION_VALUE;
-		return new PeerState(now, demand, supply);
+		int now = (int)((date.currentTimeMillis()-initialTime)/CONVERSION_VALUE);
+		return new PeerState(fm.getManagerId(),now, demand, supply);
 	}
 	
 	private void print(){
 		Iterator<Entry<ManagerController, List<PeerState>>> it = data.entrySet().iterator();
 		while(it.hasNext()){
-			Entry<ManagerController, List<PeerState>> e = it.next();
-			
+			Entry<ManagerController, List<PeerState>> e = it.next();			
 			int last = e.getValue().size()-1;
-			PeerState lastState = e.getValue().get(last);
-			
+			PeerState lastState = e.getValue().get(last);			
 			System.out.println(e.getKey()+" - time="+lastState.getTime()+", demand="+lastState.getDemand()+", supply="+lastState.getSupply());
 		}			
 	}
@@ -88,28 +94,31 @@ public class MonitorPeerState {
 	private void write(){		
 		Iterator<Entry<ManagerController, List<PeerState>>> it = data.entrySet().iterator();
 		while(it.hasNext()){
-			Entry<ManagerController, List<PeerState>> e = it.next();
-			
+			Entry<ManagerController, List<PeerState>> e = it.next();			
 			ManagerController fm = e.getKey();
-			List<PeerState> states = e.getValue();
-			
-			writeStates(fm, states);
-			
-			
-			
-		}	
-		
+			List<PeerState> states = e.getValue();			
+			writeStates(fm, states);			
+		}			
 	}
 	
 	private void writeStates(ManagerController fm, List<PeerState> states){
 		String filePath = path + fm.getManagerId()+".csv";
 		FileWriter w = null;
-		if(lastWrite == initialTime)	//first write
-			w = CsvGenerator.createHeader(filePath, "time", "demand", "supply");
-		else
+		if(lastWrite == -1)	//first write
+			w = CsvGenerator.createHeader(filePath, "id", "time", "demand", "supply");
+		else if(states.size()>1){
 			w = CsvGenerator.getFile(filePath);
+			states.remove(0);
+		}
+		else return;
 		CsvGenerator.outputPeerStates(w, states);
 		CsvGenerator.flushFile(w);
+		
+		if(states.size()>1){
+			List<PeerState> temp = new ArrayList<PeerState>();
+			temp.add(states.get(states.size()-1));
+			states = temp;
+		}
 	}
 
 }
