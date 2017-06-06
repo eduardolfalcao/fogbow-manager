@@ -56,8 +56,7 @@ public class MonitorPeerState {
 			PeerState lastState = data.get(fm).get(last);
 			PeerState currentState = getPeerState(fm);
 			
-			if(lastState.getDemand() != currentState.getDemand() ||
-					lastState.getSupply() != currentState.getSupply())
+			if(lastState.getDemand() != currentState.getDemand() || lastState.getSupply() != currentState.getSupply())
 				data.get(fm).add(currentState);			
 		}
 		//print();
@@ -106,15 +105,22 @@ public class MonitorPeerState {
 		FileWriter w = null;
 		if(lastWrite == -1)	//first write
 			w = CsvGenerator.createHeader(filePath, "id", "time", "demand", "supply");
-		else if(states.size()>1){
+		else{ 				//there are new states: write them and keep the last on list
 			w = CsvGenerator.getFile(filePath);
-			states.remove(0);
+			if(states.size()>1){	//here we could check if we should remove the last	
+				states.remove(0);	//this one is already written
+			}
+			else{			//there are not new states: update the time of the last state
+				if(states.get(0).getTime()!=0)
+					CsvGenerator.removeLastLine(filePath);
+				long now = (date.currentTimeMillis()-initialTime)/CONVERSION_VALUE;
+				states.get(0).setTime((int) now);
+			}
 		}
-		else return;
 		CsvGenerator.outputPeerStates(w, states);
 		CsvGenerator.flushFile(w);
 		
-		if(states.size()>1){
+		if(states.size()>1){//we just need to keep the last state
 			List<PeerState> temp = new ArrayList<PeerState>();
 			temp.add(states.get(states.size()-1));
 			states = temp;

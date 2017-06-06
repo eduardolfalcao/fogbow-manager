@@ -1681,8 +1681,8 @@ public class ManagerController {
 						if (!isFulfilled
 								&& !failedBatch.batchExists(order.getBatchId(), FailedBatchType.FEDERATION_USER)) {
 							//added by eduardo TODO
-							if(!order.getRequestingMemberId().equals(managerId))
-								isFulfilled = createLocalInstanceWithFederationUser(order);
+							//if(!order.getRequestingMemberId().equals(managerId))
+							isFulfilled = createLocalInstanceWithFederationUser(order);
 							if (!isFulfilled) {
 								failedBatch.failBatch(order.getBatchId(), FailedBatchType.FEDERATION_USER);
 							}

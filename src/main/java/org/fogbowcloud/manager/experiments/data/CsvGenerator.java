@@ -1,7 +1,9 @@
 package org.fogbowcloud.manager.experiments.data;
 
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.List;
 
 public class CsvGenerator {
@@ -20,6 +22,29 @@ public class CsvGenerator {
 			e.printStackTrace();
 		}
 		return writer;
+	}
+	
+	public static void removeLastLine(String outputFile){
+		RandomAccessFile f;
+		try {
+			f = new RandomAccessFile(outputFile, "rw");
+			long length = f.length() - 1;
+			byte b;
+			do {                     
+			  length -= 1;
+			  f.seek(length);
+			  b = f.readByte();
+			} while(b != 10);
+			f.setLength(length+1);
+			f.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 	
 	public static FileWriter getFile(String outputFile) {

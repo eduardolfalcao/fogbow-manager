@@ -115,8 +115,10 @@ public class CsvReader {
 			entries.addAll(csv.readFile(f.getName()));
 			csv.metricsCalculator(entries);
 		}
-		System.out.println("d="+csv.getDemand()+", s="+csv.getSupply()+", time="+csv.getTime());
-		System.out.println("k="+csv.getDemand()/csv.getSupply());
+		System.out.println("d(total)="+csv.getDemand()+", s(total)="+csv.getSupply()+", time(total)="+csv.getTime());
+		System.out.println("*********************************");
+		System.out.println("k="+((double)csv.getDemand())/((double)csv.getSupply()));
+		System.out.println("d(média)="+((double)csv.getDemand())/((double)csv.getTime()));
 		
 		
 		
