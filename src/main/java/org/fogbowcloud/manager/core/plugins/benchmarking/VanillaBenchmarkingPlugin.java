@@ -15,9 +15,11 @@ public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 	Map<String, Double> instanceToPower = new HashMap<String, Double>();
 	
 	private static Logger LOGGER;
+	private String managerId;
 	
 	public VanillaBenchmarkingPlugin(Properties properties) {
 		LOGGER = MainHelper.getLogger(VanillaBenchmarkingPlugin.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 
 	@Override
@@ -40,7 +42,7 @@ public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 			
 			power = ((vcpu / 8d) + (mem / 16d)) / 2;
 		} catch (Exception e) {
-			LOGGER.error("Error while parsing attribute values to double.", e);
+			LOGGER.error("Manager: "+managerId+". Error while parsing attribute values to double.", e);
 		}
 		
 		LOGGER.debug("Putting instanceId " + globalInstanceId + " and power " + power);

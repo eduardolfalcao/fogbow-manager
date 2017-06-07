@@ -45,8 +45,8 @@ public class CsvReader {
             br = new BufferedReader(new FileReader(csvFile));
             br.readLine();	//skip the first
             while ((line = br.readLine()) != null) {                
-                String[] info = line.split(cvsSplitBy);	// use comma as separator
-                entries.add(new PeerState(info[0], Integer.parseInt(info[1]), Integer.parseInt(info[2]), Integer.parseInt(info[3])));
+                String[] info = line.split(cvsSplitBy);	// use comma as separator             
+                entries.add(new PeerState(info[0], Integer.parseInt(info[1]), Integer.parseInt(info[2]), Integer.parseInt(info[3]), Integer.parseInt(info[4])));
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();

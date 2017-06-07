@@ -60,7 +60,7 @@ public class CsvGenerator {
 	public static void outputPeerStates(FileWriter writer, List<PeerState> states){
 		try {
 			for(PeerState s : states)			
-				writer.append(s.getId()+","+s.getTime()+","+s.getDemand()+","+s.getSupply()+"\n");
+				writer.append(s.getId()+","+s.getTime()+","+s.getDemand()+","+s.getSupply()+","+s.getMaxCapacity()+"\n");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

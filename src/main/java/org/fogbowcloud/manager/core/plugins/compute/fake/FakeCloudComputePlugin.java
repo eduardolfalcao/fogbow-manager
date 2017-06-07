@@ -54,6 +54,10 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	public int getQuota(){
 		return quota;
 	}
+	
+	public int getFreeQuota(){
+		return quota-instanceCounter;
+	}
 
 	/**
 	 * Here we have to return the quota of the cloud.

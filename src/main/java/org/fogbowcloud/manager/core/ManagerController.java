@@ -399,7 +399,7 @@ public class ManagerController {
 			}
 		}
 	}
-
+	
 	//FIXME adjusted for experimentation purposes
 	public int getMaxCapacityDefaultUser() {
 		if(computePlugin instanceof FakeCloudComputePlugin)
@@ -1985,6 +1985,10 @@ public class ManagerController {
 	
 	public AccountingPlugin getComputeAccountingPlugin() {
 		return computeAccountingPlugin;
+	}
+	
+	public ComputePlugin getComputePlugin() {
+		return computePlugin;
 	}
 	
 	public CapacityControllerPlugin getCapacityControllerPlugin() {

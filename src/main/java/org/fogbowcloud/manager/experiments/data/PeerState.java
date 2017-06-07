@@ -4,14 +4,15 @@ public class PeerState implements Comparable<PeerState>{
 	
 	private String id;
 	private int time;
-	private int demand, supply;
+	private int demand, supply, maxCapacity;
 	
-	public PeerState(String id, int time, int demand, int supply) {
+	public PeerState(String id, int time, int demand, int supply, int maxCapacity) {
 		super();
 		this.id = id;
 		this.time = time;
 		this.demand = demand;
 		this.supply = supply;
+		this.maxCapacity = maxCapacity;
 	}
 	
 	public String getId() {
@@ -34,9 +35,17 @@ public class PeerState implements Comparable<PeerState>{
 		return supply;
 	}
 	
+	public void setMaxCapacity(int maxCapacity) {
+		this.maxCapacity = maxCapacity;
+	}
+	
+	public int getMaxCapacity() {
+		return maxCapacity;
+	}
+	
 	@Override
 	public String toString() {
-		return "id:"+id+", time:"+time+", demand:"+demand+", supply:"+supply;
+		return "id:"+id+", time:"+time+", demand:"+demand+", supply:"+supply+", maxCapacity:"+maxCapacity;
 	}
 
 	@Override

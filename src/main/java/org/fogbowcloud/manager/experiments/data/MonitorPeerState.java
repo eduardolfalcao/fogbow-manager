@@ -10,6 +10,8 @@ import java.util.Map.Entry;
 
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.DateUtils;
+import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderState;
 
@@ -75,9 +77,19 @@ public class MonitorPeerState {
 			if(o.getRequestingMemberId().equals(fm.getManagerId()))
 				demand++;
 		}		
-		int supply = Math.max(0, fm.getMaxCapacityDefaultUser() - demand);		
+		int supply = getSupply(fm);	
+		int maxCapacity = fm.getMaxCapacityDefaultUser();
 		int now = (int)((date.currentTimeMillis()-initialTime)/CONVERSION_VALUE);
-		return new PeerState(fm.getManagerId(),now, demand, supply);
+		return new PeerState(fm.getManagerId(),now, demand, supply, maxCapacity);
+	}
+	
+	private int getSupply(ManagerController fm){
+		ComputePlugin cp = fm.getComputePlugin();
+		if(cp instanceof FakeCloudComputePlugin){
+			FakeCloudComputePlugin fcp = (FakeCloudComputePlugin) cp;
+			return fcp.getFreeQuota();
+		}
+		throw new IllegalArgumentException("The compute plugin is not instance of FakeCloudComputePlugin, and thus its not possible to get free quota.");
 	}
 	
 	private void print(){
@@ -104,7 +116,7 @@ public class MonitorPeerState {
 		String filePath = path + fm.getManagerId()+".csv";
 		FileWriter w = null;
 		if(lastWrite == -1)	//first write
-			w = CsvGenerator.createHeader(filePath, "id", "time", "demand", "supply");
+			w = CsvGenerator.createHeader(filePath, "id", "time", "demand", "supply", "maxCapacity");
 		else{ 				//there are new states: write them and keep the last on list
 			w = CsvGenerator.getFile(filePath);
 			if(states.size()>1){	//here we could check if we should remove the last	
