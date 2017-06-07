@@ -18,11 +18,12 @@ import org.fogbowcloud.manager.occi.order.OrderState;
 public class MonitorPeerState {
 	
 	private static final String OUTPUT_DATA_MONITORING_PERIOD_KEY = "output_data_monitoring_period";
+	private static final String OUTPUT_DATA_ENDING_TIME = "output_data_ending_time";
 	public static final String OUTPUT_FOLDER = "output_folder";
 	private static final int CONVERSION_VALUE = 1000;
 	
 	private DateUtils date = new DateUtils();
-	private long initialTime, lastWrite, outputTime;
+	private long initialTime, lastWrite, outputTime, endingTime;
 	
 	private Map<ManagerController, List<PeerState>> data;
 	private List<ManagerController> fms;
@@ -39,6 +40,7 @@ public class MonitorPeerState {
 		lastWrite = -1;
 		data = new HashMap<ManagerController, List<PeerState>>();
 		outputTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_MONITORING_PERIOD_KEY))/CONVERSION_VALUE;
+		endingTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_ENDING_TIME))/CONVERSION_VALUE;
 		path = fms.get(0).getProperties().getProperty(OUTPUT_FOLDER);
 		
 		for(ManagerController fm : this.fms){
@@ -67,6 +69,15 @@ public class MonitorPeerState {
 		if((now - lastWrite)>outputTime){
 			write();
 			lastWrite = now;	//debugar o last write
+		}
+		if(now >= endingTime){
+			for(ManagerController fm : fms){
+				List<PeerState> s = new ArrayList<PeerState>();
+				s.add(new PeerState(fm.getManagerId(), (int)now, 0, 0, 0));
+				s.add(new PeerState(fm.getManagerId(), (int)now, 0, 0, 0));
+				writeStates(fm, s);
+			}	
+			System.exit(0);
 		}
 	}
 	
@@ -115,24 +126,17 @@ public class MonitorPeerState {
 	private void writeStates(ManagerController fm, List<PeerState> states){
 		String filePath = path + fm.getManagerId()+".csv";
 		FileWriter w = null;
-		if(lastWrite == -1)	//first write
+		if(lastWrite == 0)			//first write
 			w = CsvGenerator.createHeader(filePath, "id", "time", "demand", "supply", "maxCapacity");
-		else{ 				//there are new states: write them and keep the last on list
+		else if(states.size()>1){	//remove first state (already written), and write the rest
 			w = CsvGenerator.getFile(filePath);
-			if(states.size()>1){	//here we could check if we should remove the last	
-				states.remove(0);	//this one is already written
-			}
-			else{			//there are not new states: update the time of the last state
-				if(states.get(0).getTime()!=0)
-					CsvGenerator.removeLastLine(filePath);
-				long now = (date.currentTimeMillis()-initialTime)/CONVERSION_VALUE;
-				states.get(0).setTime((int) now);
-			}
+			states.remove(0);
 		}
+		else return;				//if theres only one state, keep updating
 		CsvGenerator.outputPeerStates(w, states);
 		CsvGenerator.flushFile(w);
 		
-		if(states.size()>1){//we just need to keep the last state
+		if(states.size()>1){		//we just need to keep the last state
 			List<PeerState> temp = new ArrayList<PeerState>();
 			temp.add(states.get(states.size()-1));
 			states = temp;

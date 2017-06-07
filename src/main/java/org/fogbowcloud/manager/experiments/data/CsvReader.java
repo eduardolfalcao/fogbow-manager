@@ -14,16 +14,26 @@ import java.util.Properties;
 
 public class CsvReader {
 	
-	private int time, demand, supply;
+	private int time, demandTot, demandFed, supply;
+	private int consumingTime, supplyingTime;
 	
 	public int getTime() {
 		return time;
 	}
-	public int getDemand() {
-		return demand;
+	public int getDemandTot() {
+		return demandTot;
+	}
+	public int getDemandFed() {
+		return demandFed;
 	}
 	public int getSupply() {
 		return supply;
+	}	
+	public int getConsumingTime() {
+		return consumingTime;
+	}
+	public int getSupplyingTime() {
+		return supplyingTime;
 	}
 	
 	private String path;
@@ -78,8 +88,13 @@ public class CsvReader {
 			
 			int interval = current.getTime()-last.getTime();
 			time += interval;
-			demand += interval * last.getDemand();
+			demandTot += interval * last.getDemand();
+			demandFed += interval * Math.max(0, (last.getDemand()-last.getMaxCapacity()));
 			supply += interval * last.getSupply();
+			if(last.getMaxCapacity()-last.getDemand()>=0)
+				supplyingTime += interval;
+			else
+				consumingTime += interval;
 		}		
 	}
 	
@@ -115,10 +130,11 @@ public class CsvReader {
 			entries.addAll(csv.readFile(f.getName()));
 			csv.metricsCalculator(entries);
 		}
-		System.out.println("d(total)="+csv.getDemand()+", s(total)="+csv.getSupply()+", time(total)="+csv.getTime());
+		System.out.println("d(total)="+csv.getDemandFed()+", s(total)="+csv.getSupply()+", time(total)="+csv.getTime());
 		System.out.println("*********************************");
-		System.out.println("k="+((double)csv.getDemand())/((double)csv.getSupply()));
-		System.out.println("d(média)="+((double)csv.getDemand())/((double)csv.getTime()));
+		System.out.println("k="+((double)csv.getDemandFed())/((double)csv.getSupply()));
+		System.out.println("dTotal(média)="+((double)csv.getDemandTot())/((double)csv.getTime()));
+		System.out.println("consumingProbability="+((double)csv.getConsumingTime())/((double)csv.getTime()));
 		
 		
 		
