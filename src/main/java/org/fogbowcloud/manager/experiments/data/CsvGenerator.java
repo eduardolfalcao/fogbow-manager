@@ -57,10 +57,17 @@ public class CsvGenerator {
 		return writer;
 	}
 	
-	public static void outputPeerStates(FileWriter writer, List<PeerState> states){
+	public static void outputValues(FileWriter writer, String ... values){
 		try {
-			for(PeerState s : states)			
-				writer.append(s.getId()+","+s.getTime()+","+s.getDemand()+","+s.getSupply()+","+s.getMaxCapacity()+"\n");
+			String output = "";
+			for(int i = 0; i < values.length; i++){
+				output += values[i];
+				if(i == values.length-1)
+					output += "\n";
+				else
+					output += ",";
+			}
+			writer.append(output);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -20,6 +20,7 @@ public class MainExperiments {
 
 	private static final Logger LOGGER = Logger.getLogger(MainExperiments.class);
 	private static final ManagerTimer dataMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+	private static final ManagerTimer metricsMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 
 	public static void main(String[] args) throws Exception {
 		
@@ -86,24 +87,38 @@ public class MainExperiments {
 		
 		MonitorExperimentMetrics monitorMetrics = new MonitorExperimentMetrics(fms);
 		MonitorPeerState monitorPeerState = new MonitorPeerState(fms);
-		triggerDataMonitoring(monitorMetrics, monitorPeerState, properties);
+		triggerDataMonitoring(monitorPeerState, properties);
+		triggerMetricsMonitoring(monitorMetrics, properties);
 		
 	}
 	
-	private static void triggerDataMonitoring(final MonitorExperimentMetrics monitorMetrics , final MonitorPeerState monitorPeers, Properties prop) {
-		final long metricsMonitoringPeriod = ManagerControllerHelper.getServerOrderMonitoringPeriod(prop);
+	private static void triggerDataMonitoring(final MonitorPeerState monitorPeers, Properties prop) {
+		final long dataMonitoringPeriod = ManagerControllerHelper.getServerOrderMonitoringPeriod(prop);
 
 		dataMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {	
 				try {
-					monitorMetrics.saveMetrics();
 					monitorPeers.savePeerState();
 				} catch (Throwable e) {
-					LOGGER.error("Error while monitoring experiment metrics or peer states", e);
+					LOGGER.error("Error while monitoring peer states", e);
+				}
+			}
+		}, 0, dataMonitoringPeriod);
+	}
+	
+	private static void triggerMetricsMonitoring(final MonitorExperimentMetrics monitorMetrics, Properties prop) {
+		final long metricsMonitoringPeriod = ManagerControllerHelper.getExperimentMetricsMonitoringPeriod(prop);
+
+		metricsMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {	
+				try {
+					monitorMetrics.saveMetrics();
+				} catch (Throwable e) {
+					LOGGER.error("Error while monitoring experiment metrics", e);
 				}
 			}
 		}, 0, metricsMonitoringPeriod);
 	}
-	
 }

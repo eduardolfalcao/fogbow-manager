@@ -18,9 +18,10 @@ import org.fogbowcloud.manager.occi.order.OrderState;
 public class MonitorPeerState {
 	
 	private static final String OUTPUT_DATA_MONITORING_PERIOD_KEY = "output_data_monitoring_period";
-	private static final String OUTPUT_DATA_ENDING_TIME = "output_data_ending_time";
+	public static final String OUTPUT_DATA_ENDING_TIME = "output_data_ending_time";
 	public static final String OUTPUT_FOLDER = "output_folder";
-	private static final int CONVERSION_VALUE = 1000;
+	private static final String SPECIFIC_OUTPUT_FOLDER = "input/";
+	public static final int CONVERSION_VALUE = 1000;
 	
 	private DateUtils date = new DateUtils();
 	private long initialTime, lastWrite, outputTime, endingTime;
@@ -41,7 +42,7 @@ public class MonitorPeerState {
 		data = new HashMap<ManagerController, List<PeerState>>();
 		outputTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_MONITORING_PERIOD_KEY))/CONVERSION_VALUE;
 		endingTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_ENDING_TIME))/CONVERSION_VALUE;
-		path = fms.get(0).getProperties().getProperty(OUTPUT_FOLDER);
+		path = fms.get(0).getProperties().getProperty(OUTPUT_FOLDER)+SPECIFIC_OUTPUT_FOLDER;
 		
 		for(ManagerController fm : this.fms){
 			List<PeerState> states = new ArrayList<PeerState>();
@@ -133,7 +134,8 @@ public class MonitorPeerState {
 			states.remove(0);
 		}
 		else return;				//if theres only one state, keep updating
-		CsvGenerator.outputPeerStates(w, states);
+		for(PeerState s : states)
+			CsvGenerator.outputValues(w, s.getId(), String.valueOf(s.getTime()),String.valueOf(s.getDemand()),String.valueOf(s.getSupply()),String.valueOf(s.getMaxCapacity()));
 		CsvGenerator.flushFile(w);
 		
 		if(states.size()>1){		//we just need to keep the last state
