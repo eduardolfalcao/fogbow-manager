@@ -21,7 +21,7 @@ import org.fogbowcloud.manager.occi.order.OrderState;
 
 public class MonitorExperimentMetrics {
 	
-	private static final String SPECIFIC_OUTPUT_FOLDER = "output/results";
+	private static final String SPECIFIC_FILE_NAME = "output/results";
 	private String path;
 	private DateUtils date = new DateUtils();
 	private long initialTime, currentTime, lastTime;
@@ -34,14 +34,14 @@ public class MonitorExperimentMetrics {
 		this.fms = fms;
 		data = new HashMap<ManagerController,Metrics>();
 		
-		path = fms.get(0).getProperties().getProperty(MonitorPeerState.OUTPUT_FOLDER)+SPECIFIC_OUTPUT_FOLDER;
+		path = fms.get(0).getProperties().getProperty(MonitorPeerState.OUTPUT_FOLDER)+SPECIFIC_FILE_NAME;
 		currentTime = lastTime = initialTime = date.currentTimeMillis();
 	}
 
 	public void saveMetrics() {
 		long now = (date.currentTimeMillis()-initialTime)/MonitorPeerState.CONVERSION_VALUE;
 		for(ManagerController fm : fms)
-			data.put(fm, getMetrics(fm), now);		
+			data.put(fm, getMetrics(fm, now));		
 		print(data, path, now);		
 	}
 	
@@ -59,27 +59,38 @@ public class MonitorExperimentMetrics {
 		
 		CapacityControllerPlugin capacityControllerPlugin = fm.getCapacityControllerPlugin();
 		double maxQuota = 0, globalQuota = 0;
-		globalQuota = capacityControllerPlugin.getMaxCapacityToSupply(new FederationMember("any id that doesnt exist"));
-		maxQuota = fm.getMaxCapacityDefaultUser();		
+		maxQuota = fm.getMaxCapacityDefaultUser();
+		globalQuota = (now == 0 ? maxQuota : capacityControllerPlugin.getMaxCapacityToSupply(new FederationMember("any id that doesnt exist")));
+				
 		
 		//TODO multiplicar pelo tempo!		
-		double requested = getRequested(fm);
+//		double requested = getRequested(fm);		
+//		Metrics last = data.get(fm);
+//		if(last!=null)
+//			requested += last.getRequested();
 		
-		Metrics last = data.get(fm);
-		if(last!=null)
-			requested += last.getRequested();
+		double satisfaction = getSatisfaction(fm);
 		
-		double satisfaction = requested>0? consumed/requested : -1;
-		
-		return new Metrics(consumed,donated,requested,fairness,satisfaction,maxQuota,globalQuota);
+		return new Metrics(consumed,donated,fairness,satisfaction,maxQuota,globalQuota);
 	}
 	
-	private double getRequested(ManagerController fm){
+	private double getSatisfaction(ManagerController fm){
+		int requestedFed = getRequested(fm);		
+		int fullfiledFed = 0;
+		List<Order> orders = fm.getManagerDataStoreController().getOrdersIn(OrderState.FULFILLED);
+		for(Order o : orders){
+			if(o.getRequestingMemberId().equals(fm.getManagerId()) && !o.getProvidingMemberId().equals(fm.getManagerId()))
+				fullfiledFed++;
+		}				
+		return requestedFed>0? (double)fullfiledFed/(double)requestedFed : -1;		
+	}
+	
+	private int getRequested(ManagerController fm){
 		int demandFed = 0;
 		int open = 0;
 		List<Order> orders = fm.getManagerDataStoreController().getOrdersIn(OrderState.FULFILLED, OrderState.OPEN, OrderState.PENDING, OrderState.SPAWNING);
 		for(Order o : orders){
-			if(o.getState() == OrderState.FULFILLED && o.getState() == OrderState.PENDING && o.getState() == OrderState.SPAWNING){
+			if(o.getState() == OrderState.FULFILLED || o.getState() == OrderState.PENDING || o.getState() == OrderState.SPAWNING){
 				if(o.getRequestingMemberId().equals(fm.getManagerId()) && !o.getProvidingMemberId().equals(fm.getManagerId()))
 					demandFed++;
 			}
@@ -105,7 +116,7 @@ public class MonitorExperimentMetrics {
 		String filePath = path + ".csv";
 		FileWriter w = null;
 		if(beginning == true){			//first write
-			w = CsvGenerator.createHeader(filePath, "id", "time","consumedFed", "donatedFed", "requestedFed", "fairness", "satisfaction", "globaQuota", "maxQuota");
+			w = CsvGenerator.createHeader(filePath, "id", "time","consumedFed", "donatedFed", "fairness", "satisfaction", "globalQuota", "maxQuota");
 			beginning = false;
 		}
 		else
@@ -115,7 +126,7 @@ public class MonitorExperimentMetrics {
 		while(it.hasNext()){
 			Entry<ManagerController, Metrics> e = it.next();
 			CsvGenerator.outputValues(w, e.getKey().getManagerId(), String.valueOf(time), String.valueOf(e.getValue().getConsumed()), String.valueOf(e.getValue().getDonated()),
-					String.valueOf(e.getValue().getRequested()), String.valueOf(e.getValue().getFairness()), String.valueOf(e.getValue().getSatisfaction()), 
+					String.valueOf(e.getValue().getFairness()), String.valueOf(e.getValue().getSatisfaction()), 
 					String.valueOf(e.getValue().getGlobalQuota()), String.valueOf(e.getValue().getMaxQuota()));
 		}
 		CsvGenerator.flushFile(w);

@@ -16,6 +16,7 @@ public class ManagerControllerHelper {
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_SERVED_ORDER_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_EXPERIMENT_METRICS_ORDER_MONITORING_PERIOD = 30000; // 30 seconds
+	private static final long DEFAULT_PEER_STATE_MONITORING_PERIOD_KEY = 2000; // 2 seconds
 	
 	private static Logger LOGGER;
 	
@@ -34,6 +35,14 @@ public class ManagerControllerHelper {
 				.getProperty(ConfigurationConstants.EXPERIMENT_METRICS_MONITORING_PERIOD_KEY);
 		final long metricsMonitoringPeriod = metricsMonitoringPeriodStr == null
 				? DEFAULT_EXPERIMENT_METRICS_ORDER_MONITORING_PERIOD : Long.valueOf(metricsMonitoringPeriodStr);
+		return metricsMonitoringPeriod;
+	}
+	
+	public static long getPeerStateMonitoringPeriod(Properties properties) {
+		String metricsMonitoringPeriodStr = properties
+				.getProperty(ConfigurationConstants.PEER_STATE_MONITORING_PERIOD_KEY);
+		final long metricsMonitoringPeriod = metricsMonitoringPeriodStr == null
+				? DEFAULT_PEER_STATE_MONITORING_PERIOD_KEY : Long.valueOf(metricsMonitoringPeriodStr);
 		return metricsMonitoringPeriod;
 	}	
 	

@@ -93,7 +93,7 @@ public class MainExperiments {
 	}
 	
 	private static void triggerDataMonitoring(final MonitorPeerState monitorPeers, Properties prop) {
-		final long dataMonitoringPeriod = ManagerControllerHelper.getServerOrderMonitoringPeriod(prop);
+		final long dataMonitoringPeriod = ManagerControllerHelper.getPeerStateMonitoringPeriod(prop);
 
 		dataMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override

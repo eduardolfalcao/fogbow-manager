@@ -40,10 +40,13 @@ public class GlobalFairnessDrivenController extends FairnessDrivenCapacityContro
 		double currentDonated = 0;
 		List<AccountingInfo> accountingList = accountingPlugin.getAccountingInfo();
 		for(AccountingInfo accountingInfo : accountingList){
-			if (accountingInfo.getProvidingMember().equals(properties
-					.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {						
+			if (accountingInfo.getProvidingMember().equals(properties			//if this fm is providing and the consumer is not the same fm, then, this fm is providing
+					.getProperty(ConfigurationConstants.XMPP_JID_KEY)) &&
+					!accountingInfo.getRequestingMember().equals(properties
+							.getProperty(ConfigurationConstants.XMPP_JID_KEY))) {						
 				currentDonated += accountingInfo.getUsage();
-			} else {
+			} else if(!accountingInfo.getProvidingMember().equals(properties	//if it is another fm providing, then, this fm is consuming
+					.getProperty(ConfigurationConstants.XMPP_JID_KEY))){
 				currentConsumed += accountingInfo.getUsage();
 			}
 		}

@@ -391,7 +391,7 @@ public class ManagerController {
 	private void updateVirtualQuotas() {
 		LOGGER.debug("Updating virtual quotas (capacity controller plugin).");
 		for(FederationMember member : new ArrayList<FederationMember>(this.members)) {
-			if(!(member.getId().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)))){				
+			if(!(member.getId().equals(getManagerId()))){				
 				int maxCapacity = getMaxCapacityDefaultUser();				
 				this.capacityControllerPlugin.updateCapacity(member, maxCapacity);
 				LOGGER.debug("Member: " + member.getId() + "Quota: "

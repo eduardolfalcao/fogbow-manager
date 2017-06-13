@@ -3,19 +3,19 @@ package org.fogbowcloud.manager.experiments.data;
 public class Metrics {
 	
 	
-	private double consumed, donated, requested;
+	private double consumed, donated;//, requested;
 	private double fairness, satisfaction;
 	private double maxQuota, globalQuota;
 	
 	
 	
-	public Metrics(double consumed, double donated, double requested, 
+	public Metrics(double consumed, double donated,  
 			double fairness, double satisfaction,
 			double maxQuota, double globalQuota) {
 		super();
 		this.consumed = consumed;
 		this.donated = donated;
-		this.requested = requested;
+//		this.requested = requested;
 		this.fairness = fairness;
 		this.satisfaction = satisfaction;
 		this.maxQuota = maxQuota;
@@ -34,12 +34,12 @@ public class Metrics {
 	public void setDonated(double donated) {
 		this.donated = donated;
 	}
-	public double getRequested() {
-		return requested;
-	}
-	public void setRequested(double requested) {
-		this.requested = requested;
-	}
+//	public double getRequested() {
+//		return requested;
+//	}
+//	public void setRequested(double requested) {
+//		this.requested = requested;
+//	}
 	public double getFairness() {
 		return fairness;
 	}
