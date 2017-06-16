@@ -21,7 +21,7 @@ public class Order {
 	private String instanceId;
 	private String providingMemberId;
 	private final String requestingMemberId;
-	private long fulfilledTime = 0;
+	private long fulfilledTime = 0;	
 	private final boolean isLocal;
 	private OrderState state;
 	private List<Category> categories;

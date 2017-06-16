@@ -20,8 +20,8 @@ public class AccountingInfo {
 		this.currentInstances = 0;
 	}
 	
-	public void addConsumption(double consuption) {
-		this.usage += consuption;
+	public void addConsumption(double consumption) {
+		this.usage += consumption;
 	}
 
 	public String getUser() {
@@ -80,6 +80,7 @@ public class AccountingInfo {
 	@Override
 	public String toString() {
 		return "User=" + getUser() + "; requestingMember=" + getRequestingMember()
-				+ "; providingMember=" + getProvidingMember() + "; usage=" + getUsage();
+				+ "; providingMember=" + getProvidingMember() + "; usage=" + getUsage()
+				+ "; currentInstances=" + getCurrentInstances();
 	}
 }

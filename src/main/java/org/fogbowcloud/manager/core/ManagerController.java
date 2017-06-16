@@ -57,6 +57,7 @@ import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
+import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.core.plugins.localcredentials.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.localcredentials.SingleMapperPlugin;
@@ -333,7 +334,7 @@ public class ManagerController {
 
 	private void updateAccounting() {
 		try {
-			updateComputeAccounting();			
+			updateComputeAccounting();	
 		} catch (Throwable e) {
 			LOGGER.warn("Could not update compute accounting.", e);
 		}		

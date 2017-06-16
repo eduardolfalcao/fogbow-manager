@@ -133,7 +133,7 @@ public class CsvReader {
 		System.out.println("d(total)="+csv.getDemandFed()+", s(total)="+csv.getSupply()+", time(total)="+csv.getTime());
 		System.out.println("*********************************");
 		System.out.println("k="+((double)csv.getDemandFed())/((double)csv.getSupply()));
-		System.out.println("dTotal(média)="+((double)csv.getDemandTot())/((double)csv.getTime()));
+		System.out.println("dTotal(média)="+((double)csv.getDemandTot())/((double)csv.getConsumingTime()));
 		System.out.println("consumingProbability="+((double)csv.getConsumingTime())/((double)csv.getTime()));
 		
 		
