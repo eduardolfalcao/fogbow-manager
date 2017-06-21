@@ -30,14 +30,6 @@ public class ManagerControllerHelper {
 		return instanceMonitoringPeriod;
 	}
 	
-	public static long getExperimentMetricsMonitoringPeriod(Properties properties) {
-		String metricsMonitoringPeriodStr = properties
-				.getProperty(ConfigurationConstants.EXPERIMENT_METRICS_MONITORING_PERIOD_KEY);
-		final long metricsMonitoringPeriod = metricsMonitoringPeriodStr == null
-				? DEFAULT_EXPERIMENT_METRICS_ORDER_MONITORING_PERIOD : Long.valueOf(metricsMonitoringPeriodStr);
-		return metricsMonitoringPeriod;
-	}
-	
 	public static long getPeerStateMonitoringPeriod(Properties properties) {
 		String metricsMonitoringPeriodStr = properties
 				.getProperty(ConfigurationConstants.PEER_STATE_MONITORING_PERIOD_KEY);

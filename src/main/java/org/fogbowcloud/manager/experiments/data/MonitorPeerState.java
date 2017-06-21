@@ -20,7 +20,6 @@ public class MonitorPeerState {
 	private static final String OUTPUT_DATA_MONITORING_PERIOD_KEY = "output_data_monitoring_period";
 	public static final String OUTPUT_DATA_ENDING_TIME = "output_data_ending_time";
 	public static final String OUTPUT_FOLDER = "output_folder";
-	private static final String SPECIFIC_OUTPUT_FOLDER = "input/";
 	public static final int CONVERSION_VALUE = 1000;
 	
 	private DateUtils date = new DateUtils();
@@ -32,17 +31,20 @@ public class MonitorPeerState {
 	private String path;
 	
 	public MonitorPeerState(List<ManagerController> fms) {
+		
+		outputTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_MONITORING_PERIOD_KEY))/CONVERSION_VALUE;
+		endingTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_ENDING_TIME))/CONVERSION_VALUE;
+		path = fms.get(0).getProperties().getProperty(OUTPUT_FOLDER);
+		
+		data = new HashMap<ManagerController, List<PeerState>>();
+		
 		this.fms = new ArrayList<ManagerController>();	//only cooperative fm matters
 		for(ManagerController fm : fms)
 			if(!fm.getManagerId().contains("free-rider"))
 				this.fms.add(fm);
 		
-		initialTime = date.currentTimeMillis();
 		lastWrite = -1;
-		data = new HashMap<ManagerController, List<PeerState>>();
-		outputTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_MONITORING_PERIOD_KEY))/CONVERSION_VALUE;
-		endingTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_ENDING_TIME))/CONVERSION_VALUE;
-		path = fms.get(0).getProperties().getProperty(OUTPUT_FOLDER)+SPECIFIC_OUTPUT_FOLDER;
+		initialTime = date.currentTimeMillis();
 		
 		for(ManagerController fm : this.fms){
 			List<PeerState> states = new ArrayList<PeerState>();
@@ -52,6 +54,8 @@ public class MonitorPeerState {
 			data.put(fm, states);			
 			writeStates(fm,states);			
 		}
+		
+		
 		lastWrite = (date.currentTimeMillis()-initialTime)/CONVERSION_VALUE;
 	}
 	
@@ -61,10 +65,13 @@ public class MonitorPeerState {
 			PeerState lastState = data.get(fm).get(last);
 			PeerState currentState = getPeerState(fm);
 			
-			if(lastState.getDemand() != currentState.getDemand() || lastState.getSupply() != currentState.getSupply())
+			if(lastState.getdTot() != currentState.getdTot() ||
+					lastState.getdFed() != currentState.getdFed() ||
+					lastState.getrFed() != currentState.getrFed() ||
+					lastState.getoFed() != currentState.getoFed() ||
+					lastState.getsFed() != currentState.getsFed())
 				data.get(fm).add(currentState);			
 		}
-		//print();
 		
 		long now = (date.currentTimeMillis()-initialTime)/CONVERSION_VALUE;
 		if((now - lastWrite)>outputTime){
@@ -74,8 +81,8 @@ public class MonitorPeerState {
 		if(now >= endingTime){
 			for(ManagerController fm : fms){
 				List<PeerState> s = new ArrayList<PeerState>();
-				s.add(new PeerState(fm.getManagerId(), (int)now, 0, 0, 0));
-				s.add(new PeerState(fm.getManagerId(), (int)now, 0, 0, 0));
+				s.add(new PeerState(fm.getManagerId(), (int)now, 0, 0, 0, 0, 0));
+				s.add(new PeerState(fm.getManagerId(), (int)now, 0, 0, 0, 0, 0));
 				writeStates(fm, s);
 			}	
 			System.exit(0);
@@ -83,25 +90,44 @@ public class MonitorPeerState {
 	}
 	
 	private PeerState getPeerState(ManagerController fm){		
-		int demand = 0;
-		List<Order> orders = fm.getManagerDataStoreController().getOrdersIn(OrderState.FULFILLED, OrderState.OPEN, OrderState.PENDING, OrderState.SPAWNING);
+		
+		List<Order> orders = fm.getManagerDataStoreController().getAllOrders();
+		
+		int dTot = 0;	//O_r=i + P_r=i + F_r=i&&p=i + F_r=i&&p!=i 
+		int dFed = 0;	//max(0,dTot - maxCapacity)
+		int rFed = 0;	//F_r=i&&p!=i
+		int oFed = 0;	//maxCapacity - F_r=i&&p=i
+		int sFed = 0;	//F_r!=i&&p=i
+		
 		for(Order o : orders){
-			if(o.getRequestingMemberId().equals(fm.getManagerId()))
-				demand++;
-		}		
-		int supply = getSupply(fm);	
-		int maxCapacity = fm.getMaxCapacityDefaultUser();
-		int now = (int)((date.currentTimeMillis()-initialTime)/CONVERSION_VALUE);
-		return new PeerState(fm.getManagerId(),now, demand, supply, maxCapacity);
-	}
-	
-	private int getSupply(ManagerController fm){
-		ComputePlugin cp = fm.getComputePlugin();
-		if(cp instanceof FakeCloudComputePlugin){
-			FakeCloudComputePlugin fcp = (FakeCloudComputePlugin) cp;
-			return fcp.getFreeQuota();
+			if(o.getState().equals(OrderState.FULFILLED)){
+				if(o.getRequestingMemberId().equals(fm.getManagerId())){	//F_r=i
+					if(o.getProvidingMemberId().equals(fm.getManagerId())){	//F_r=i&&p=i
+						dTot++;
+						oFed--;
+					}
+					else{													//F_r=i&&p!=i
+						dTot++;
+						rFed++;
+					}
+				}
+				else{														//F_r!=i
+					if(o.getProvidingMemberId().equals(fm.getManagerId()))	//F_r!=i&&p==i
+						sFed++;					
+				}
+			}
+			else if((o.getState().equals(OrderState.OPEN)||o.getState().equals(OrderState.PENDING)) && 
+					o.getRequestingMemberId().equals(fm.getManagerId()))	//O_r=i || P_r=i
+				dTot++;	
 		}
-		throw new IllegalArgumentException("The compute plugin is not instance of FakeCloudComputePlugin, and thus its not possible to get free quota.");
+		
+		int maxCapacity = fm.getMaxCapacityDefaultUser();
+		oFed += maxCapacity;
+		dFed = Math.max(0, dTot - maxCapacity);
+		
+		int now = (int)((date.currentTimeMillis()-initialTime)/CONVERSION_VALUE);
+		
+		return new PeerState(fm.getManagerId(),now, dTot, dFed, rFed, oFed, sFed);
 	}
 	
 	private void print(){
@@ -110,7 +136,7 @@ public class MonitorPeerState {
 			Entry<ManagerController, List<PeerState>> e = it.next();			
 			int last = e.getValue().size()-1;
 			PeerState lastState = e.getValue().get(last);			
-			System.out.println(e.getKey()+" - time="+lastState.getTime()+", demand="+lastState.getDemand()+", supply="+lastState.getSupply());
+			System.out.println(lastState);
 		}			
 	}
 	
@@ -127,21 +153,26 @@ public class MonitorPeerState {
 	private void writeStates(ManagerController fm, List<PeerState> states){
 		String filePath = path + fm.getManagerId()+".csv";
 		FileWriter w = null;
-		if(lastWrite == 0)			//first write
-			w = CsvGenerator.createHeader(filePath, "id", "time", "demand", "supply", "maxCapacity");
+		if(lastWrite == -1)			//first write
+			w = CsvGenerator.createHeader(filePath, "id", "t", "dTot", "dFed", "rFed", "oFed", "sFed");
 		else if(states.size()>1){	//remove first state (already written), and write the rest
 			w = CsvGenerator.getFile(filePath);
+			for(PeerState s : states)
+				System.out.println(s);
+			System.out.println();
 			states.remove(0);
 		}
 		else return;				//if theres only one state, keep updating
 		for(PeerState s : states)
-			CsvGenerator.outputValues(w, s.getId(), String.valueOf(s.getTime()),String.valueOf(s.getDemand()),String.valueOf(s.getSupply()),String.valueOf(s.getMaxCapacity()));
+			CsvGenerator.outputValues(w, s.getId(), String.valueOf(s.getTime()),String.valueOf(s.getdTot()),
+					String.valueOf(s.getdFed()),String.valueOf(s.getrFed()), String.valueOf(s.getoFed()), 
+					String.valueOf(s.getsFed()));
 		CsvGenerator.flushFile(w);
 		
 		if(states.size()>1){		//we just need to keep the last state
-			List<PeerState> temp = new ArrayList<PeerState>();
-			temp.add(states.get(states.size()-1));
-			states = temp;
+			PeerState last = states.get(states.size()-1); 
+			states.clear();
+			states.add(last);
 		}
 	}
 

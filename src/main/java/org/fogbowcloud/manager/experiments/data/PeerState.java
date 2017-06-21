@@ -1,61 +1,86 @@
 package org.fogbowcloud.manager.experiments.data;
 
-public class PeerState implements Comparable<PeerState>{
+public class PeerState{
 	
 	private String id;
 	private int time;
-	private int demand, supply, maxCapacity;
+	private int dTot, dFed, rFed, oFed, sFed;
+	//d: demand
+	//r: received
+	//o: offered
+	//s: supplied or donated
 	
-	public PeerState(String id, int time, int demand, int supply, int maxCapacity) {
+	public PeerState(String id, int time, int dTot, int dFed, int rFed, int oFed, int sFed) {
 		super();
 		this.id = id;
 		this.time = time;
-		this.demand = demand;
-		this.supply = supply;
-		this.maxCapacity = maxCapacity;
-	}
+		this.dTot = dTot;
+		this.dFed = dFed;
+		this.rFed = rFed;
+		this.oFed = oFed;
+		this.sFed = sFed;
+	}	
 	
 	public String getId() {
 		return id;
 	}
-	
-	public void setTime(int time) {
-		this.time = time;
+
+	public void setId(String id) {
+		this.id = id;
 	}
-	
+
 	public int getTime() {
 		return time;
 	}
-	
-	public int getDemand() {
-		return demand;
+
+	public void setTime(int time) {
+		this.time = time;
 	}
-	
-	public int getSupply() {
-		return supply;
+
+	public int getdTot() {
+		return dTot;
 	}
-	
-	public void setMaxCapacity(int maxCapacity) {
-		this.maxCapacity = maxCapacity;
+
+	public void setdTot(int dTot) {
+		this.dTot = dTot;
 	}
-	
-	public int getMaxCapacity() {
-		return maxCapacity;
+
+	public int getdFed() {
+		return dFed;
 	}
-	
-	@Override
-	public String toString() {
-		return "id:"+id+", time:"+time+", demand:"+demand+", supply:"+supply+", maxCapacity:"+maxCapacity;
+
+	public void setdFed(int dFed) {
+		this.dFed = dFed;
+	}
+
+	public int getrFed() {
+		return rFed;
+	}
+
+	public void setrFed(int rFed) {
+		this.rFed = rFed;
+	}
+
+	public int getoFed() {
+		return oFed;
+	}
+
+	public void setoFed(int oFed) {
+		this.oFed = oFed;
+	}
+
+	public int getsFed() {
+		return sFed;
+	}
+
+	public void setsFed(int sFed) {
+		this.sFed = sFed;
 	}
 
 	@Override
-	public int compareTo(PeerState p) {
-		if(time < p.getTime())
-			return -1;
-		else if(time == p.getTime())
-			return 0;
-		else
-			return 1;
+	public String toString() {
+		return "id:"+id+", time:"+time+", demand(tot):"+dTot+", demand(fed):"+dFed+", \n"
+				+ "received(fed):"+rFed+", offered(fed):"+oFed+", supplied(fed):"+sFed;
 	}
 	
 }
