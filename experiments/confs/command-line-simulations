@@ -19,6 +19,8 @@ sudo ./bin/start-rendezvous				-- when installed from source code
 ./fogbow-cli order --url http://localhost:9194 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
 
 
+./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id b1ee7c4e-72eb-4fc6-a61c-59109d9cc9b2 & ./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id cf5e9361-7466-409e-9379-c8b9a0dded7c 
+
 
 ##################################
 # Roteiro
