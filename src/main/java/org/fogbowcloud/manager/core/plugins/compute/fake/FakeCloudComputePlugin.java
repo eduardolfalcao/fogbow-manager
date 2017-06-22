@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -13,6 +15,7 @@ import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.restlet.Request;
 import org.restlet.Response;
 
@@ -24,8 +27,11 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	private int instanceCounter = 0;
 	private List<String> instances = new ArrayList<String>();
 	
+	private String managerId;
+	
 	public FakeCloudComputePlugin(Properties properties){
 		quota = Integer.parseInt(properties.getProperty(COMPUTE_FAKE_QUOTA));
+		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 	
 	@Override
@@ -33,8 +39,11 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 			Map<String, String> xOCCIAtt, String imageId) {
 		if(instanceCounter>=quota)
 			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, "There is no more quota in the underlying cloud.");
+		
 		String name = "instance"+(++instanceCounter);
+		name += "-"+ String.valueOf(UUID.randomUUID());
 		instances.add(name);
+		
 		return name;
 	}
 	
