@@ -13,6 +13,7 @@ import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
+import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.core.plugins.prioritization.nof.FederationMemberDebt;
 import org.fogbowcloud.manager.core.plugins.prioritization.nof.FederationMemberDebtComparator;
@@ -24,11 +25,9 @@ public class NoFMemberPickerPlugin implements FederationMemberPickerPlugin {
 	private String localMemberId;
 	private boolean trustworthy = false;
 
-	private static Logger LOGGER;
+	private static final Logger LOGGER = Logger.getLogger(NoFMemberPickerPlugin.class);
 	
-	public NoFMemberPickerPlugin(Properties properties, AccountingPlugin accoutingPlugin) {
-		LOGGER = MainHelper.getLogger(NoFMemberPickerPlugin.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
-		
+	public NoFMemberPickerPlugin(Properties properties, AccountingPlugin accoutingPlugin) {		
 		this.accoutingPlugin = accoutingPlugin;
 		this.localMemberId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		try {

@@ -8,17 +8,17 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
+import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.occi.instance.Instance;
 
 public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 	
 	Map<String, Double> instanceToPower = new HashMap<String, Double>();
 	
-	private static Logger LOGGER;
+	private static final Logger LOGGER = Logger.getLogger(VanillaBenchmarkingPlugin.class);
 	private String managerId;
 	
 	public VanillaBenchmarkingPlugin(Properties properties) {
-		LOGGER = MainHelper.getLogger(VanillaBenchmarkingPlugin.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 
@@ -27,14 +27,14 @@ public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 		if (instance == null) {
 			throw new IllegalArgumentException("Instance must not be null.");
 		}
-		LOGGER.info("Running benchmarking on instance: " + globalInstanceId);
+		LOGGER.info("<"+managerId+">: "+"Running benchmarking on instance: " + globalInstanceId);
 
 		double power = UNDEFINED_POWER;
 		try {
 			String vcpuStr = instance.getAttributes().get("occi.compute.cores");
 			String memStr = instance.getAttributes().get("occi.compute.memory");
 
-			LOGGER.debug("Instance " + globalInstanceId + " has " + vcpuStr + " vCPU and " + memStr
+			LOGGER.debug("<"+managerId+">: "+"Instance " + globalInstanceId + " has " + vcpuStr + " vCPU and " + memStr
 					+ " GB of RAM.");
 			
 			double vcpu = parseDouble(vcpuStr);
@@ -42,10 +42,10 @@ public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 			
 			power = ((vcpu / 8d) + (mem / 16d)) / 2;
 		} catch (Exception e) {
-			LOGGER.error("Manager: "+managerId+". Error while parsing attribute values to double.", e);
+			LOGGER.error("<"+managerId+">: "+"Error while parsing attribute values to double.", e);
 		}
 		
-		LOGGER.debug("Putting instanceId " + globalInstanceId + " and power " + power);
+		LOGGER.debug("<"+managerId+">: "+"Putting instanceId " + globalInstanceId + " and power " + power);
 		instanceToPower.put(globalInstanceId, power);
 	}
 
@@ -55,8 +55,8 @@ public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 
 	@Override
 	public double getPower(String globalInstanceId) {
-		LOGGER.debug("Getting power of instance " + globalInstanceId);
-		LOGGER.debug("Current instanceToPower=" + instanceToPower);
+		LOGGER.debug("<"+managerId+">: "+"Getting power of instance " + globalInstanceId);
+		LOGGER.debug("<"+managerId+">: "+"Current instanceToPower=" + instanceToPower);
 		if (instanceToPower.get(globalInstanceId) == null) {
 			return UNDEFINED_POWER;
 		}
@@ -65,7 +65,7 @@ public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 
 	@Override
 	public void remove(String globalInstanceId) {
-		LOGGER.debug("Removing instance: " + globalInstanceId + " from benchmarking map.");
+		LOGGER.debug("<"+managerId+">: "+"Removing instance: " + globalInstanceId + " from benchmarking map.");
 		instanceToPower.remove(globalInstanceId);		
 	}
 }

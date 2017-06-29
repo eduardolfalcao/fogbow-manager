@@ -17,9 +17,10 @@ public class ManagerControllerHelper {
 	private static final long DEFAULT_SERVED_ORDER_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_EXPERIMENT_METRICS_ORDER_MONITORING_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_PEER_STATE_MONITORING_PERIOD_KEY = 2000; // 2 seconds
+	private static final long DEFAULT_BOOTSTRAPPING_PERIOD_KEY = 10000; // 10 seconds
 	
-	private static Logger LOGGER;
-	
+	private static final Logger LOGGER = Logger.getLogger(ManagerControllerHelper.class);
+		
 	public ManagerControllerHelper() {}
 	
 	public static long getInstanceMonitoringPeriod(Properties properties) {
@@ -37,6 +38,14 @@ public class ManagerControllerHelper {
 				? DEFAULT_PEER_STATE_MONITORING_PERIOD_KEY : Long.valueOf(metricsMonitoringPeriodStr);
 		return metricsMonitoringPeriod;
 	}	
+	
+	public static long getBootstrappingPeriod(Properties properties) {
+		String bootstrappingPeriodStr = properties
+				.getProperty(ConfigurationConstants.BOOTSTRAPPING_PERIOD_KEY);
+		final long bootstrappingPeriod = bootstrappingPeriodStr == null
+				? DEFAULT_BOOTSTRAPPING_PERIOD_KEY : Long.valueOf(bootstrappingPeriodStr);
+		return bootstrappingPeriod;
+	}
 	
 	public static long getServerOrderMonitoringPeriod(Properties properties) {
 		String servedOrderMonitoringPeriodStr = properties
@@ -64,7 +73,6 @@ public class ManagerControllerHelper {
 			} catch (Exception e) {
 				this.maximumAttempts = MAXIMUM_ORDER_ATTEMPTS_DEFAULT;
 			}
-			LOGGER = MainHelper.getLogger(ManagerControllerHelper.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		}
 		
 		public synchronized void addFailedMonitoringAttempt(Order order) {

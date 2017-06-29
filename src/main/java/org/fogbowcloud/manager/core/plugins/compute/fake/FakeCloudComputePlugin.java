@@ -38,7 +38,7 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	public String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt, String imageId) {
 		if(instanceCounter>=quota)
-			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, "There is no more quota in the underlying cloud.");
+			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, "<"+managerId+">: "+"There is no more quota in the underlying cloud.");
 		
 		String name = "instance"+(++instanceCounter);
 		name += "-"+ String.valueOf(UUID.randomUUID());

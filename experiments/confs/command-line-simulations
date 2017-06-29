@@ -19,13 +19,37 @@ sudo ./bin/start-rendezvous				-- when installed from source code
 ./fogbow-cli order --url http://localhost:9194 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
 
 
-./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id b1ee7c4e-72eb-4fc6-a61c-59109d9cc9b2 & ./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id cf5e9361-7466-409e-9379-c8b9a0dded7c 
+./fogbow-cli order --url http://localhost:9194 --get --auth-token a --id 485123be-48d6-4603-b365-c73a7f4b96b9
+./fogbow-cli order --url http://localhost:9194 --delete --auth-token a --id 485123be-48d6-4603-b365-c73a7f4b96b9 & ./fogbow-cli instance --url http://localhost:9194 --delete --auth-token a --id ./fogbow-cli order --url http://localhost:9194 --get --auth-token a --id 485123be-48d6-4603-b365-c73a7f4b96b9  
 
 
 ##################################
 # Roteiro
 ##################################
+./fogbow-cli order --url http://localhost:9193 --create --n 3 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
+X-OCCI-Location: http://127.0.0.1:9193/order/4fdd29e5-91cb-44a7-93c7-b2e4a2bb66ee
+X-OCCI-Location: http://127.0.0.1:9193/order/3801bb24-8ee0-4322-90b1-0696ff1c0d89
+X-OCCI-Location: http://127.0.0.1:9193/order/616234a2-71ff-403a-96f1-c6b7421529a7
+./fogbow-cli order --url http://localhost:9193 --get --auth-token a --id 4fdd29e5-91cb-44a7-93c7-b2e4a2bb66ee
+./fogbow-cli order --url http://localhost:9193 --get --auth-token a --id 3801bb24-8ee0-4322-90b1-0696ff1c0d89
+./fogbow-cli order --url http://localhost:9193 --get --auth-token a --id 616234a2-71ff-403a-96f1-c6b7421529a7
+
+./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id 4fdd29e5-91cb-44a7-93c7-b2e4a2bb66ee & ./fogbow-cli instance --url http://localhost:9194 --delete --auth-token a --id instance1-c9c0d0ac-0b63-48e5-8408-7e4309095889@cooperative-manager1
+./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id 3801bb24-8ee0-4322-90b1-0696ff1c0d89 & ./fogbow-cli instance --url http://localhost:9194 --delete --auth-token a --id instance2-b609bca6-127f-42da-8a80-fc61ff589551@cooperative-manager1
+./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id 616234a2-71ff-403a-96f1-c6b7421529a7 & ./fogbow-cli instance --url http://localhost:9194 --delete --auth-token a --id instance1-f0123eb2-0ef1-4af5-97cf-f6469b9a1afe@cooperative-manager2
+
+instance1-c9c0d0ac-0b63-48e5-8408-7e4309095889@cooperative-manager1
+instance2-b609bca6-127f-42da-8a80-fc61ff589551@cooperative-manager1
+instance1-f0123eb2-0ef1-4af5-97cf-f6469b9a1afe@cooperative-manager2
+
+
+ & ./fogbow-cli order --url http://localhost:9194 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
+X-OCCI-Location: http://127.0.0.1:9194/order/8d601952-fa05-46d4-b5ad-9104bdfca4b2
+X-OCCI-Location: http://127.0.0.1:9193/order/6b8b67e6-705e-4743-8e8d-2a834f3e227e
+./fogbow-cli order --url http://localhost:9195 --create --n 2 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
 ./fogbow-cli order --url http://localhost:9193 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu & ./fogbow-cli order --url http://localhost:9194 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
+
+
 ./fogbow-cli order --url http://localhost:9195 --create --n 2 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
 ./fogbow-cli order --url http://localhost:9193 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu & ./fogbow-cli order --url http://localhost:9194 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
 ./fogbow-cli order --url http://localhost:9193 --delete --auth-token a --id 047adce9-cb3d-4ec9-8b3f-050bba74dcc1 & ./fogbow-cli instance --delete --auth-token mytoken --url http://localhost:9193 --id instance1@cooperative-manager2

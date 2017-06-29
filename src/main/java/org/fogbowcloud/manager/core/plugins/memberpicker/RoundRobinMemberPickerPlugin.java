@@ -6,6 +6,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
@@ -13,9 +16,13 @@ import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 
 public class RoundRobinMemberPickerPlugin implements FederationMemberPickerPlugin {
 
-	private String lastMember = null;
+	private static final Logger LOGGER = Logger.getLogger(RoundRobinMemberPickerPlugin.class);
+	
+	private String managerId;	
+	private String lastMember = null;	
 
 	public RoundRobinMemberPickerPlugin(Properties properties, AccountingPlugin accountingPlugin) {
+		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 
 	@Override
@@ -44,6 +51,7 @@ public class RoundRobinMemberPickerPlugin implements FederationMemberPickerPlugi
 		if (lastMember == null && !membersListCopy.isEmpty()) {
 			FederationMember federationMember = membersListCopy.get(0);
 			lastMember = federationMember.getId();
+			LOGGER.info("<"+managerId+">: "+federationMember+" picked.");
 			return federationMember;
 		}
 		
@@ -53,6 +61,7 @@ public class RoundRobinMemberPickerPlugin implements FederationMemberPickerPlugi
 			if (memberName.equals(lastMember)) {
 				FederationMember nextMember = membersListCopy.get((i + 1) % membersListCopy.size());
 				lastMember = nextMember.getId();
+				LOGGER.info("<"+managerId+">: "+nextMember+" picked.");
 				return nextMember;
 			}
 		}

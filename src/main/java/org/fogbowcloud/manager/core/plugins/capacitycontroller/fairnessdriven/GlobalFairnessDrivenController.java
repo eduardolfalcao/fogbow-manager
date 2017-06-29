@@ -7,6 +7,7 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
+import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 
 //TODO review all class
 public class GlobalFairnessDrivenController extends FairnessDrivenCapacityController{

@@ -82,9 +82,12 @@ public class MainExperiments {
 		for(Properties prop : propertiesList)
 			fms.add(SimpleManagerFactory.createFM(prop));
 		
-		
+		//bootstrapping
+		Thread.sleep(ManagerControllerHelper.getBootstrappingPeriod(managerProperties));
 		MonitorPeerState monitorPeerState = new MonitorPeerState(fms);
 		triggerDataMonitoring(monitorPeerState, properties);
+		
+		LOGGER.info("The federation is up!");
 		
 	}
 	

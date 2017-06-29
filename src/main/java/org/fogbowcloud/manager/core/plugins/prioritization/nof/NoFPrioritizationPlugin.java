@@ -13,6 +13,7 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
+import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.core.plugins.prioritization.TwoFoldPrioritizationPlugin;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -24,18 +25,20 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 	private boolean trustworthy = false;
 	private boolean prioritizeLocal = true;
 	
-	private static Logger LOGGER;
+	private static final Logger LOGGER = Logger.getLogger(NoFPrioritizationPlugin.class);
 
+	private String managerId;
+	
 	public NoFPrioritizationPlugin(Properties properties, AccountingPlugin accountingPlugin) {
 		
-		LOGGER = MainHelper.getLogger(NoFPrioritizationPlugin.class.getName(), properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		this.managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		
 		this.accountingPlugin = accountingPlugin;
 		this.localMemberId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		try {
 			this.trustworthy = Boolean.valueOf(properties.getProperty("nof_trustworthy").trim());
 		} catch (Exception e) {
-			LOGGER.error(
+			LOGGER.error("<"+managerId+">: "+
 					"Error while getting boolean value for nof_trustworhty. The default value is false.",
 					e);
 		}
@@ -44,36 +47,36 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 			this.prioritizeLocal = Boolean.valueOf(properties.getProperty("nof_prioritize_local")
 					.trim());
 		} catch (Exception e) {
-			LOGGER.error(
+			LOGGER.error("<"+managerId+">: "+
 					"Error while getting boolean value for nof_prioritize_local. The default value is true.",
 					e);
-		}
+		}		
 	}
 	
 	@Override
 	public Order takeFrom(Order newOrder, List<Order> ordersWithInstance) {
-		LOGGER.debug("Choosing order to take instance from ordersWithInstance="
+		LOGGER.debug("<"+managerId+">: "+"Choosing order to take instance from ordersWithInstance="
 				+ ordersWithInstance + " for requestMember=" + newOrder.getRequestingMemberId());
 		if (ordersWithInstance == null) {			
 			return null;
 		}
 		
 		List<String> servedMemberIds = getServedMemberIds(ordersWithInstance);
-		LOGGER.debug("Current servedMemberIds=" + servedMemberIds);
+		LOGGER.debug("<"+managerId+">: "+"Current servedMemberIds=" + servedMemberIds);
 		List<AccountingInfo> accounting = accountingPlugin.getAccountingInfo();
 		Map<String, ResourceUsage> membersUsage = NoFHelper.calculateMembersUsage(localMemberId, accounting);
-		LOGGER.debug("Current membersUsage=" + membersUsage);		
+		LOGGER.debug("<"+managerId+">: "+"Current membersUsage=" + membersUsage);		
 		LinkedList<FederationMemberDebt> memberDebts = calctMemberDebts(servedMemberIds, membersUsage);
 		if (memberDebts.isEmpty()) {
-			LOGGER.debug("There are no member debts.");
+			LOGGER.debug("<"+managerId+">: "+"There are no member debts.");
 			return null;
 		}
 
 		Collections.sort(memberDebts, new FederationMemberDebtComparator());
-		LOGGER.debug("Current memberDebts=" + memberDebts);
+		LOGGER.debug("<"+managerId+">: "+"Current memberDebts=" + memberDebts);
 		
 		double requestingMemberDebt = calcDebt(membersUsage, newOrder.getRequestingMemberId());
-		LOGGER.debug("Requesting member debt=" + requestingMemberDebt);
+		LOGGER.debug("<"+managerId+">: "+"Requesting member debt=" + requestingMemberDebt);
 		FederationMemberDebt firstMember = memberDebts.getFirst();
 		if (firstMember.getDebt() < requestingMemberDebt) {
 			String memberId = firstMember.getMember().getResourcesInfo().getId();

@@ -24,7 +24,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 	private long lastUpdate;
 	private String managerId;
 
-	private static Logger LOGGER;
+	private static final Logger LOGGER = Logger.getLogger(FCUAccountingPlugin.class);
 	public static final String ACCOUNTING_DATASTORE_URL = "fcu_accounting_datastore_url";
 
 	public FCUAccountingPlugin(Properties properties, BenchmarkingPlugin benchmarkingPlugin) {
@@ -41,16 +41,15 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 				properties.getProperty(getDataStoreUrl()));
 		db = new AccountingDataStore(properties);
 		
-		LOGGER = MainHelper.getLogger(FCUAccountingPlugin.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 
 	@Override
 	public void update(List<Order> ordersWithInstance) {
-		LOGGER.debug("Updating account with orders=" + ordersWithInstance);
+		LOGGER.debug("<"+managerId+">: "+"Updating account with orders=" + ordersWithInstance);
 		long now = dateUtils.currentTimeMillis();
 		double updatingInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now - lastUpdate) / 60);
-		LOGGER.debug("updating interval=" + updatingInterval);
+		LOGGER.debug("<"+managerId+">: "+"updating interval=" + updatingInterval);
 
 		Map<AccountingEntryKey, AccountingInfo> usage = new HashMap<AccountingEntryKey, AccountingInfo>();
 
@@ -83,11 +82,11 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 			usage.get(current).addConsumption(instanceUsage);
 		}
 
-		LOGGER.debug("current usage=" + usage);
+		LOGGER.debug("<"+managerId+">: "+"current usage=" + usage);
 
 		if ((usage.isEmpty()) || db.update(new ArrayList<AccountingInfo>(usage.values()))) {
 			this.lastUpdate = now;
-			LOGGER.debug("Updating lastUpdate to " + this.lastUpdate);
+			LOGGER.debug("<"+managerId+">: "+"Updating lastUpdate to " + this.lastUpdate);
 		}
 	}
 	

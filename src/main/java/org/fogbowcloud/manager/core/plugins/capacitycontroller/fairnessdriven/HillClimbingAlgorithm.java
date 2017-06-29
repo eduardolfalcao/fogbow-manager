@@ -24,7 +24,7 @@ public class HillClimbingAlgorithm {
 		this.minimumThreshold = minimumThreshold;
 		this.maximumThreshold = maximumThreshold;
 		
-		this.maximumCapacityToSupply = INITIAL_VALUE;
+		this.maximumCapacityToSupply = INITIAL_VALUE;		
 		this.currentFairness = INITIAL_VALUE; 
 		this.lastFairness = INITIAL_VALUE;
 		this.lastUpdated = 0;

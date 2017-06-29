@@ -94,7 +94,7 @@ public class MonitorPeerState {
 		List<Order> orders = fm.getManagerDataStoreController().getAllOrders();
 		
 		int dTot = 0;	//O_r=i + P_r=i + F_r=i&&p=i + F_r=i&&p!=i 
-		int dFed = 0;	//max(0,dTot - maxCapacity)
+		int dFed = 0;	//max(max(0,dTot - maxCapacity), rFed)
 		int rFed = 0;	//F_r=i&&p!=i
 		int oFed = 0;	//maxCapacity - F_r=i&&p=i
 		int sFed = 0;	//F_r!=i&&p=i
@@ -123,7 +123,7 @@ public class MonitorPeerState {
 		
 		int maxCapacity = fm.getMaxCapacityDefaultUser();
 		oFed += maxCapacity;
-		dFed = Math.max(0, dTot - maxCapacity);
+		dFed = Math.max(Math.max(0, dTot - maxCapacity), rFed);
 		
 		int now = (int)((date.currentTimeMillis()-initialTime)/CONVERSION_VALUE);
 		
@@ -157,9 +157,9 @@ public class MonitorPeerState {
 			w = CsvGenerator.createHeader(filePath, "id", "t", "dTot", "dFed", "rFed", "oFed", "sFed");
 		else if(states.size()>1){	//remove first state (already written), and write the rest
 			w = CsvGenerator.getFile(filePath);
-			for(PeerState s : states)
-				System.out.println(s);
-			System.out.println();
+//			for(PeerState s : states)
+//				System.out.println(s);
+//			System.out.println();
 			states.remove(0);
 		}
 		else return;				//if theres only one state, keep updating

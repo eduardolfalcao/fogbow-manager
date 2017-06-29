@@ -10,7 +10,7 @@ import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.FederationMember;
-import org.fogbowcloud.manager.occi.model.ResourceRepository;
+import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.jamppa.component.XMPPComponent;
 import org.xmpp.packet.Packet;
 
@@ -28,7 +28,7 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	public static final String GETREMOTEUSERQUOTA_NAMESPACE = "http://fogbowcloud.org/manager/getremoteuserquota";
 
 	private static long PERIOD = 30000;
-	private static Logger LOGGER;
+	private static final Logger LOGGER = Logger.getLogger(ManagerXmppComponent.class);
 	private ManagerController managerFacade;
 	private final Timer timer = new Timer();
 	private String rendezvousAddress;
@@ -37,8 +37,6 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	public ManagerXmppComponent(String jid, String password, String server,
 			int port, ManagerController managerFacade, long timeout) {
 		super(jid, password, server, port, timeout);
-		
-		LOGGER = MainHelper.getLogger(ManagerXmppComponent.class.getName(), managerFacade.getProperties().getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		
 		this.managerFacade = managerFacade;
 		if (managerFacade.getMaxWhoIsAliveManagerCount() != null) {
@@ -65,7 +63,7 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 		try {
 			return Long.parseLong(iAmAlivePeriodStr);
 		} catch (Exception e) {
-			LOGGER.warn("Error while trying to convert String(" + iAmAlivePeriodStr + ") to Long.",
+			LOGGER.warn("<"+managerFacade.getManagerId()+">: "+"Error while trying to convert String(" + iAmAlivePeriodStr + ") to Long.",
 					e);
 		}	
 		return PERIOD;
@@ -74,7 +72,7 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	@Override
 	protected void send(Packet packet) {
 		packet.setFrom(getJID());
-		LOGGER.debug("(sending IQ to " + packet.getTo() + ", packetId " + packet.getID() + ", XML "
+		LOGGER.debug("<"+managerFacade.getManagerId()+">: "+"(sending IQ to " + packet.getTo() + ", packetId " + packet.getID() + ", XML "
 				+ packet.toXML());
 		super.send(packet);
 	}
@@ -108,12 +106,12 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 						this.cancel();
 					}					
 				} catch (Exception e) {
-					LOGGER.error("Failure during IAmAlive().", e);
+					LOGGER.error("<"+managerFacade.getManagerId()+">: "+"Failure during IAmAlive().", e);
 				}
 				try {
 					whoIsalive();
 				} catch (Exception e) {
-					LOGGER.error("Failure during whoIsAlive().", e); 
+					LOGGER.error("<"+managerFacade.getManagerId()+">: "+"Failure during whoIsAlive().", e); 
 				}
 			}
 		}, delay, period);

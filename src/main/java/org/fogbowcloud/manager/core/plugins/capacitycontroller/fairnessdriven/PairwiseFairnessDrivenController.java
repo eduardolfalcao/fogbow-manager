@@ -8,6 +8,7 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
+import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 
 public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityController {	
 	
@@ -35,14 +36,13 @@ public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityCont
 	
 	@Override
 	public void updateCapacity(FederationMember member, double maximumCapacity) {
-		maximumCapacity = normalizeMaximumCapacity(maximumCapacity);
-		
+		maximumCapacity = normalizeMaximumCapacity(maximumCapacity);		
 		if (this.hillClimbingControllers.containsKey(member) && 
 				this.hillClimbingControllers.get(member).getLastUpdated() == this.dateUtils.currentTimeMillis()) {
 			throw new IllegalStateException("The controller of member (" + 
 				properties.getProperty(ConfigurationConstants.XMPP_JID_KEY) + 
 				") is running more than once at the same time step for member(" + member.getId() + ").");
-		} else if (!this.hillClimbingControllers.containsKey(member)) {
+		} else if (!this.hillClimbingControllers.containsKey(member)) {			 
 			this.hillClimbingControllers.put(member, new HillClimbingAlgorithm(
 					this.deltaC, this.minimumThreshold, this.maximumThreshold));
 		}

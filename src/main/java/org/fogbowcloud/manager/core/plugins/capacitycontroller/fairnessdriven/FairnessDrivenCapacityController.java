@@ -9,10 +9,11 @@ import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.CapacityControllerPlugin;
+import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 
 public abstract class FairnessDrivenCapacityController implements CapacityControllerPlugin {
 	
-	private static Logger LOGGER;
+	private static final Logger LOGGER = Logger.getLogger(FairnessDrivenCapacityController.class);
 	protected static final String CONTROLLER_MINIMUM_THRESHOLD = "controller_minimum_threshold";
 	protected static final String CONTROLLER_MAXIMUM_THRESHOLD = "controller_maximum_threshold";
 	private double INITIALIZE_LAST_MAXIMUM_CAPACITY_VALUE = Double.MAX_VALUE;
@@ -23,12 +24,13 @@ public abstract class FairnessDrivenCapacityController implements CapacityContro
 	protected Properties properties;
 	protected DateUtils dateUtils; 
 	
+	private String managerId;
+	
 	public FairnessDrivenCapacityController(Properties properties, AccountingPlugin accountingPlugin) {
 		this.properties = properties;
 		this.accountingPlugin = accountingPlugin;
 		this.dateUtils = new DateUtils();
-		
-		LOGGER = MainHelper.getLogger(FairnessDrivenCapacityController.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+		this.managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 	
 	public abstract double getCurrentFairness(FederationMember member);
@@ -55,7 +57,7 @@ public abstract class FairnessDrivenCapacityController implements CapacityContro
 		} else {
 			this.lastMaximumCapacity = maximumCapacity;
 		}
-		LOGGER.info("The maximum capacity is " + maximumCapacity 
+		LOGGER.info("<"+managerId+">: "+"The maximum capacity is " + maximumCapacity 
 				+ " and the last maximum capacity is " + this.lastMaximumCapacity);
 		
 		return maximumCapacity;

@@ -15,6 +15,7 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderState;
@@ -26,7 +27,7 @@ import org.sqlite.SQLiteConfig;
 public class ManagerDataStore {
 
 	public static final String ERROR_WHILE_INITIALIZING_THE_DATA_STORE = "Error while initializing the Manager DataStore.";
-	private static Logger LOGGER;
+	private static final Logger LOGGER = Logger.getLogger(ManagerDataStore.class);
 	public static final String MANAGER_DATASTORE_URL = "manager_datastore_url";
 	private static final String DEFAULT_DATASTORE_NAME = "datastore_manager.slite";
 	protected static final String MANAGER_DATASTORE_SQLITE_DRIVER = "org.sqlite.JDBC";
@@ -57,8 +58,6 @@ public class ManagerDataStore {
 	private String dataStoreURL;
 
 	public ManagerDataStore(Properties properties) {
-		
-		LOGGER = MainHelper.getLogger(ManagerDataStore.class.getName(), properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		
 		String dataStoreURLProperties = properties.getProperty(MANAGER_DATASTORE_URL);
 		this.dataStoreURL = DataStoreHelper.getDataStoreUrl(dataStoreURLProperties,

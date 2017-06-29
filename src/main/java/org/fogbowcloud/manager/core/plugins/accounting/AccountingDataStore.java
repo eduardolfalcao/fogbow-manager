@@ -15,6 +15,7 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.DataStoreHelper;
 
@@ -36,11 +37,9 @@ public class AccountingDataStore {
 	private String dataStoreURL;
 	private String managerId;
 
-	public static Logger LOGGER;
+	private static final Logger LOGGER = Logger.getLogger(AccountingDataStore.class);
 	
-	public AccountingDataStore(Properties properties) {		
-		
-		LOGGER = MainHelper.getLogger(AccountingDataStore.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
+	public AccountingDataStore(Properties properties) {
 		
 		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);		
 		String dataStoreURLProperties = properties.getProperty(ACCOUNTING_DATASTORE_URL);
@@ -68,7 +67,7 @@ public class AccountingDataStore {
 							+ ")");
 			statement.close();
 		} catch (Exception e) {
-			LOGGER.error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
+			LOGGER.error("<"+managerId+">: "+ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 		} finally {
 			List<Statement> statements = new ArrayList<Statement>();
@@ -87,11 +86,11 @@ public class AccountingDataStore {
 		
 		setInstancesCountToZero();
 		
-		LOGGER.debug("Updating usage into database.");
-		LOGGER.debug("Usage=" + usage);
+		LOGGER.debug("<"+managerId+">: "+"Updating usage into database.");
+		LOGGER.debug("<"+managerId+">: "+"Usage=" + usage);
 
 		if (usage == null) {
-			LOGGER.warn("Members and users must not be null.");
+			LOGGER.warn("<"+managerId+">: "+"Members and users must not be null.");
 			return false;
 		}
 		
@@ -111,7 +110,7 @@ public class AccountingDataStore {
 
 			if (hasBatchExecutionError(insertMemberStatement.executeBatch())
 					| hasBatchExecutionError(updateMemberStatement.executeBatch())) {
-				LOGGER.debug("Rollback will be executed.");
+				LOGGER.debug("<"+managerId+">: "+"Rollback will be executed.");
 				connection.rollback();
 				return false;
 			}
@@ -119,13 +118,13 @@ public class AccountingDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't account usage.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't account usage.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 			return false;
 		} finally {
@@ -140,7 +139,7 @@ public class AccountingDataStore {
 	//TODO for debugging purposes
 	private static final String SET_INSTANCES_COUNT_ZERO_SQL = "UPDATE " + USAGE_TABLE_NAME + " SET instances = 0";	
 	private boolean setInstancesCountToZero() {
-		LOGGER.debug("Updating instance count into database to ZERO.");
+		LOGGER.debug("<"+managerId+">: "+"Updating instance count into database to ZERO.");
 
 		Statement updateStatement = null;		
 		Connection connection = null;
@@ -151,13 +150,13 @@ public class AccountingDataStore {
 			updateStatement.execute(SET_INSTANCES_COUNT_ZERO_SQL);
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't set instances count to zero.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't set instances count to zero.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 			return false;
 		} finally {
@@ -172,11 +171,11 @@ public class AccountingDataStore {
 	
 	public boolean updateQuota(FederationMember member, double capacity) {
 		
-		LOGGER.debug("Updating quota into database.");
-		LOGGER.debug("Member=" + member+", quota="+capacity);
+		LOGGER.debug("<"+managerId+">: "+"Updating quota into database.");
+		LOGGER.debug("<"+managerId+">: "+"Member=" + member+", quota="+capacity);
 
 		if (member == null) {
-			LOGGER.warn("Member must not be null.");
+			LOGGER.warn("<"+managerId+">: "+"Member must not be null.");
 			return false;
 		}
 		
@@ -196,7 +195,7 @@ public class AccountingDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't update quotas.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't update quotas.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
@@ -229,7 +228,7 @@ public class AccountingDataStore {
 		
 		List<AccountingEntryKey> entryKeys = getEntryKeys();
 
-		LOGGER.debug("Database entry keys=" + entryKeys);
+		LOGGER.debug("<"+managerId+">: "+"Database entry keys=" + entryKeys);
 		
 		// preprocessing data
 		Map<AccountingEntryKey, AccountingInfo> processedUsage = new HashMap<AccountingEntryKey, AccountingInfo>();
@@ -256,7 +255,7 @@ public class AccountingDataStore {
 			// inserting new usage entry
 			if (!entryKeys.contains(currentKey)) {
 
-				LOGGER.debug("New accountingEntry=" + accountingEntry);
+				LOGGER.debug("<"+managerId+">: "+"New accountingEntry=" + accountingEntry);
 				insertMemberStatement.setString(1, accountingEntry.getUser());
 				insertMemberStatement.setString(2, accountingEntry.getRequestingMember());
 				insertMemberStatement.setString(3, accountingEntry.getProvidingMember());
@@ -266,7 +265,7 @@ public class AccountingDataStore {
 				insertMemberStatement.addBatch();
 				
 			} else { // updating an existing entry
-				LOGGER.debug("Existing accountingEntry=" + accountingEntry);
+				LOGGER.debug("<"+managerId+">: "+"Existing accountingEntry=" + accountingEntry);
 				updateMemberStatement.setDouble(1, accountingEntry.getUsage());
 				updateMemberStatement.setInt(2, accountingEntry.getCurrentInstances());
 				updateMemberStatement.setString(3, accountingEntry.getUser());
@@ -280,7 +279,7 @@ public class AccountingDataStore {
 	private static final String SELECT_ALL_USAGE_SQL = "SELECT * FROM " + USAGE_TABLE_NAME;
 		
 	private List<AccountingEntryKey> getEntryKeys() {
-		LOGGER.debug("Getting database keys.");
+		LOGGER.debug("<"+managerId+">: "+"Getting database keys.");
 
 		Statement statement = null;
 		Connection conn = null;
@@ -298,13 +297,13 @@ public class AccountingDataStore {
 			}
 			return dbKeys;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't get keys from DB.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't get keys from DB.", e);
 			return null;
 		}
 	}
 
 	public List<AccountingInfo> getAccountingInfo() {
-		LOGGER.debug("Getting AccounintgInfo...");
+		LOGGER.debug("<"+managerId+">: "+"Getting AccountingInfo...");
 		Statement statement = null;
 		Connection conn = null;
 		try {
@@ -314,7 +313,7 @@ public class AccountingDataStore {
 			statement.execute(SELECT_ALL_USAGE_SQL);
 			return createAccounting(statement.getResultSet());
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't get keys from DB.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't get keys from DB.", e);
 			return null;
 		}	
 	}
@@ -323,7 +322,7 @@ public class AccountingDataStore {
 			+ " WHERE user = ? AND requesting_member = ? AND providing_member = ?";
 	
 	private AccountingInfo getAccountingInfo(AccountingEntryKey key) {
-		LOGGER.debug("Getting accountingInfo to " + key);
+		LOGGER.debug("<"+managerId+">: "+"Getting accountingInfo to " + key);
 
 		AccountingEntryKey entryKey = (AccountingEntryKey) key;
 
@@ -353,7 +352,7 @@ public class AccountingDataStore {
 				return accountingInfo;
 			}
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't get keys from DB.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't get keys from DB.", e);
 			return null;
 		} finally {
 			List<Statement> statements = new ArrayList<Statement>();
@@ -372,7 +371,7 @@ public class AccountingDataStore {
 		try {
 			return DriverManager.getConnection(this.dataStoreURL);
 		} catch (SQLException e) {
-			LOGGER.error("Error while getting a new connection from the connection pool.", e);
+			LOGGER.error("<"+managerId+">: "+"Error while getting a new connection from the connection pool.", e);
 			throw e;
 		}
 	}
@@ -384,7 +383,7 @@ public class AccountingDataStore {
 					if (!s.isClosed())
 						s.close();//
 				} catch (SQLException e) {
-					LOGGER.error("Couldn't close statement"+s, e);
+					LOGGER.error("<"+managerId+">: "+"Couldn't close statement"+s, e);
 				}
 			}
 		}
@@ -395,7 +394,7 @@ public class AccountingDataStore {
 					conn.close();
 				}
 			} catch (SQLException e) {
-				LOGGER.error("Couldn't close connection", e);
+				LOGGER.error("<"+managerId+">: "+"Couldn't close connection", e);
 			}
 		}
 	}
@@ -414,7 +413,7 @@ public class AccountingDataStore {
 				accounting.add(userAccounting);				
 			}
 		} catch (SQLException e) {
-			LOGGER.error("Error while creating accounting from ResultSet.", e);
+			LOGGER.error("<"+managerId+">: "+"Error while creating accounting from ResultSet.", e);
 			return null;
 		}
 		return accounting;

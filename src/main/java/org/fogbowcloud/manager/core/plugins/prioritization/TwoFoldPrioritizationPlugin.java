@@ -9,6 +9,7 @@ import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
+import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.prioritization.fcfs.FCFSPrioritizationPlugin;
 import org.fogbowcloud.manager.occi.order.Order;
 
@@ -21,11 +22,9 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 	
 	private String managerId;	//for debugging purposes
 	
-	private static Logger LOGGER;
+	private static final Logger LOGGER = Logger.getLogger(TwoFoldPrioritizationPlugin.class);
 	
 	public TwoFoldPrioritizationPlugin(Properties properties, AccountingPlugin accountingPlugin) {
-		
-		LOGGER = MainHelper.getLogger(TwoFoldPrioritizationPlugin.class.getName(), properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 		
 		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		

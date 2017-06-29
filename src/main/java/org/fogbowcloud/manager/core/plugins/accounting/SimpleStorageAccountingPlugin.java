@@ -22,30 +22,30 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 	private AccountingDataStore db;
 	private DateUtils dateUtils;
 	private long lastUpdate;
+	private String managerId;
 
-	private static Logger LOGGER;
+	private static final Logger LOGGER = Logger.getLogger(SimpleStorageAccountingPlugin.class);
 
 	public SimpleStorageAccountingPlugin(Properties properties) {
 		this(properties, new DateUtils());
 	}
 	
 	public SimpleStorageAccountingPlugin(Properties properties, DateUtils dateUtils) {
+		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);	
 		this.dateUtils = dateUtils;
 		this.lastUpdate = dateUtils.currentTimeMillis();
 
 		if(properties.get(AccountingDataStore.ACCOUNTING_DATASTORE_URL)==null)
 			properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, properties.getProperty(getDataStoreUrl()));
 		db = new AccountingDataStore(properties);
-		
-		LOGGER = MainHelper.getLogger(SimpleStorageAccountingPlugin.class.getName(),properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 	}
 
 	@Override
 	public void update(List<Order> ordersWithInstance) {
-		LOGGER.debug("Updating storage account with orders=" + ordersWithInstance);
+		LOGGER.debug("<"+managerId+">: "+"Updating storage account with orders=" + ordersWithInstance);
 		long now = dateUtils.currentTimeMillis();
 		double updatingInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now - lastUpdate) / 60);
-		LOGGER.debug("updating interval=" + updatingInterval);
+		LOGGER.debug("<"+managerId+">: "+"updating interval=" + updatingInterval);
 
 		Map<AccountingEntryKey, AccountingInfo> usage = new HashMap<AccountingEntryKey, AccountingInfo>();
 
@@ -73,18 +73,18 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 			try {
 				instanceUsage = getUsage(order, updatingInterval, consumptionInterval);				
 			} catch (Exception e) {
-				LOGGER.warn("Could not possible get usage of order : " + order.toString());
+				LOGGER.warn("<"+managerId+">: "+"Could not possible get usage of order : " + order.toString());
 				continue;
 			}
 
 			usage.get(current).addConsumption(instanceUsage);
 		}
 
-		LOGGER.debug("current usage=" + usage);
+		LOGGER.debug("<"+managerId+">: "+"current usage=" + usage);
 
 		if ((usage.isEmpty()) || db.update(new ArrayList<AccountingInfo>(usage.values()))) {
 			this.lastUpdate = now;
-			LOGGER.debug("Updating lastUpdate to " + this.lastUpdate);
+			LOGGER.debug("<"+managerId+">: "+"Updating lastUpdate to " + this.lastUpdate);
 		}
 	}
 	

@@ -100,20 +100,4 @@ public class MainHelper {
 		PropertyConfigurator.configure(props);		
 	}	
 	
-	public static Logger getLogger(String className, String managerId){
-	
-		Logger log = Logger.getLogger(className);
-				
-		FileAppender fa = new FileAppender();
-		fa.setFile(System.getProperty("user.dir")+"/experiments/log/"+managerId+".log");
-		fa.setAppend(true);
-		fa.setThreshold(Level.DEBUG);
-		fa.setLayout(new PatternLayout("%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n"));
-		fa.activateOptions();		
-		log.addAppender(fa);
-		
-		return log;
-		
-	}
-	
 }
