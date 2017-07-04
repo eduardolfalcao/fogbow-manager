@@ -17,7 +17,7 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.experiments.data.MonitorPeerState;
-import org.fogbowcloud.manager.experiments.scheduler.Scheduler;
+import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
 
 public class MainExperiments {
 
@@ -90,8 +90,8 @@ public class MainExperiments {
 		for(Properties prop : propertiesList)
 			fms.add(SimpleManagerFactory.createFM(prop));
 		
-		Scheduler scheduler = new Scheduler(fms, properties);
-		triggerScheduler(scheduler, properties);
+		WorkloadScheduler scheduler = new WorkloadScheduler(fms, properties);
+		triggerWorkloadScheduler(scheduler, properties);
 		
 		//bootstrapping
 		Thread.sleep(ManagerControllerHelper.getBootstrappingPeriod(managerProperties));
@@ -102,7 +102,7 @@ public class MainExperiments {
 		
 	}
 	
-	private static void triggerScheduler(final Scheduler scheduler, final Properties prop) {
+	private static void triggerWorkloadScheduler(final WorkloadScheduler scheduler, final Properties prop) {
 		final long schedulerPeriod = 1000;
 		schedulerTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override

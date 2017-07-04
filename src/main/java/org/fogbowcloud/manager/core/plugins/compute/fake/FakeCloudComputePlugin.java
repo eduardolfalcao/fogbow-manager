@@ -49,8 +49,12 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	
 	@Override
 	public Instance getInstance(Token token, String instanceId) {
-		if(instances.contains(instanceId))
-			return new Instance(instanceId);
+		if(instances.contains(instanceId)){
+			Instance i = new Instance(instanceId);
+			i.addAttribute("occi.compute.cores", "8");
+			i.addAttribute("occi.compute.memory", "16");
+			return i;
+		}
 		return null;
 	}	
 

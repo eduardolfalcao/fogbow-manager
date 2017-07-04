@@ -94,7 +94,7 @@ public class MonitorPeerState {
 		List<Order> orders = fm.getManagerDataStoreController().getAllOrders();
 		
 		int dTot = 0;	//O_r=i + P_r=i + F_r=i&&p=i + F_r=i&&p!=i 
-		int dFed = 0;	//max(max(0,dTot - maxCapacity), rFed)
+		int dFed = 0;	//1 - max(0,dTot - maxCapacity) ou 2 - max(max(0,dTot - maxCapacity), rFed)
 		int rFed = 0;	//F_r=i&&p!=i
 		int oFed = 0;	//maxCapacity - F_r=i&&p=i
 		int sFed = 0;	//F_r!=i&&p=i
@@ -123,7 +123,7 @@ public class MonitorPeerState {
 		
 		int maxCapacity = fm.getMaxCapacityDefaultUser();
 		oFed += maxCapacity;
-		dFed = Math.max(Math.max(0, dTot - maxCapacity), rFed);
+		dFed = Math.max(0, dTot - maxCapacity);
 		
 		int now = (int)((date.currentTimeMillis()-initialTime)/CONVERSION_VALUE);
 		

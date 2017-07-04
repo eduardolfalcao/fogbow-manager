@@ -6,23 +6,31 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimerTask;
+import java.util.concurrent.Executors;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.ManagerControllerHelper;
+import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.experiments.MainExperiments;
 import org.fogbowcloud.manager.experiments.scheduler.model.DataReader;
 import org.fogbowcloud.manager.experiments.scheduler.model.Job;
 import org.fogbowcloud.manager.experiments.scheduler.model.Peer;
 import org.fogbowcloud.manager.experiments.scheduler.model.User;
 import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 
-public class Scheduler {
+public class WorkloadScheduler {
 	
-	private static final Logger LOGGER = Logger.getLogger(Scheduler.class);
+	private static final Logger LOGGER = Logger.getLogger(WorkloadScheduler.class);
 	public static final String 	WORKLOAD_FOLDER = "workload_folder";	
 	private Properties props;
+	
+	private static final ManagerTimer monitorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+	private WorkloadMonitor monitor;
 	
 	private long time = 0;
 	private List<Peer> peers;
@@ -31,7 +39,7 @@ public class Scheduler {
 	private Map<String, String> xOCCIAtt;
 	private List<Category> categories;
 	
-	public Scheduler(List<ManagerController> fms, Properties props) {
+	public WorkloadScheduler(List<ManagerController> fms, Properties props) {
 		this.props = props;
 		this.peers = new ArrayList<Peer>();
 		
@@ -46,6 +54,9 @@ public class Scheduler {
 				}				
 			}			
 		}
+		
+		monitor = new WorkloadMonitor(fms);
+		triggerWorkloadMonitor(monitor);
 		
 		initOrderParams();
 	}
@@ -72,11 +83,14 @@ public class Scheduler {
 			xOCCIAttClone.put(OrderAttribute.INSTANCE_COUNT.getValue(), String.valueOf(j.getTasks().size()));	
 			List<Category> categoriesClone = new ArrayList<Category>();
 			categoriesClone.addAll(categories);
-			mc.createOrders("", categoriesClone, xOCCIAttClone);
+			List<Order> orders = mc.createOrders("", categoriesClone, xOCCIAttClone);
+			for(int i = 0; i < orders.size(); i++)
+				j.getTasks().get(i).setOrderId(orders.get(i).getId());		
 			System.out.println("Peer "+j.getPeerId()+" creating "+j);
+			monitor.addJob(j);
 		}		
 		time++;		
-	}
+	}	
 	
 	private List<Job> getJobs(long time) {
 		List<Job> jobs = new ArrayList<Job>();
@@ -91,6 +105,20 @@ public class Scheduler {
 			}			
 		}
 		return jobs;
+	}
+	
+	private static void triggerWorkloadMonitor(final WorkloadMonitor monitor) {
+		final long monitorPeriod = 1000;
+		monitorTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {	
+				try {
+					monitor.monitorJobs();
+				} catch (Throwable e) {
+					LOGGER.error("Error while monitoring workload", e);
+				}
+			}
+		}, 0, monitorPeriod);
 	}
 
 	private void readWorkloads(){

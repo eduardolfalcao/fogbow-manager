@@ -288,7 +288,7 @@ public class ManagerController {
 				Instance instance = null;
 				if (order.getState().equals(OrderState.FULFILLED)
 						|| order.getState().equals(OrderState.DELETED)) {
-					instance = getInstance(order, order.getResourceKing());
+					instance = getInstance(order, order.getResourceKind());
 					LOGGER.debug("<"+managerId+">: "+instance.getId() + " was recovered to order " + order.getId());
 				}
 			} catch (OCCIException e) {
@@ -645,7 +645,7 @@ public class ManagerController {
 				continue;
 			}
 			String instanceId = order.getInstanceId();
-			if (instanceId == null || instanceId.isEmpty() || !order.getResourceKing().equals(OrderConstants.COMPUTE_TERM) ) {
+			if (instanceId == null || instanceId.isEmpty() || !order.getResourceKind().equals(OrderConstants.COMPUTE_TERM) ) {
 				continue;
 			}
 			Instance instance = null;
@@ -722,11 +722,11 @@ public class ManagerController {
 			try {
 				Token token = localIdentityPlugin.createToken(mapperPlugin.getLocalCredentials(accessId));
 				String instanceId = order.getInstanceId();
-				if (order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
+				if (order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
 					computePlugin.removeInstance(token, instanceId);					
-				} else if (order.getResourceKing().equals(OrderConstants.STORAGE_TERM)) {
+				} else if (order.getResourceKind().equals(OrderConstants.STORAGE_TERM)) {
 					storagePlugin.removeInstance(token, instanceId);
-				} else if (order.getResourceKing().equals(OrderConstants.NETWORK_TERM)) {
+				} else if (order.getResourceKind().equals(OrderConstants.NETWORK_TERM)) {
 					networkPlugin.removeInstance(token, instanceId);
 				}
 			} catch (Exception e) { 
@@ -753,7 +753,7 @@ public class ManagerController {
 		List<Instance> instances = new ArrayList<Instance>();
 		for (Order order : managerDataStoreController.getOrdersByUserId(getUserId(accessId))) {
 			
-			if (!order.getResourceKing().equals(resourceKind)) {
+			if (!order.getResourceKind().equals(resourceKind)) {
 				continue;
 			}
 			
@@ -808,7 +808,7 @@ public class ManagerController {
 	
 	private Instance getInstance(Order order, String resourceKind) {
 		
-		String orderResourceKind = order.getResourceKing();
+		String orderResourceKind = order.getResourceKind();
 		if (!orderResourceKind.equals(resourceKind)) {
 			throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
 		}
@@ -993,7 +993,7 @@ public class ManagerController {
 	}
 
 	protected void instanceRemoved(Order order) {			
-		if (order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
+		if (order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
 			updateAccounting();
 			benchmarkingPlugin.remove(order.getInstanceId());			
 		}
@@ -1018,7 +1018,7 @@ public class ManagerController {
 		this.managerDataStoreController.updateOrder(order);
 		if (instanceId != null) {
 			this.managerDataStoreController.removeAllStorageLinksByInstance(
-					normalizeFogbowResourceId(instanceId), order.getResourceKing());			
+					normalizeFogbowResourceId(instanceId), order.getResourceKind());			
 		}
 	}
 
@@ -1119,7 +1119,7 @@ public class ManagerController {
 		for (Order order : allServedOrders) {
 			if (order.getRequestingMemberId().equals(requestingMemberId) && 
 					order.getState().equals(OrderState.FULFILLED) && 
-					order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) 
+					order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) 
 				instancesFulfilled++;
 		}
 		FederationMember requestingMember = null;
@@ -1133,12 +1133,10 @@ public class ManagerController {
 		//TODO different instances sizes should be considered?
 		double virtualQuota = capacityControllerPlugin.getMaxCapacityToSupply(requestingMember);
 		int virtualQuotaFloor = (int)Math.floor(virtualQuota);
-		boolean res = instancesFulfilled < virtualQuotaFloor;
+		boolean res = instancesFulfilled < virtualQuotaFloor;		
 		
-		LOGGER.error("**************");
-		LOGGER.error("The quota of "+managerId+" for "+requestingMemberId+" is "+virtualQuota);
-		LOGGER.error("<"+managerId+">: isThereEnoughQuota for "+requestingMemberId+"? "+res);
-		LOGGER.error("**************");
+		LOGGER.debug("The quota of "+managerId+" for "+requestingMemberId+" is "+virtualQuota);
+		LOGGER.debug("<"+managerId+">: isThereEnoughQuota for "+requestingMemberId+"? "+res);
 		
 		return res;
 	}
@@ -1273,7 +1271,7 @@ public class ManagerController {
 		try {
 			Order servedOrder = managerDataStoreController.getOrderByInstance(instanceId);
 			Token federationUserToken = getFederationUserToken(servedOrder);
-			String orderResourceKind = servedOrder != null ? servedOrder.getResourceKing(): null;
+			String orderResourceKind = servedOrder != null ? servedOrder.getResourceKind(): null;
 			Instance instance = null;
 			if (orderResourceKind == null || orderResourceKind.equals(OrderConstants.COMPUTE_TERM)) {
 				instance = computePlugin.getInstance(federationUserToken, instanceId);
@@ -1392,7 +1390,7 @@ public class ManagerController {
 				boolean isNotFoundException = false;
 				try {
 					LOGGER.debug("<"+managerId+">: "+"Monitoring instance of order: " + order);
-					removeFailedInstance(order, getInstance(order, order.getResourceKing()));
+					removeFailedInstance(order, getInstance(order, order.getResourceKind()));
 					this.monitoringHelper.eraseFailedMonitoringAttempts(order);
 				} catch (OCCIException e) {
 					LOGGER.debug("<"+managerId+">: "+"Error while getInstance of " + order.getInstanceId(), e);
@@ -1427,7 +1425,7 @@ public class ManagerController {
 		}
 		if (InstanceState.FAILED.equals(instance.getState())) {
 			try {
-				removeInstance(instance.getId(), order, order.getResourceKing());
+				removeInstance(instance.getId(), order, order.getResourceKind());
 			} catch (Throwable t) {
 				// Best effort
 				LOGGER.warn("<"+managerId+">: "+"Error while removing stale instance.", t);
@@ -1484,8 +1482,8 @@ public class ManagerController {
 						order.setInstanceId(instanceId);
 						order.setProvidingMemberId(memberAddress);
 						
-						boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order.getResourceKing());
-						boolean isNetworkOrder = OrderConstants.NETWORK_TERM.equals(order.getResourceKing());						
+						boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order.getResourceKind());
+						boolean isNetworkOrder = OrderConstants.NETWORK_TERM.equals(order.getResourceKind());						
 						if (isStorageOrder || isNetworkOrder) {
 							managerDataStoreController.removeOrderSyncronous(order.getId());
 							order.setState(OrderState.FULFILLED);
@@ -1540,7 +1538,7 @@ public class ManagerController {
 		benchmarkExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
-				Instance instance = new Instance(order.getInstanceId());
+				Instance instance = computePlugin.getInstance(null, order.getInstanceId());
 				//FIXME commented by Eduardo
 				/*Instance instance = null;
 				if (getManagerSSHPublicKey() != null) {
@@ -1853,9 +1851,9 @@ public class ManagerController {
 				+ order.getxOCCIAtt() + " for requesting member: " + order.getRequestingMemberId()
 				+ " with requestingToken " + order.getRequestingMemberId());
 
-		boolean isComputeOrder = OrderConstants.COMPUTE_TERM.equals(order.getResourceKing());
-		boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order.getResourceKing());
-		boolean isNetworkOrder = OrderConstants.NETWORK_TERM.equals(order.getResourceKing());
+		boolean isComputeOrder = OrderConstants.COMPUTE_TERM.equals(order.getResourceKind());
+		boolean isStorageOrder = OrderConstants.STORAGE_TERM.equals(order.getResourceKind());
+		boolean isNetworkOrder = OrderConstants.NETWORK_TERM.equals(order.getResourceKind());
 		
 		for (String keyAttributes : OrderAttribute.getValues()) {
 			order.getxOCCIAtt().remove(keyAttributes);
@@ -2076,7 +2074,7 @@ public class ManagerController {
 		List<Instance> allFullInstances = new ArrayList<Instance>();
 		LOGGER.debug("<"+managerId+">: "+"Getting all instances and your information.");
 		for (Order order : ordersFromUser) {
-			if (!order.getResourceKing().equals(OrderConstants.COMPUTE_TERM)) {
+			if (!order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
 				continue;
 			}
 			
