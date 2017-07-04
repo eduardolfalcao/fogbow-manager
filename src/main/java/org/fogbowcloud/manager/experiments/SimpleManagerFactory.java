@@ -46,7 +46,7 @@ public class SimpleManagerFactory {
 	
 	private static final String BASE_PLUGINS = "org.fogbowcloud.manager.core.plugins.";
 	private static final String XMPP_JID_FREERIDER = "free-rider-manager";
-	private static final String XMPP_JID_COOPERATIVE = "cooperative-manager";
+	private static final String XMPP_JID_COOPERATIVE = "p";
 	
 	private static final String PATH_FOGBOW_MANAGER = System.getProperty("user.dir");
 	private static final String PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/experiments/datastores/";

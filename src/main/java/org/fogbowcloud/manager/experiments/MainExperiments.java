@@ -14,11 +14,13 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.experiments.data.MonitorPeerState;
+import org.fogbowcloud.manager.experiments.scheduler.Scheduler;
 
 public class MainExperiments {
 
 	private static final Logger LOGGER = Logger.getLogger(MainExperiments.class);
 	private static final ManagerTimer dataMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+	private static final ManagerTimer schedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 
 	public static void main(String[] args) throws Exception {
 		
@@ -82,6 +84,9 @@ public class MainExperiments {
 		for(Properties prop : propertiesList)
 			fms.add(SimpleManagerFactory.createFM(prop));
 		
+		Scheduler scheduler = new Scheduler(fms, properties);
+		triggerScheduler(scheduler, properties);
+		
 		//bootstrapping
 		Thread.sleep(ManagerControllerHelper.getBootstrappingPeriod(managerProperties));
 		MonitorPeerState monitorPeerState = new MonitorPeerState(fms);
@@ -89,6 +94,20 @@ public class MainExperiments {
 		
 		LOGGER.info("The federation is up!");
 		
+	}
+	
+	private static void triggerScheduler(final Scheduler scheduler, final Properties prop) {
+		final long schedulerPeriod = 1000;
+		schedulerTimer.scheduleAtFixedRate(new TimerTask() {
+			@Override
+			public void run() {	
+				try {
+					scheduler.checkAndSubmitTasks();
+				} catch (Throwable e) {
+					LOGGER.error("Error while scheduling workload", e);
+				}
+			}
+		}, ManagerControllerHelper.getBootstrappingPeriod(prop), schedulerPeriod);
 	}
 	
 	private static void triggerDataMonitoring(final MonitorPeerState monitorPeers, Properties prop) {
