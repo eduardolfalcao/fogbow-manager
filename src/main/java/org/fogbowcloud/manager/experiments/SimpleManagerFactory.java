@@ -48,8 +48,8 @@ public class SimpleManagerFactory {
 	private static final String XMPP_JID_FREERIDER = "free-rider-manager";
 	private static final String XMPP_JID_COOPERATIVE = "p";
 	
-	private static final String PATH_FOGBOW_MANAGER = System.getProperty("user.dir");
-	private static final String PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/experiments/datastores/";
+	public static final String PATH_FOGBOW_MANAGER = System.getProperty("user.dir");
+	public static final String PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/experiments/datastores/";
 	private static final String PATH_LOG = PATH_FOGBOW_MANAGER+"/experiments/log/";
 	
 	private static final int HTTP_PORT = 9192;

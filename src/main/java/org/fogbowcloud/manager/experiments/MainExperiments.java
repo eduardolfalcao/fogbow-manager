@@ -8,6 +8,9 @@ import java.util.Properties;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
 
+import javax.swing.JOptionPane;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ManagerController;
@@ -23,9 +26,6 @@ public class MainExperiments {
 	private static final ManagerTimer schedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 
 	public static void main(String[] args) throws Exception {
-		
-		//TODO
-		//remover banco de dados
 		
 		MainHelper.configureLog4j();		
 
@@ -58,12 +58,18 @@ public class MainExperiments {
 		Properties managerProperties = new Properties();
 		FileInputStream input = new FileInputStream(managerConfigFile);
 		managerProperties.load(input);
+		
+		if(JOptionPane.OK_OPTION==JOptionPane.showConfirmDialog(null, "Would you like to remove data from previous experiment?")){
+			FileUtils.cleanDirectory(new File(SimpleManagerFactory.PATH_DATASTORES));
+			FileUtils.cleanDirectory(new File(managerProperties.getProperty(MonitorPeerState.OUTPUT_FOLDER)));
+		}
+		
 		Properties infraProperties = new Properties();
 		FileInputStream infraInput = new FileInputStream(infrastructureConfgFile);
 		infraProperties.load(infraInput);
 		Properties fedProperties = new Properties();
 		FileInputStream fedInput = new FileInputStream(federationConfgFile);
-		fedProperties.load(fedInput);
+		fedProperties.load(fedInput);		 
 		
 		properties.putAll(managerProperties);
 		properties.putAll(infraProperties);
