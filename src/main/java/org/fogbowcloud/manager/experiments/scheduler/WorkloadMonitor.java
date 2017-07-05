@@ -12,7 +12,9 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.experiments.scheduler.model.Job;
 import org.fogbowcloud.manager.experiments.scheduler.model.Task;
+import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderAttribute;
 
 public class WorkloadMonitor {
 	
@@ -44,8 +46,8 @@ public class WorkloadMonitor {
 						long durationInSec = TimeUnit.MILLISECONDS.toSeconds(now - fulfilledTime);
 						if(durationInSec>=t.getRuntime()){							
 							ordersToBeRemoved.put(fm, order);
-							System.out.println("Removing "+t);
-							itTasks.remove();							
+							itTasks.remove();
+							System.out.println("Peer "+fm+" removing task "+t+" - ~ending time:"+(t.getRuntime()+j.getSubmitTime()));
 						}					
 					}
 				}
@@ -56,13 +58,18 @@ public class WorkloadMonitor {
 		removeOrders(ordersToBeRemoved);
 	}
 	
-	private void removeOrders(Map<ManagerController,Order> ordersToBeRemoved){
-		for (Map.Entry<ManagerController, Order> entry : ordersToBeRemoved.entrySet()){
-		    ManagerController mc = entry.getKey();
-		    Order orderToBeRemoved = entry.getValue();		    
-		    mc.removeInstance(null, orderToBeRemoved.getGlobalInstanceId(), orderToBeRemoved.getResourceKind());
-		    mc.removeOrder(null, orderToBeRemoved.getId());
-		}		
+	private void removeOrders(final Map<ManagerController,Order> ordersToBeRemoved){		
+		Runnable run = new Runnable() {
+		    public void run() {
+		    	for (Map.Entry<ManagerController, Order> entry : ordersToBeRemoved.entrySet()){
+				    ManagerController mc = entry.getKey();
+				    Order orderToBeRemoved = entry.getValue();		    
+				    mc.removeInstance(null, orderToBeRemoved.getGlobalInstanceId(), orderToBeRemoved.getResourceKind());	
+				    mc.removeOrder(null, orderToBeRemoved.getId());		    
+				}	
+		    }
+		 };
+		 new Thread(run).start();						
 	}
 	
 	private ManagerController getManager(Job j){

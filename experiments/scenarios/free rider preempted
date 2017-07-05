@@ -1,0 +1,21 @@
+#9193 is a cooperator (quota=2)
+#9194 is a cooperator (quota=2)
+#9195 is a free rider (quota=0)
+
+#first, 9194 asks 3 instances, from which 2 are answered locally, and 1 is provided remotely from 9193
+./fogbow-cli order --url http://localhost:9194 --create --n 3 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
+X-OCCI-Location: http://127.0.0.1:9194/order/38deb21e-5b31-4668-88e6-2ca3631f1d9c
+X-OCCI-Location: http://127.0.0.1:9194/order/2b283bf0-ede1-472b-a993-f675047457fa
+X-OCCI-Location: http://127.0.0.1:9194/order/662818b0-ac96-41b6-b625-32bdc077e518
+
+
+#then, 9193 asks 2 instances, both met locally
+./fogbow-cli order --url http://localhost:9193 --create --n 2 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
+
+#then, 9194 removes a local instance
+./fogbow-cli order --url http://localhost:9194 --get --auth-token a --id 38deb21e-5b31-4668-88e6-2ca3631f1d9c
+instance1-f1a80974-9d99-4192-8bed-6ea5fee336c0@cooperative-manager2
+./fogbow-cli order --url http://localhost:9194 --delete --auth-token a --id 38deb21e-5b31-4668-88e6-2ca3631f1d9c & ./fogbow-cli instance --url http://localhost:9194 --delete --auth-token a --id instance1-d57fc972-eba7-4af8-951e-fa0db38446db@cooperative-manager2
+
+#then, 9195 asks 1, which will be met by 9194
+./fogbow-cli order --url http://localhost:9195 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu

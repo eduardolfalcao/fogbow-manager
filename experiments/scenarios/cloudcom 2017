@@ -1,54 +1,47 @@
 ###################################################
-# XMPP
+# manager.conf
 ###################################################
-# jid of the Fogbow Manager XMPP component
-# FREE RIDER ===> xmpp_jid=free-rider-manager1 
-# COOPERATIVE ===> xmpp_jid=cooperative-manager1
 
-# password of the Fogbow Manager XMPP component
-xmpp_password=manager_password
-
-# XMPP server IP address
-xmpp_host=127.0.0.1
-
-# Port in which the XMPP server will be listening
-xmpp_port=5347
-
-# jid of your Rendezvous XMPP component
-rendezvous_jid=rendezvous
+###################################################
+# TIME INTERVALS
+###################################################
+scheduler_period=1000
 #----------------------------------------------------
 
 ###################################################
-# FEDERATION IDENTITY
+# MONITORING ORDERS
 ###################################################
-local_identity_class=org.fogbowcloud.manager.core.plugins.identity.nocloud.NoCloudIdentityPlugin
-federation_identity_class=org.fogbowcloud.manager.core.plugins.identity.nocloud.NoCloudIdentityPlugin
+instance_monitoring_period=5000
+served_order_monitoring_period=5000
+async_order_waiting_interval=5000
+maximum_order_attempts=100					//tenta submeter novamente a cada instance_monitoring_period seconds + GRACE_TIME
 #----------------------------------------------------
 
 ###################################################
-# AUTHORIZATION
+# MONITORING EXPERIMENT METRICS
 ###################################################
-federation_authorization_class=org.fogbowcloud.manager.core.plugins.authorization.AllowAllAuthorizationPlugin
+bootstrapping_period=20000
+peer_state_monitoring_period=1000
+output_data_monitoring_period=10000
+output_folder=experiments/data/
+output_data_ending_time=7200000
+workload_folder=experiments/workload/
 #----------------------------------------------------
 
+
 ###################################################
-# MEMBER VALIDATOR
+# federation.conf
 ###################################################
-member_validator_class=org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin
-#----------------------------------------------------
 
 ###################################################
 # MEMBER PICKER
 ###################################################
 member_picker_class=org.fogbowcloud.manager.core.plugins.memberpicker.RoundRobinMemberPickerPlugin
-# NoFMemberPicker doesn't work properly. Check issue in github.
 #----------------------------------------------------
 
 ###################################################
 # CAPACITY CONTROLLER
 ###################################################
-# FREE RIDER ===> capacity_controller_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.freerider.FreeRiderCapacityControllerPlugin
-# COOPERATIVE ===> capacity_controller_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.TwoFoldCapacityController
 capacity_controller_class=org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven.TwoFoldCapacityController
 controller_delta=0.05
 controller_minimum_threshold=0.75
@@ -59,7 +52,6 @@ capacity_controller_update_period=30000
 ###################################################
 # PRIORITIZATION
 ###################################################
-# FREE RIDER ===> prioritization_class=org.fogbowcloud.manager.core.plugins.prioritization.fcfs.FCFSPrioritizationPlugin
 # COOPERATIVE ===> prioritization_class=org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFPrioritizationPlugin
 nof_prioritize_local=true
 nof_trustworthy=false
@@ -69,13 +61,20 @@ nof_trustworthy=false
 # ACCOUNTING
 ###################################################
 compute_accounting_class=org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin
-accounting_datastore_url=jdbc:sqlite::memory:
+accounting_datastore_url=jdbc:sqlite:experiments/datastores/datastore_accounting.sqlite
 accounting_update_period=5000
 
 storage_accounting_class=org.fogbowcloud.manager.core.plugins.accounting.SimpleStorageAccountingPlugin
 #----------------------------------------------------
 
 ###################################################
-# CREDENTIALS
+# infrastructure.conf
 ###################################################
-federation_user_credential_class=org.fogbowcloud.manager.core.plugins.localcredentials.SingleMapperPlugin
+
+###################################################
+# CLOUD 
+###################################################
+# FREE RIDER ===> compute_class=org.fogbowcloud.manager.core.plugins.compute.nocloud.NoCloudComputePlugin
+# COOPERATIVE ===> compute_class=org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin
+compute_fake_quota=15
+#----------------------------------------------------

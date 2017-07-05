@@ -23,6 +23,7 @@ import org.fogbowcloud.manager.occi.storage.StorageLink;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteConfig.JournalMode;
 
 public class ManagerDataStore {
 
@@ -773,6 +774,7 @@ public class ManagerDataStore {
 			SQLiteConfig config = new SQLiteConfig();
 			config.enforceForeignKeys(true);  
 			config.setBusyTimeout("30000");
+			config.setJournalMode(JournalMode.WAL);
 			return DriverManager.getConnection(this.dataStoreURL, config.toProperties());				
 		} catch (SQLException e) {
 			LOGGER.error("Error while getting a new connection from the connection pool.", e);

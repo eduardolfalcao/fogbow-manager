@@ -3,16 +3,19 @@ package org.fogbowcloud.manager.experiments.scheduler;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.ManagerTimer;
+import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.experiments.MainExperiments;
 import org.fogbowcloud.manager.experiments.scheduler.model.DataReader;
 import org.fogbowcloud.manager.experiments.scheduler.model.Job;
@@ -38,6 +41,8 @@ public class WorkloadScheduler {
 	
 	private Map<String, String> xOCCIAtt;
 	private List<Category> categories;
+	
+	private long initialTime;
 	
 	public WorkloadScheduler(List<ManagerController> fms, Properties props) {
 		this.props = props;
@@ -75,34 +80,62 @@ public class WorkloadScheduler {
 	}
 
 	public void checkAndSubmitTasks() {
-		List<Job> jobsToBeSubmitted = getJobs(time);
-		for(Job j : jobsToBeSubmitted){
-			ManagerController mc = relations.get(j.getPeerId());
-			Map<String, String> xOCCIAttClone = new HashMap<String, String>();
-			xOCCIAttClone.putAll(xOCCIAtt);
-			xOCCIAttClone.put(OrderAttribute.INSTANCE_COUNT.getValue(), String.valueOf(j.getTasks().size()));	
-			List<Category> categoriesClone = new ArrayList<Category>();
-			categoriesClone.addAll(categories);
-			List<Order> orders = mc.createOrders("", categoriesClone, xOCCIAttClone);
-			for(int i = 0; i < orders.size(); i++)
-				j.getTasks().get(i).setOrderId(orders.get(i).getId());		
-			System.out.println("Peer "+j.getPeerId()+" creating "+j);
-			monitor.addJob(j);
-		}		
+		if(time==0)
+			initialTime = new DateUtils().currentTimeMillis();
+		long now = new DateUtils().currentTimeMillis();
+		System.out.println("TimeMonitor: "+time+"; RealTime: "+TimeUnit.MILLISECONDS.toSeconds((now-initialTime)));
+				
+		runJobs();
 		time++;		
 	}	
 	
+	
+	
+	private void runJobs(){		
+		Runnable run = new Runnable() {
+		    public void run() {
+			    List<Job> jobsToBeSubmitted = getJobs(time);
+			    for(Job j : jobsToBeSubmitted){
+					ManagerController mc = relations.get(j.getPeerId());
+					Map<String, String> xOCCIAttClone = new HashMap<String, String>();
+					xOCCIAttClone.putAll(xOCCIAtt);
+					xOCCIAttClone.put(OrderAttribute.INSTANCE_COUNT.getValue(), String.valueOf(j.getTasks().size()));	
+					List<Category> categoriesClone = new ArrayList<Category>();
+					categoriesClone.addAll(categories);
+					List<Order> orders = mc.createOrders("", categoriesClone, xOCCIAttClone);
+					for(int i = 0; i < orders.size(); i++)
+						j.getTasks().get(i).setOrderId(orders.get(i).getId());		
+					System.out.println("Peer "+j.getPeerId()+" creating "+j);
+					monitor.addJob(j);
+				}		
+		    }
+		 };
+		 new Thread(run).start();		
+	}
+	
 	private List<Job> getJobs(long time) {
 		List<Job> jobs = new ArrayList<Job>();
-		for(Peer p : peers){
-			for(User u : p.getUsers()){
-				for(Job j: u.getJobs()){
-					if(j.getSubmitTime() == time)
+		Iterator<Peer> peersIt = peers.iterator();
+		while(peersIt.hasNext()){
+			Peer p = peersIt.next();
+			Iterator<User> usersIt = p.getUsers().iterator();
+			while(usersIt.hasNext()){
+				User u = usersIt.next();
+				Iterator<Job> jobsIt = u.getJobs().iterator();
+				while(jobsIt.hasNext()){
+					Job j = jobsIt.next();
+					if(j.getSubmitTime() == time){
 						jobs.add(j);
+						jobsIt.remove();
+					}
 					else if(j.getSubmitTime() > time)
 						break;
 				}
-			}			
+				if(u.getJobs().isEmpty())
+					usersIt.remove();
+			}
+			if(p.getUsers().isEmpty())
+				peersIt.remove();
 		}
 		return jobs;
 	}

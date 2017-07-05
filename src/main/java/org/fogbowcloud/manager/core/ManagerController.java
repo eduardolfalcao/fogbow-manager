@@ -992,7 +992,12 @@ public class ManagerController {
 		return false;
 	}
 
-	protected void instanceRemoved(Order order) {			
+	protected void instanceRemoved(Order order) {
+		if(order.getResourceKind() == null){
+			System.out.println("########################################################");
+			System.out.println("# "+order);
+			System.out.println("########################################################");
+		}
 		if (order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
 			updateAccounting();
 			benchmarkingPlugin.remove(order.getInstanceId());			
@@ -1789,8 +1794,9 @@ public class ManagerController {
 			ManagerPacketHelper.checkIfInstanceIsBeingUsedByRemoteMember(globalInstanceId, servedOrder, packetSender);
 			return true;
 		} catch (OCCIException e) {
-			LOGGER.error("<"+managerId+">: "+"Error while checking if instance " + globalInstanceId + " is being used by "
-							+ servedOrder.getRequestingMemberId(), e);
+			/** COMMENTED BY EDUARDO **/
+			//LOGGER.error("<"+managerId+">: "+"Error while checking if instance " + globalInstanceId + " is being used by "
+			//				+ servedOrder.getRequestingMemberId(), e);
 			throw e;
 		}
 	}
