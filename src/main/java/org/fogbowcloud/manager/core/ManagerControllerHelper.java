@@ -121,7 +121,7 @@ public class ManagerControllerHelper {
 		}
 		
 		protected long getTimeout(long monitorPeriod) {
-			return this.dateUtils.currentTimeMillis() + (monitorPeriod * this.maximumAttempts) + GRACE_TIME;
+			return this.dateUtils.currentTimeMillis() + (monitorPeriod * this.maximumAttempts);// + GRACE_TIME;
 		}
 		
 		protected Map<String, OrderAttempt> getOrderFailedAttempts() {

@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import javax.swing.JOptionPane;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ManagerController;
@@ -27,7 +28,8 @@ public class MainExperiments {
 
 	public static void main(String[] args) throws Exception {
 		
-		MainHelper.configureLog4j();		
+		MainHelper.configureLog4j();	
+		LOGGER.setLevel(Level.INFO);
 
 		String managerConfigFilePath = args[0];
 		String infrastructureConfigFilePath = args[1];
@@ -41,15 +43,15 @@ public class MainExperiments {
 		File federationConfgFile = new File(federationConfigFilePath);
 		
 		if(!managerConfigFile.exists()){
-			LOGGER.warn("Informed path to manager.conf file must be valid.");
+			LOGGER.info("Informed path to manager.conf file must be valid.");
 			System.exit(MainHelper.EXIT_ERROR_CODE);
 		}
 		if(!infrastructureConfgFile.exists()){
-			LOGGER.warn("Informed path to infrastructure.conf file must be valid.");
+			LOGGER.info("Informed path to infrastructure.conf file must be valid.");
 			System.exit(MainHelper.EXIT_ERROR_CODE);
 		}
 		if(!federationConfgFile.exists()){
-			LOGGER.warn("Informed path to federation.conf file must be valid.");
+			LOGGER.info("Informed path to federation.conf file must be valid.");
 			System.exit(MainHelper.EXIT_ERROR_CODE);
 		}
 		
@@ -59,10 +61,10 @@ public class MainExperiments {
 		FileInputStream input = new FileInputStream(managerConfigFile);
 		managerProperties.load(input);
 		
-		if(JOptionPane.OK_OPTION==JOptionPane.showConfirmDialog(null, "Would you like to remove data from previous experiment?")){
-			FileUtils.cleanDirectory(new File(SimpleManagerFactory.PATH_DATASTORES));
-			FileUtils.cleanDirectory(new File(managerProperties.getProperty(MonitorPeerState.OUTPUT_FOLDER)));
-		}
+		//if(JOptionPane.OK_OPTION==JOptionPane.showConfirmDialog(null, "Would you like to remove data from previous experiment?")){
+		FileUtils.cleanDirectory(new File(SimpleManagerFactory.PATH_DATASTORES));
+		//FileUtils.cleanDirectory(new File(managerProperties.getProperty(MonitorPeerState.OUTPUT_FOLDER)));
+		//}
 		
 		Properties infraProperties = new Properties();
 		FileInputStream infraInput = new FileInputStream(infrastructureConfgFile);

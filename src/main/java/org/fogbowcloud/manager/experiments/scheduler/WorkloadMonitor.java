@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.DateUtils;
@@ -27,6 +28,7 @@ public class WorkloadMonitor {
 	public WorkloadMonitor(List<ManagerController> fms) {
 		this.fms = fms;
 		this.jobsSubmitted = new ArrayList<Job>();
+		LOGGER.setLevel(Level.INFO);
 	}
 	
 	public void monitorJobs(){
@@ -47,7 +49,7 @@ public class WorkloadMonitor {
 						if(durationInSec>=t.getRuntime()){							
 							ordersToBeRemoved.put(fm, order);
 							itTasks.remove();
-							System.out.println("Peer "+fm+" removing task "+t+" - ~ending time:"+(t.getRuntime()+j.getSubmitTime()));
+							LOGGER.info("Peer "+fm+" removing task "+t+" - ~ending time:"+(t.getRuntime()+j.getSubmitTime()));
 						}					
 					}
 				}

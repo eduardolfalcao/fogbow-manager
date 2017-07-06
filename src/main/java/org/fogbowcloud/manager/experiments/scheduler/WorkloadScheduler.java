@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.experiments.scheduler;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -11,12 +12,11 @@ import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.core.model.DateUtils;
-import org.fogbowcloud.manager.experiments.MainExperiments;
 import org.fogbowcloud.manager.experiments.scheduler.model.DataReader;
 import org.fogbowcloud.manager.experiments.scheduler.model.Job;
 import org.fogbowcloud.manager.experiments.scheduler.model.Peer;
@@ -49,6 +49,7 @@ public class WorkloadScheduler {
 		this.peers = new ArrayList<Peer>();
 		
 		readWorkloads();
+		sortJobsAndTasks();		
 		
 		relations = new HashMap<String, ManagerController>();
 		for(Peer p : peers){
@@ -64,6 +65,7 @@ public class WorkloadScheduler {
 		triggerWorkloadMonitor(monitor);
 		
 		initOrderParams();
+		LOGGER.setLevel(Level.INFO);
 	}
 	
 	private void initOrderParams() {
@@ -83,7 +85,7 @@ public class WorkloadScheduler {
 		if(time==0)
 			initialTime = new DateUtils().currentTimeMillis();
 		long now = new DateUtils().currentTimeMillis();
-		System.out.println("TimeMonitor: "+time+"; RealTime: "+TimeUnit.MILLISECONDS.toSeconds((now-initialTime)));
+		LOGGER.info("TimeMonitor: "+time+"; RealTime: "+TimeUnit.MILLISECONDS.toSeconds((now-initialTime)));
 				
 		runJobs();
 		time++;		
@@ -102,10 +104,10 @@ public class WorkloadScheduler {
 					xOCCIAttClone.put(OrderAttribute.INSTANCE_COUNT.getValue(), String.valueOf(j.getTasks().size()));	
 					List<Category> categoriesClone = new ArrayList<Category>();
 					categoriesClone.addAll(categories);
-					List<Order> orders = mc.createOrders("", categoriesClone, xOCCIAttClone);
+					List<Order> orders = mc.createOrders("", categoriesClone, xOCCIAttClone);					
 					for(int i = 0; i < orders.size(); i++)
-						j.getTasks().get(i).setOrderId(orders.get(i).getId());		
-					System.out.println("Peer "+j.getPeerId()+" creating "+j);
+						j.getTasks().get(i).setOrderId(orders.get(i).getId());
+					LOGGER.info("Peer "+j.getPeerId()+" creating "+j);					
 					monitor.addJob(j);
 				}		
 		    }
@@ -140,6 +142,17 @@ public class WorkloadScheduler {
 		return jobs;
 	}
 	
+	private void sortJobsAndTasks(){
+		for(Peer p : this.peers){
+			for(User u : p.getUsers()){
+				Collections.sort(u.getJobs());
+				for(Job j : u.getJobs()){
+					Collections.sort(j.getTasks());
+				}
+			}
+		}
+	}
+	
 	private static void triggerWorkloadMonitor(final WorkloadMonitor monitor) {
 		final long monitorPeriod = 1000;
 		monitorTimer.scheduleAtFixedRate(new TimerTask() {
@@ -157,7 +170,7 @@ public class WorkloadScheduler {
 	private void readWorkloads(){
 		DataReader df = new DataReader();
 		for(String file : getFiles()){
-			System.out.println("Running on file: "+file);
+			LOGGER.info("Running on file: "+file);
 			df.readWorkload(this.peers, file);
 		}		
 	}

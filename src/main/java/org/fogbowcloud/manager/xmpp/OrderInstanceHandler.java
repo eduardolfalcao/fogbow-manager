@@ -5,8 +5,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.dom4j.Element;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.jamppa.component.handler.AsyncQueryHandler;
@@ -14,11 +17,15 @@ import org.xmpp.packet.IQ;
 
 public class OrderInstanceHandler extends AsyncQueryHandler {
 
+	private static final Logger LOGGER = Logger.getLogger(OrderInstanceHandler.class);
+	
 	private ManagerController facade;
+	private String managerId;
 
 	public OrderInstanceHandler(ManagerController facade) {
 		super(ManagerXmppComponent.ORDER_NAMESPACE);
 		this.facade = facade;
+		this.managerId = facade.getManagerId();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -48,6 +55,9 @@ public class OrderInstanceHandler extends AsyncQueryHandler {
 			userToken = new Token(tokenEl.elementText("accessId"), new Token.User(userEl.elementText(ManagerPacketHelper.ID_EL), 
 					userEl.elementText(ManagerPacketHelper.NAME_EL)), null, new HashMap<String, String>());
 		}
+		
+		LOGGER.warn("<"+managerId+">: Received request with "+orderId+" from "+iq.getFrom().toBareJID());
+		
 		facade.queueServedOrder(iq.getFrom().toBareJID(), categories, xOCCIAtt, orderId,
 				userToken);
 	}

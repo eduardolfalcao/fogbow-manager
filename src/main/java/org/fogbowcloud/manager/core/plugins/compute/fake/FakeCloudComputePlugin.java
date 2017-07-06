@@ -6,10 +6,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -22,6 +24,7 @@ import org.restlet.Response;
 public class FakeCloudComputePlugin implements ComputePlugin {
 
 	public static final String COMPUTE_FAKE_QUOTA = "compute_fake_quota";
+	private static final Logger LOGGER = Logger.getLogger(FakeCloudComputePlugin.class);
 	
 	private int quota;	
 	private int instanceCounter = 0;
@@ -55,6 +58,8 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 			i.addAttribute("occi.compute.memory", "16");
 			return i;
 		}
+		LOGGER.warn("Existing instances: "+instances);//debug-EDUARDO
+		LOGGER.warn("Requested instance: "+instanceId);//debug-EDUARDO
 		return null;
 	}	
 

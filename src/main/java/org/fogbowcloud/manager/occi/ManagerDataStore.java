@@ -57,12 +57,14 @@ public class ManagerDataStore {
 	protected static final String FEDERTION_MEMBER_ID = "federation_member_id";
 	
 	private String dataStoreURL;
+	private String managerId;
 
 	public ManagerDataStore(Properties properties) {
 		
-		String dataStoreURLProperties = properties.getProperty(MANAGER_DATASTORE_URL);
+		String dataStoreURLProperties = properties.getProperty(MANAGER_DATASTORE_URL);		
 		this.dataStoreURL = DataStoreHelper.getDataStoreUrl(dataStoreURLProperties,
 				DEFAULT_DATASTORE_NAME);
+		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		
 		Statement statement = null;
 		Connection connection = null;
@@ -103,8 +105,8 @@ public class ManagerDataStore {
 							+ ORDER_TABLE_NAME + "(" + ORDER_ID + ") ON DELETE CASCADE)");			
 			statement.close();
 		} catch (Exception e) {
-			LOGGER.error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
-			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
+			LOGGER.error("<"+managerId+">: "+ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
+			throw new Error("<"+managerId+">: "+ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 		} finally {
 			close(statement, connection);
 		}
@@ -142,13 +144,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't create order.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't create order with id "+order.getId()+". "+e.getMessage());
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(orderStmt, connection);
@@ -201,13 +203,13 @@ public class ManagerDataStore {
 			
 			return orders;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't retrieve orders.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't retrieve orders.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(ordersStmt, connection);
@@ -257,13 +259,13 @@ public class ManagerDataStore {
 			
 			return order;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't retrieve order.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't retrieve order.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(ordersStmt, connection);
@@ -289,13 +291,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't remove order.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't remove order.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(removeOrderStmt, connection);
@@ -319,7 +321,7 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't remove all order.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't remove all order.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
@@ -364,13 +366,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't update order.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't update order.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(updateOrderStmt, connection);
@@ -397,13 +399,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't update order asyncronous.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't update order asyncronous.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 		} catch (Exception e) {
 			
@@ -441,13 +443,13 @@ public class ManagerDataStore {
 			
 			connection.commit();
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't count order.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't count order.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(countOrderStmt, connection);
@@ -486,13 +488,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't create storage link.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't create storage link.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(storageLinkStmt, connection);
@@ -600,13 +602,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't update storage link.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't update storage link.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(updateStorageLinkStmt, connection);
@@ -637,13 +639,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't create federation member.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't create federation member.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(federationMemberStmt, connection);
@@ -681,13 +683,13 @@ public class ManagerDataStore {
 			
 			return federationMembersServered;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't retrieve federation members serverd.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't retrieve federation members serverd.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(federationMemStmt, connection);
@@ -714,13 +716,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't remove federation member servered.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't remove federation member servered.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(removeFederationMemberServeredStmt, connection);
@@ -755,13 +757,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("Couldn't remove all values in all table servered.", e);
+			LOGGER.error("<"+managerId+">: "+"Couldn't remove all values in all table servered.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("Couldn't rollback transaction.", e1);
+				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(removeAllValueInAllTableStmt, connection);
@@ -777,7 +779,7 @@ public class ManagerDataStore {
 			config.setJournalMode(JournalMode.WAL);
 			return DriverManager.getConnection(this.dataStoreURL, config.toProperties());				
 		} catch (SQLException e) {
-			LOGGER.error("Error while getting a new connection from the connection pool.", e);
+			LOGGER.error("<"+managerId+">: "+"Error while getting a new connection from the connection pool.", e);
 			throw e;
 		}
 	}
@@ -789,7 +791,7 @@ public class ManagerDataStore {
 					statement.close();
 				}
 			} catch (SQLException e) {
-				LOGGER.error("Couldn't close statement");
+				LOGGER.error("<"+managerId+">: "+"Couldn't close statement");
 			}
 		}
 
@@ -799,7 +801,7 @@ public class ManagerDataStore {
 					conn.close();
 				}
 			} catch (SQLException e) {
-				LOGGER.error("Couldn't close connection");
+				LOGGER.error("<"+managerId+">: "+"Couldn't close connection");
 			}
 		}
 	}

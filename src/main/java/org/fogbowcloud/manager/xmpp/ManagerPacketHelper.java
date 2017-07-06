@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.apache.http.HttpStatus;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
@@ -143,7 +144,7 @@ public class ManagerPacketHelper {
 		return aliveItems;
 	}
 
-	public static void asynchronousRemoteOrder(String orderId, List<Category> categories,
+	public static void asynchronousRemoteOrder(String managerId, String orderId, List<Category> categories,
 			Map<String, String> xOCCIAttr, String memberAddress, Token userFederationToken,
 			AsyncPacketSender packetSender, final AsynchronousOrderCallback callback) {
 
@@ -180,7 +181,9 @@ public class ManagerPacketHelper {
 			UserEl.addElement(NAME_EL).setText(
 					userFederationToken.getUser().getName());			
 		}
-
+		
+		LOGGER.warn("<"+managerId+">: Sending request with "+orderId+" to "+memberAddress);
+		
 		packetSender.addPacketCallback(iq, new PacketCallback() {
 
 			@Override

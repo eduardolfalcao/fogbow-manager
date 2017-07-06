@@ -78,7 +78,7 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 			double instanceUsage = getUsage(order, updatingInterval, consumptionInterval);
 			
 			//added by Eduardo for debugging purposes
-			usage.get(current).incrementCurrentInstances();
+			usage.get(current).incrementCurrentInstances();		//every time we have to count again by the number of orders with instance
 			usage.get(current).addConsumption(instanceUsage);
 		}
 

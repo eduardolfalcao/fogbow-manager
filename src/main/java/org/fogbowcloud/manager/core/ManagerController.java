@@ -993,11 +993,13 @@ public class ManagerController {
 	}
 
 	protected void instanceRemoved(Order order) {
-		if(order.getResourceKind() == null){
-			System.out.println("########################################################");
-			System.out.println("# "+order);
-			System.out.println("########################################################");
+		
+		/** Added by Eduardo **/
+		if(order == null){
+			LOGGER.debug("<"+managerId+">: Trying to close null order!");
+			return;
 		}
+		
 		if (order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
 			updateAccounting();
 			benchmarkingPlugin.remove(order.getInstanceId());			
@@ -1459,7 +1461,7 @@ public class ManagerController {
 
 		LOGGER.info("<"+managerId+">: "+"Submiting order " + order + " to member " + memberAddress);		
 		this.managerDataStoreController.addOrderSyncronous(order.getId(), dateUtils.currentTimeMillis(), order.getProvidingMemberId());
-		ManagerPacketHelper.asynchronousRemoteOrder(order.getId(), categoriesCopy, xOCCIAttCopy, memberAddress, 
+		ManagerPacketHelper.asynchronousRemoteOrder(managerId, order.getId(), categoriesCopy, xOCCIAttCopy, memberAddress, 
 				federationIdentityPlugin.getForwardableToken(order.getFederationToken()), 
 				packetSender, new AsynchronousOrderCallback() {
 					@Override
@@ -1497,6 +1499,7 @@ public class ManagerController {
 						}
 						
 						try {
+							LOGGER.warn("<"+managerId+">: will execBenchmark on received instance, order "+order.getId()+", and instance "+order.getInstanceId());
 							execBenchmark(order);
 						} catch (Throwable e) {
 							LOGGER.error("<"+managerId+">: "+"Error while executing the benchmark in " + instanceId
@@ -1543,7 +1546,10 @@ public class ManagerController {
 		benchmarkExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
-				Instance instance = computePlugin.getInstance(null, order.getInstanceId());
+				Instance instance = new Instance(order.getInstanceId());
+				instance.addAttribute("occi.compute.cores", "8");
+				instance.addAttribute("occi.compute.memory", "16");
+				
 				//FIXME commented by Eduardo
 				/*Instance instance = null;
 				if (getManagerSSHPublicKey() != null) {
@@ -1846,7 +1852,7 @@ public class ManagerController {
 		try {
 			return createInstance(order);
 		} catch (Exception e) {
-			LOGGER.info("<"+managerId+">: "+"Could not create instance with federation user locally. ", e);
+			LOGGER.info("<"+managerId+">: "+"Could not create instance with federation user locally. ", e);	//DEBUG-EDUARDO
 			return false;
 		}
 	}

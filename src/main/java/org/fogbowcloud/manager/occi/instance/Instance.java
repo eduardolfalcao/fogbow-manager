@@ -40,6 +40,11 @@ public class Instance {
 		this.links = new ArrayList<Link>();
 		this.attributes = new HashMap<String, String>();
 	}
+	
+	@Override
+	public String toString() {
+		return "id "+id+", state "+state;
+	}
 
 	public Instance(String id, List<Resource> resources, Map<String, String> attributes,
 			List<Link> links, InstanceState instanceState) {

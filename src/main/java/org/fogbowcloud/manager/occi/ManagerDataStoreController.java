@@ -112,7 +112,7 @@ public class ManagerDataStoreController {
 	
 	public Order getOrder(String orderId, boolean lookingForLocalOrder) {
 		try {
-			Order order = this.managerDatabase.getOrder(orderId);
+			Order order = this.managerDatabase.getOrder(orderId);			
 			if (order != null && 
 					(lookingForLocalOrder && order.isLocal() || !lookingForLocalOrder && !order.isLocal())) {
 				LOGGER.debug("<"+managerId+">: "+"Getting order id " + order);
@@ -123,7 +123,6 @@ public class ManagerDataStoreController {
 			LOGGER.error("<"+managerId+">: "+errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 		}
-		LOGGER.debug("<"+managerId+">: "+"Order id " + orderId + " was not found.");
 		return null;
 	}
 

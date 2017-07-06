@@ -89,7 +89,7 @@ public class MainHelper {
 
 	public static void configureLog4j() {
 		try {
-			props.load(new FileInputStream("experiments/confs/log4j.properties"));
+			props.load(new FileInputStream("scenarios/log4j.properties"));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

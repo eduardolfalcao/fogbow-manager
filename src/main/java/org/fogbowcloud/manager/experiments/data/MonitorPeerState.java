@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.experiments.data;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,7 +35,8 @@ public class MonitorPeerState {
 		
 		outputTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_MONITORING_PERIOD_KEY))/CONVERSION_VALUE;
 		endingTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_ENDING_TIME))/CONVERSION_VALUE;
-		path = fms.get(0).getProperties().getProperty(OUTPUT_FOLDER);
+		path = fms.get(0).getProperties().getProperty(OUTPUT_FOLDER);		
+		new File(path).mkdirs();
 		
 		data = new HashMap<ManagerController, List<PeerState>>();
 		
@@ -76,7 +78,7 @@ public class MonitorPeerState {
 		long now = (date.currentTimeMillis()-initialTime)/CONVERSION_VALUE;
 		if((now - lastWrite)>outputTime){
 			write();
-			lastWrite = now;	//debugar o last write
+			lastWrite = now;	
 		}
 		if(now >= endingTime){
 			for(ManagerController fm : fms){

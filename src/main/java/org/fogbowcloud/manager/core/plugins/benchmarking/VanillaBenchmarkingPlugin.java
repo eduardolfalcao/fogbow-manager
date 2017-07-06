@@ -25,7 +25,7 @@ public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 	@Override
 	public void run(String globalInstanceId, Instance instance) {
 		if (instance == null) {
-			throw new IllegalArgumentException("Instance must not be null.");
+			throw new IllegalArgumentException("<"+managerId+">: "+"Instance must not be null. (globalInstanceId: "+globalInstanceId+")");
 		}
 		LOGGER.info("<"+managerId+">: "+"Running benchmarking on instance: " + globalInstanceId);
 
