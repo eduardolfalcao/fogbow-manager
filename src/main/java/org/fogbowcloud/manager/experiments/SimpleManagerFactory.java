@@ -55,28 +55,22 @@ public class SimpleManagerFactory {
 	private static final int HTTP_PORT = 9192;
 	
 	
-	public static Properties adjustPropertiesManager(int id, boolean freeRider, Properties properties){
+	public static Properties adjustPropertiesManager(int id, boolean fdnof, Properties properties){
 		
-		Properties prop = (Properties) properties.clone();
+		Properties prop = (Properties) properties.clone();		
 		
-		String managerId = "", computePlugin = "", capacityControllerPlugin = "", prioritizationPlugin = "";		
-		if(freeRider){
-			managerId = XMPP_JID_FREERIDER+id;
-			computePlugin = BASE_PLUGINS+"compute.nocloud.NoCloudComputePlugin";
-			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.freerider.FreeRiderCapacityControllerPlugin";
-			prioritizationPlugin = BASE_PLUGINS+"prioritization.fcfs.FCFSPrioritizationPlugin";
-		}
-		else{
-			managerId = XMPP_JID_COOPERATIVE+id;
-			computePlugin = BASE_PLUGINS+"compute.fake.FakeCloudComputePlugin";
+		String managerId = XMPP_JID_COOPERATIVE+id;
+		
+		String capacityControllerPlugin = "";
+		if(fdnof)
 			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.fairnessdriven.TwoFoldCapacityController";
-			//capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin";
-			prioritizationPlugin = BASE_PLUGINS+"prioritization.nof.NoFPrioritizationPlugin";
-		}
+		else
+			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin";
+		
+		String prioritizationPlugin = BASE_PLUGINS+"prioritization.nof.NoFPrioritizationPlugin";		
 		
 		prop.put(ConfigurationConstants.XMPP_JID_KEY, managerId);
-		prop.put(ConfigurationConstants.COMPUTE_CLASS_KEY, computePlugin);
-		//prop.put(ConfigurationConstants.CAPACITY_CONTROLLER_PLUGIN_CLASS, capacityControllerPlugin);
+		prop.put(ConfigurationConstants.CAPACITY_CONTROLLER_PLUGIN_CLASS, capacityControllerPlugin);
 		prop.put(ConfigurationConstants.PRIORITIZATION_PLUGIN_CLASS, prioritizationPlugin);
 		
 		

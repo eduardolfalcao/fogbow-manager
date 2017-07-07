@@ -17,6 +17,7 @@ import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.ManagerTimer;
+import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.experiments.data.MonitorPeerState;
 import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
 
@@ -34,9 +35,6 @@ public class MainExperiments {
 		String managerConfigFilePath = args[0];
 		String infrastructureConfigFilePath = args[1];
 		String federationConfigFilePath = args[2];
-		
-		int numberOfCooperativeMembers = Integer.parseInt(args[3]);
-		int numberOfFreeRiderMembers = Integer.parseInt(args[4]);
 		
 		File managerConfigFile = new File(managerConfigFilePath);
 		File infrastructureConfgFile = new File(infrastructureConfigFilePath);
@@ -60,12 +58,6 @@ public class MainExperiments {
 		Properties managerProperties = new Properties();
 		FileInputStream input = new FileInputStream(managerConfigFile);
 		managerProperties.load(input);
-		
-		//if(JOptionPane.OK_OPTION==JOptionPane.showConfirmDialog(null, "Would you like to remove data from previous experiment?")){
-		FileUtils.cleanDirectory(new File(SimpleManagerFactory.PATH_DATASTORES));
-		//FileUtils.cleanDirectory(new File(managerProperties.getProperty(MonitorPeerState.OUTPUT_FOLDER)));
-		//}
-		
 		Properties infraProperties = new Properties();
 		FileInputStream infraInput = new FileInputStream(infrastructureConfgFile);
 		infraProperties.load(infraInput);
@@ -77,25 +69,39 @@ public class MainExperiments {
 		properties.putAll(infraProperties);
 		properties.putAll(fedProperties);
 		
+		int numberOfPeers = Integer.parseInt(args[3]);
+		properties.put(FakeCloudComputePlugin.COMPUTE_FAKE_QUOTA, args[4]);	//compute_fake_quota
+		boolean fdnof = args[5].equals("fdnof")?true:false;					//fdnof or sdnof
+		properties.put(WorkloadScheduler.WORKLOAD_FOLDER, args[6]);			//workload_folder
+		properties.put(MonitorPeerState.OUTPUT_DATA_ENDING_TIME, args[7]);	//output_data_ending_time
+		
+		String outputfolder = "data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";
+		properties.put(MonitorPeerState.OUTPUT_FOLDER, outputfolder);		
+		
+		try{
+			FileUtils.cleanDirectory(new File(SimpleManagerFactory.PATH_DATASTORES));
+		}catch(Exception e){
+			LOGGER.warn(e.getMessage());
+		}
+		try{
+			FileUtils.cleanDirectory(new File(properties.getProperty(MonitorPeerState.OUTPUT_FOLDER)));
+		}catch(Exception e){
+			LOGGER.warn(e.getMessage());
+		}
+		
 		List<Properties> propertiesList = new ArrayList<Properties>();
 		
-		boolean freeRider = false;
 		int id = 1;
-		for(; id <= numberOfCooperativeMembers; id++)
-			propertiesList.add(SimpleManagerFactory.adjustPropertiesManager(id, freeRider, properties));
-		
-		freeRider = true;
-		for(; id <= numberOfCooperativeMembers+numberOfFreeRiderMembers; id++)
-			propertiesList.add(SimpleManagerFactory.adjustPropertiesManager(id, freeRider, properties));
+		for(; id <= numberOfPeers; id++)
+			propertiesList.add(SimpleManagerFactory.adjustPropertiesManager(id, fdnof, properties));
 		
 		List<ManagerController> fms = new ArrayList<ManagerController>();
 		for(Properties prop : propertiesList)
 			fms.add(SimpleManagerFactory.createFM(prop));
 		
 		WorkloadScheduler scheduler = new WorkloadScheduler(fms, properties);
-		triggerWorkloadScheduler(scheduler, properties);
+		triggerWorkloadScheduler(scheduler, properties);		
 		
-		//bootstrapping
 		Thread.sleep(ManagerControllerHelper.getBootstrappingPeriod(managerProperties));
 		MonitorPeerState monitorPeerState = new MonitorPeerState(fms);
 		triggerDataMonitoring(monitorPeerState, properties);

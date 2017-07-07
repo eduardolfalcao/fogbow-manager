@@ -57,7 +57,7 @@ public class TestOrderRemoteInstance {
 
 		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
 
-		ManagerPacketHelper.asynchronousRemoteOrder(order.getId(), order.getCategories(), 
+		ManagerPacketHelper.asynchronousRemoteOrder("",order.getId(), order.getCategories(), 
 				order.getxOCCIAtt(), DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, 
 				order.getFederationToken(), managerTestHelper.createPacketSender(), 
 				new AsynchronousOrderCallback() {

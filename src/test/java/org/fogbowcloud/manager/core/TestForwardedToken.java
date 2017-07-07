@@ -36,7 +36,7 @@ public class TestForwardedToken {
         
 		final String userId = "user_id";
 		final String username = "user";
-		ManagerPacketHelper.asynchronousRemoteOrder(order1.getId(), order1.getCategories(), 
+		ManagerPacketHelper.asynchronousRemoteOrder("",order1.getId(), order1.getCategories(), 
 				order1.getxOCCIAtt(), "member1", new Token("accessId", new Token.User(userId, username), 
 				null, null), packetSender, null);
 		
@@ -65,7 +65,7 @@ public class TestForwardedToken {
 				new HashMap<String, String>(), true, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		order1.setState(OrderState.OPEN);
         
-		ManagerPacketHelper.asynchronousRemoteOrder(order1.getId(), order1.getCategories(), 
+		ManagerPacketHelper.asynchronousRemoteOrder("",order1.getId(), order1.getCategories(), 
 				order1.getxOCCIAtt(), "member1", null, packetSender, null);
 		
 		Mockito.verify(packetSender).sendPacket(Mockito.argThat(new ArgumentMatcher<IQ>() {
