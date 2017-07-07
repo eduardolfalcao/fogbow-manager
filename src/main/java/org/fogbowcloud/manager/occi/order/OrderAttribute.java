@@ -22,7 +22,8 @@ public enum OrderAttribute {
 	RESOURCE_KIND("org.fogbowcloud.order.resource-kind"),
 	STORAGE_SIZE("org.fogbowcloud.order.storage-size"),
 	NETWORK_ID("org.fogbowcloud.order.network-id"),
-	RUNTIME("org.fogbowcloud.order.runtime");
+	RUNTIME("org.fogbowcloud.order.runtime"),
+	ELAPSED_TIME("org.fogbowcloud.order.elapsedtime");
 	
 	private String value;
 	

@@ -22,7 +22,7 @@ public class Order {
 	private String providingMemberId;
 	private final String requestingMemberId;
 	private long fulfilledTime = 0;
-	private long elapsedTime = 0, runtime = -1;	
+	private long elapsedTime, runtime;	
 	private final boolean isLocal;
 	private OrderState state;
 	private List<Category> categories;
@@ -51,6 +51,7 @@ public class Order {
 		} else {
 			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
 			this.runtime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.RUNTIME.getValue()));
+			this.elapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.ELAPSED_TIME.getValue()));
 		}		
 	}
 
@@ -74,6 +75,7 @@ public class Order {
 		} else {
 			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
 			this.runtime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.RUNTIME.getValue()));
+			this.elapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.ELAPSED_TIME.getValue()));
 		}
 	}
 	
@@ -200,6 +202,7 @@ public class Order {
 		long now = dateUtils.currentTimeMillis();
 		this.elapsedTime += (now - fulfilledTime);
 		fulfilledTime = 0;
+		this.xOCCIAtt.put(OrderAttribute.ELAPSED_TIME.getValue(), String.valueOf(elapsedTime));
 	}
 
 	public Map<String, String> getxOCCIAtt() {
