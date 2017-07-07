@@ -64,7 +64,7 @@ public class ManagerPacketHelper {
 
 	public static String iAmAlive(String rendezvousAddress, Properties properties,
 			PacketSender packetSender) throws Exception {
-		LOGGER_EXP.setLevel(Level.INFO);
+		
 		if (packetSender == null) {
 			LOGGER.warn("Packet sender not set.");
 			throw new IllegalArgumentException("Packet sender not set.");
@@ -184,6 +184,7 @@ public class ManagerPacketHelper {
 					userFederationToken.getUser().getName());			
 		}
 		
+		LOGGER_EXP.setLevel(Level.ERROR);
 		LOGGER_EXP.info("<"+managerId+">: Sending request with "+orderId+" to "+memberAddress);
 		
 		packetSender.addPacketCallback(iq, new PacketCallback() {

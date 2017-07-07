@@ -150,7 +150,7 @@ public class ManagerController {
 	}
 	
 	public ManagerController(Properties properties, ScheduledExecutorService executor) {
-		LOGGER_EXP.setLevel(Level.INFO);
+		LOGGER_EXP.setLevel(Level.ERROR);
 		if (properties == null) {
 			throw new IllegalArgumentException();
 		}
