@@ -11,7 +11,7 @@ import java.util.List;
 public class DataReader {
 	
 	public static void main(String[] args) throws FileNotFoundException {
-		String file = "/home/eduardolfalcao/Área de Trabalho/Dropbox/Doutorado/Disciplinas/Projeto de Tese 5/workload-generator/tool/workload_clust_5spt_10ups_gwa-t1.txt";
+		String file = "/home/eduardolfalcao/cloudcom2017/workload/force-preemption.txt";
 		DataReader dr = new DataReader();
 		List<Peer> peers = new ArrayList<Peer>();
 		dr.readWorkload(peers, file);

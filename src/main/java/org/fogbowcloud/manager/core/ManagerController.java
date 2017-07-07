@@ -36,6 +36,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.model.DateUtils;
@@ -142,12 +143,14 @@ public class ManagerController {
 	private PoolingHttpClientConnectionManager cm; 
 	
 	private static final Logger LOGGER = Logger.getLogger(ManagerController.class);
+	private static final Logger LOGGER_EXP = Logger.getLogger("EXPERIMENT_LOGGER");
 
 	public ManagerController(Properties properties) {
 		this(properties, null);
 	}
 	
 	public ManagerController(Properties properties, ScheduledExecutorService executor) {
+		LOGGER_EXP.setLevel(Level.INFO);
 		if (properties == null) {
 			throw new IllegalArgumentException();
 		}
@@ -473,7 +476,7 @@ public class ManagerController {
 					}
 				}
 			} catch (Exception e) {
-				LOGGER.warn("<"+managerId+">: "+"Does not possible get instances " + "with credentials of " + localName);
+				LOGGER.warn("<"+managerId+">: "+"It is not possible to get instances " + "with credentials of " + localName);
 			}
 		}
 		return federationInstances;
@@ -483,16 +486,10 @@ public class ManagerController {
 	public boolean instanceHasOrderRelatedTo(String orderId, String instanceId) {
 		LOGGER.debug("<"+managerId+">: "+"Checking if instance " + instanceId + " is related to order " + orderId);
 		// checking federation local user instances for local users
-		if (orderId == null) {			
-			int count = 0;
+		if (orderId == null) {
 			for (Order order : managerDataStoreController.getAllOrders()) {
-				count++;
-				LOGGER.debug("<"+managerId+">: @@@ order "+count);
-				LOGGER.debug("<"+managerId+">: @@@ desc: "+order);
 				if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
 					String reqInstanceId = generateGlobalId(order.getInstanceId(), order.getProvidingMemberId());
-					LOGGER.debug("<"+managerId+">: @@@ reqInstanceId: "+reqInstanceId);
-					LOGGER.debug("<"+managerId+">: @@@ instanceId: "+instanceId);
 					if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
 						LOGGER.debug("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
 						return true;
@@ -502,27 +499,23 @@ public class ManagerController {
 		} else {
 			// checking federation local users instances for remote members
 			Order order = managerDataStoreController.getOrder(orderId);
-			LOGGER.debug("<"+managerId+">: %%% "+"The order with id " + orderId + " is " + order);
 			if (order == null) {
 				return false;
-			}
-			
-			LOGGER.debug("<"+managerId+">: %%% "+"The order's instanceId is " + order.getInstanceId());			
+			}			
 			
 			if (instanceId == null) {
 				return true;
 			}
 
-			LOGGER.debug("<"+managerId+">: %%% desc: "+order);
 			// it is possible that the asynchronous order has not received instanceId yet
 			if ((order.getState().in(OrderState.OPEN) || order.getState().in(OrderState.PENDING)) 
 						&& managerDataStoreController.isOrderSyncronous(orderId)) {
-				LOGGER.debug("<"+managerId+">: %%%"+"The instance " + instanceId + " is related to order " + order.getId());
+				LOGGER.debug("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
 				return true;
 			} else if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
 				String reqInstanceId = generateGlobalId(order.getInstanceId(), order.getProvidingMemberId());
 				if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
-					LOGGER.debug("<"+managerId+">: %%%"+"The instance " + instanceId + " is related to order " + order.getId());
+					LOGGER.debug("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
 					return true;
 				}
 			}
@@ -599,7 +592,7 @@ public class ManagerController {
 			try {
 				totalResourcesInfo.addResource(getResourceInfoInUseByUserId(localToken, userId, isLocal));			
 			} catch (Exception e) {
-				LOGGER.warn("<"+managerId+">: "+"Did not possible get informations about instances, CPUs and "
+				LOGGER.warn("<"+managerId+">: "+"It was not possible to get informations about instances, CPUs and "
 						+ "memories in use by user id (" + userId + ").");
 			}
 		} else {
@@ -625,7 +618,7 @@ public class ManagerController {
 				try {
 					totalResourcesInfo.addResource(getResourceInfoInUseByUserId(localToken, userId, isLocal));			
 				} catch (Exception e) {
-					LOGGER.warn("<"+managerId+">: "+"Did not possible get informations about instances, CPUs and "
+					LOGGER.warn("<"+managerId+">: "+"It was not possible to get informations about instances, CPUs and "
 							+ "memories in use by user id (" + userId + ").");
 				}				
 			}			
@@ -764,7 +757,7 @@ public class ManagerController {
 			try {
 				instances.add(generateInstanceWithGlobalId(order.getInstanceId(), order.getProvidingMemberId()));
 			} catch (Exception e) {
-				LOGGER.warn("<"+managerId+">: "+"Exception thown while retrieving instance " + instanceId + ".", e);
+				LOGGER.warn("<"+managerId+">: "+"Exception thrown while retrieving instance " + instanceId + ".", e);
 			}
 		}
 		return instances;
@@ -1000,6 +993,10 @@ public class ManagerController {
 			return;
 		}
 		
+		/** EDUARDO **/
+		order.updateElapsedTime();
+		LOGGER_EXP.info("<"+managerId+">: "+"checking if the order will be removed or rescheduled - order: " + order);
+		
 		if (order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
 			updateAccounting();
 			benchmarkingPlugin.remove(order.getInstanceId());			
@@ -1011,12 +1008,21 @@ public class ManagerController {
 
 		if (order.getState().equals(OrderState.DELETED) || !order.isLocal()) {
 			managerDataStoreController.excludeOrder(order.getId());
-		} else if (isPersistent(order)) {
-			LOGGER.debug("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.OPEN);
-			order.setState(OrderState.OPEN);
-			if (!orderSchedulerTimer.isScheduled()) {
-				triggerOrderScheduler();
+		} 
+		else if (isPersistent(order)) {			
+			boolean finished = order.getElapsedTime() >= order.getRuntime();			
+			if(order.isLocal() && !finished){
+				LOGGER.warn("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.OPEN);
+				LOGGER_EXP.info("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.OPEN);
+				order.setState(OrderState.OPEN);
+				if (!orderSchedulerTimer.isScheduled()) {
+					triggerOrderScheduler();
+				}
 			}
+			else{
+				LOGGER_EXP.info("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.CLOSED);
+				order.setState(OrderState.CLOSED);
+			}			
 		} else {
 			LOGGER.debug("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.CLOSED);
 			order.setState(OrderState.CLOSED);
@@ -1059,6 +1065,8 @@ public class ManagerController {
 		List<Order> userOrders = managerDataStoreController.getAllLocalOrders();
 
 		for (Order order : userOrders) {
+			if(instanceId==null || order==null)
+				LOGGER_EXP.info("<"+managerId+">: instanceId="+instanceId+", order="+order);
 			if (instanceId.equals(order.getInstanceId() + Order.SEPARATOR_GLOBAL_ID + order.getProvidingMemberId())) {
 				if (!order.getFederationToken().getUser().getId().equals(userId)) {
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -1106,9 +1114,7 @@ public class ManagerController {
 		Order order = new Order(orderId, requestingUserToken, categories, xOCCIAtt, false, requestingMemberId);
 		
 		if(!isThereEnoughQuota(requestingMemberId)){
-			LOGGER.info("##############");
 			LOGGER.info(managerId+" not donating for "+requestingMemberId);
-			LOGGER.info("##############");
 			ManagerPacketHelper.replyToServedOrder(order, packetSender);
 			return;
 		}
@@ -1233,6 +1239,8 @@ public class ManagerController {
 	}
 
 	protected void preemption(Order orderToPreemption) {
+		/** EDUARDO **/
+		LOGGER_EXP.info("<"+managerId+">: preempting "+orderToPreemption);
 		removeInstance(orderToPreemption.getInstanceId(), orderToPreemption, OrderConstants.COMPUTE_TERM);
 	}
 
@@ -1397,7 +1405,8 @@ public class ManagerController {
 				boolean isNotFoundException = false;
 				try {
 					LOGGER.debug("<"+managerId+">: "+"Monitoring instance of order: " + order);
-					removeFailedInstance(order, getInstance(order, order.getResourceKind()));
+					Instance instance = getInstance(order, order.getResourceKind());
+					removeFailedInstance(order, instance);
 					this.monitoringHelper.eraseFailedMonitoringAttempts(order);
 				} catch (OCCIException e) {
 					LOGGER.debug("<"+managerId+">: "+"Error while getInstance of " + order.getInstanceId(), e);
@@ -1432,6 +1441,8 @@ public class ManagerController {
 		}
 		if (InstanceState.FAILED.equals(instance.getState())) {
 			try {
+				/** EDUARDO **/
+				LOGGER_EXP.info("<"+managerId+">: "+"Removing failed instance with order "+order+", and instance "+instance);
 				removeInstance(instance.getId(), order, order.getResourceKind());
 			} catch (Throwable t) {
 				// Best effort
@@ -1689,7 +1700,7 @@ public class ManagerController {
 		LOGGER.debug("<"+managerId+">: "+"Checking and submiting orders.");
 
 		// removing orders that reach timeout
-		checkPedingOrders();
+		checkPendingOrders();
 		for (Order order : new ArrayList<Order>(managerDataStoreController.getOrdersIn(OrderState.OPEN))) {
 			if (!order.getState().equals(OrderState.OPEN)) {
 				LOGGER.debug("<"+managerId+">: "+"The order " + order.getId() + " is no longer open.");
@@ -1800,17 +1811,16 @@ public class ManagerController {
 			ManagerPacketHelper.checkIfInstanceIsBeingUsedByRemoteMember(globalInstanceId, servedOrder, packetSender);
 			return true;
 		} catch (OCCIException e) {
-			/** COMMENTED BY EDUARDO **/
-			//LOGGER.error("<"+managerId+">: "+"Error while checking if instance " + globalInstanceId + " is being used by "
-			//				+ servedOrder.getRequestingMemberId(), e);
+			LOGGER.warn("<"+managerId+">: "+"Error while checking if instance " + globalInstanceId + " is being used by "
+							+ servedOrder.getRequestingMemberId(), e);
 			throw e;
 		}
 	}
 
-	protected void checkPedingOrders() {
+	protected void checkPendingOrders() {
 		List<Order> ordersPedding = this.managerDataStoreController.getOrdersByState(OrderState.PENDING);
 		for (Order order : ordersPedding) {
-			if (timoutReached(order.getSyncronousTime())) {
+			if (timeoutReached(order.getSyncronousTime())) {
 				LOGGER.debug("<"+managerId+">: "+"The forwarded order " + order.getId()
 						+ " reached timeout and is been removed from asynchronousOrders list.");
 				order.setState(OrderState.OPEN);
@@ -1819,7 +1829,7 @@ public class ManagerController {
 		}
 	}
 
-	private boolean timoutReached(long timeStamp) {
+	private boolean timeoutReached(long timeStamp) {
 		long nowMilli = dateUtils.currentTimeMillis();
 		Date now = new Date(nowMilli);
 

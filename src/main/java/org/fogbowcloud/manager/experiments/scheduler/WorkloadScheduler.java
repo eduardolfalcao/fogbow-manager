@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
@@ -25,6 +26,7 @@ import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
+import org.fogbowcloud.manager.occi.order.OrderType;
 
 public class WorkloadScheduler {
 	
@@ -45,11 +47,12 @@ public class WorkloadScheduler {
 	private long initialTime;
 	
 	public WorkloadScheduler(List<ManagerController> fms, Properties props) {
+		LOGGER.setLevel(Level.INFO);
 		this.props = props;
 		this.peers = new ArrayList<Peer>();
 		
 		readWorkloads();
-		sortJobsAndTasks();		
+		sortJobsAndTasks();
 		
 		relations = new HashMap<String, ManagerController>();
 		for(Peer p : peers){
@@ -64,8 +67,7 @@ public class WorkloadScheduler {
 		monitor = new WorkloadMonitor(fms);
 		triggerWorkloadMonitor(monitor);
 		
-		initOrderParams();
-		LOGGER.setLevel(Level.INFO);
+		initOrderParams();		
 	}
 	
 	private void initOrderParams() {
@@ -73,7 +75,7 @@ public class WorkloadScheduler {
 		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
 		xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(), "1");
 		xOCCIAtt.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), "public key");
-		xOCCIAtt.put(OrderAttribute.TYPE.getValue(), "one-time");
+		xOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderType.PERSISTENT.getValue());
 		
 		categories = new ArrayList<Category>();
 		categories.add(new Category(OrderConstants.TERM,OrderConstants.SCHEME,OrderConstants.KIND_CLASS));
@@ -89,44 +91,51 @@ public class WorkloadScheduler {
 				
 		runJobs();
 		time++;		
-	}	
+	}		
 	
-	
-	
-	private void runJobs(){		
-		Runnable run = new Runnable() {
-		    public void run() {
-			    List<Job> jobsToBeSubmitted = getJobs(time);
-			    for(Job j : jobsToBeSubmitted){
-					ManagerController mc = relations.get(j.getPeerId());
-					Map<String, String> xOCCIAttClone = new HashMap<String, String>();
-					xOCCIAttClone.putAll(xOCCIAtt);
-					xOCCIAttClone.put(OrderAttribute.INSTANCE_COUNT.getValue(), String.valueOf(j.getTasks().size()));	
-					List<Category> categoriesClone = new ArrayList<Category>();
-					categoriesClone.addAll(categories);
-					List<Order> orders = mc.createOrders("", categoriesClone, xOCCIAttClone);					
-					for(int i = 0; i < orders.size(); i++)
-						j.getTasks().get(i).setOrderId(orders.get(i).getId());
-					LOGGER.info("Peer "+j.getPeerId()+" creating "+j);					
-					monitor.addJob(j);
-				}		
-		    }
-		 };
-		 new Thread(run).start();		
+	private void runJobs(){
+		final long jobTime = time;
+		Map<ManagerController, List<Job>> peersAndJobs = getJobs(jobTime);
+		    	
+		for(final Entry<ManagerController, List<Job>> e : peersAndJobs.entrySet()){
+			Runnable run = new Runnable() {
+			    public void run() {
+			    	List<Job> jobsToBeSubmitted = e.getValue();
+			    	ManagerController mc = e.getKey();
+			    	for(Job j : jobsToBeSubmitted){			    										
+						Map<String, String> xOCCIAttClone = new HashMap<String, String>();
+						xOCCIAttClone.putAll(xOCCIAtt);
+						//xOCCIAttClone.put(OrderAttribute.INSTANCE_COUNT.getValue(), String.valueOf(j.getTasks().size()));	
+						List<Category> categoriesClone = new ArrayList<Category>();
+						categoriesClone.addAll(categories);
+						for(int i = 0; i < j.getTasks().size(); i++){
+							xOCCIAttClone.put(OrderAttribute.RUNTIME.getValue(), String.valueOf(j.getTasks().get(i).getRuntime()*1000));
+							List<Order> orders = mc.createOrders("", categoriesClone, xOCCIAttClone);					
+							j.getTasks().get(i).setOrderId(orders.get(0).getId());
+						}															
+						monitor.addJob(j);
+						LOGGER.info("Time: "+jobTime+", Peer "+j.getPeerId()+" creating "+j);
+			    	}
+			    } 		    		    
+		    }; 
+		    new Thread(run).start();
+		}
 	}
 	
-	private List<Job> getJobs(long time) {
-		List<Job> jobs = new ArrayList<Job>();
+	private Map<ManagerController, List<Job>> getJobs(long time) {
+		Map<ManagerController, List<Job>> peersAndJobs = new HashMap<ManagerController, List<Job>>();	
 		Iterator<Peer> peersIt = peers.iterator();
 		while(peersIt.hasNext()){
-			Peer p = peersIt.next();
+			Peer p = peersIt.next();			
+			ManagerController mc = relations.get(p.getPeerId());
+			List<Job> jobs = new ArrayList<Job>();			
 			Iterator<User> usersIt = p.getUsers().iterator();
 			while(usersIt.hasNext()){
 				User u = usersIt.next();
 				Iterator<Job> jobsIt = u.getJobs().iterator();
 				while(jobsIt.hasNext()){
 					Job j = jobsIt.next();
-					if(j.getSubmitTime() == time){
+					if(j.getSubmitTime() == time){						
 						jobs.add(j);
 						jobsIt.remove();
 					}
@@ -135,11 +144,12 @@ public class WorkloadScheduler {
 				}
 				if(u.getJobs().isEmpty())
 					usersIt.remove();
+				peersAndJobs.put(mc, jobs);
 			}
 			if(p.getUsers().isEmpty())
 				peersIt.remove();
 		}
-		return jobs;
+		return peersAndJobs;
 	}
 	
 	private void sortJobsAndTasks(){
@@ -152,6 +162,24 @@ public class WorkloadScheduler {
 			}
 		}
 	}
+	
+//	private void printJobs(int time){
+//		for(Peer p : this.peers){			
+//			for(User u : p.getUsers()){			
+//				for(Job j : u.getJobs()){
+//					if(j.getSubmitTime()==time)
+//						LOGGER.info("Peer "+p.getPeerId()+", User "+u.getUserId()+", job "+j);
+//					else if(j.getSubmitTime() > time)
+//						break;
+//				}
+//			}
+//		}
+//		time++;
+//		if(time <= 3600)
+//			printJobs(time);
+//	}
+	
+	
 	
 	private static void triggerWorkloadMonitor(final WorkloadMonitor monitor) {
 		final long monitorPeriod = 1000;

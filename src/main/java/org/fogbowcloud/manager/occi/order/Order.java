@@ -21,7 +21,8 @@ public class Order {
 	private String instanceId;
 	private String providingMemberId;
 	private final String requestingMemberId;
-	private long fulfilledTime = 0;	
+	private long fulfilledTime = 0;
+	private long elapsedTime = 0, runtime = -1;	
 	private final boolean isLocal;
 	private OrderState state;
 	private List<Category> categories;
@@ -48,7 +49,8 @@ public class Order {
 		if (this.xOCCIAtt == null) {
 			this.resourceKind = null;			
 		} else {
-			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());					
+			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
+			this.runtime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.RUNTIME.getValue()));
 		}		
 	}
 
@@ -70,7 +72,8 @@ public class Order {
 		if (this.xOCCIAtt == null) {
 			this.resourceKind = null;			
 		} else {
-			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());					
+			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
+			this.runtime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.RUNTIME.getValue()));
 		}
 	}
 	
@@ -184,6 +187,20 @@ public class Order {
 	public long getFulfilledTime() {
 		return fulfilledTime;
 	}
+	
+	public long getRuntime() {
+		return runtime;
+	}
+	
+	public long getElapsedTime() {
+		return elapsedTime;
+	}
+	
+	public void updateElapsedTime(){
+		long now = dateUtils.currentTimeMillis();
+		this.elapsedTime += (now - fulfilledTime);
+		fulfilledTime = 0;
+	}
 
 	public Map<String, String> getxOCCIAtt() {
 		if (xOCCIAtt == null) {
@@ -220,7 +237,9 @@ public class Order {
 		return "id: " + id + ", token: " + federationToken + ", instanceId: " + instanceId
 				+ ", providingMemberId: " + providingMemberId + ", requestingMemberId: "
 				+ requestingMemberId + ", state: " + state + ", isLocal " + isLocal
-				+ ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt;
+				+ ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt 
+				+ ", runtime: " + runtime + ", fulfilledTime: "+fulfilledTime
+				+ ", elapsedTime: "+elapsedTime;
 	}
 
 

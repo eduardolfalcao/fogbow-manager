@@ -389,7 +389,7 @@ public class TestManagerController {
 				now + ManagerController.DEFAULT_ASYNC_ORDER_WAITING_INTERVAL + 100);		
 		
 		// Timeout expired
-		managerController.checkPedingOrders();		
+		managerController.checkPendingOrders();		
 
 		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
@@ -419,7 +419,7 @@ public class TestManagerController {
 				now + ManagerController.DEFAULT_ASYNC_ORDER_WAITING_INTERVAL + 100);		
 		
 		// Timeout expired
-		managerController.checkPedingOrders();		
+		managerController.checkPendingOrders();		
 
 		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
@@ -569,7 +569,7 @@ public class TestManagerController {
 				now + ManagerController.DEFAULT_ASYNC_ORDER_WAITING_INTERVAL + 100);		
 		
 		// Timeout expired
-		managerController.checkPedingOrders();		
+		managerController.checkPendingOrders();		
 		
 		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
@@ -599,7 +599,7 @@ public class TestManagerController {
 				now + ManagerController.DEFAULT_ASYNC_ORDER_WAITING_INTERVAL + 100);		
 		
 		// Timeout expired
-		managerController.checkPedingOrders();		
+		managerController.checkPendingOrders();		
 		
 		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
@@ -799,7 +799,7 @@ public class TestManagerController {
 		Mockito.when(dateUtils.currentTimeMillis()).thenReturn(
 				now + ManagerController.DEFAULT_ASYNC_ORDER_WAITING_INTERVAL + 100);
 		
-		managerController.checkPedingOrders();
+		managerController.checkPendingOrders();
 		
 		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());

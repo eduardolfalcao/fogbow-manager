@@ -44,12 +44,16 @@ public class WorkloadMonitor {
 					Task t = itTasks.next();
 					Order order = fm.getOrder(null, t.getOrderId());					
 					long fulfilledTime = order.getFulfilledTime();
-					if(fulfilledTime>0){
-						long durationInSec = TimeUnit.MILLISECONDS.toSeconds(now - fulfilledTime);
+					long elapsedTime = order.getElapsedTime();
+					if(fulfilledTime>0 || elapsedTime > 0){
+						long durationInMs = elapsedTime;
+						if(fulfilledTime>0)
+							durationInMs += (now - fulfilledTime);
+						long durationInSec = TimeUnit.MILLISECONDS.toSeconds(durationInMs);
 						if(durationInSec>=t.getRuntime()){							
 							ordersToBeRemoved.put(fm, order);
 							itTasks.remove();
-							LOGGER.info("Peer "+fm+" removing task "+t+" - ~ending time:"+(t.getRuntime()+j.getSubmitTime()));
+							LOGGER.info("Peer "+fm+" removing task "+t+", order "+order+" - ~ending time:"+(t.getRuntime()+j.getSubmitTime()));
 						}					
 					}
 				}
@@ -60,18 +64,21 @@ public class WorkloadMonitor {
 		removeOrders(ordersToBeRemoved);
 	}
 	
-	private void removeOrders(final Map<ManagerController,Order> ordersToBeRemoved){		
-		Runnable run = new Runnable() {
-		    public void run() {
-		    	for (Map.Entry<ManagerController, Order> entry : ordersToBeRemoved.entrySet()){
+	private void removeOrders(final Map<ManagerController,Order> ordersToBeRemoved){
+		for (final Map.Entry<ManagerController, Order> entry : ordersToBeRemoved.entrySet()){
+			Runnable run = new Runnable() {
+				public void run() {
 				    ManagerController mc = entry.getKey();
-				    Order orderToBeRemoved = entry.getValue();		    
+				    Order orderToBeRemoved = entry.getValue();
+				    if(orderToBeRemoved.getGlobalInstanceId()==null)
+				    	LOGGER.error("<"+mc.getManagerId()+">: trying to remove instance from order "+orderToBeRemoved);
 				    mc.removeInstance(null, orderToBeRemoved.getGlobalInstanceId(), orderToBeRemoved.getResourceKind());	
-				    mc.removeOrder(null, orderToBeRemoved.getId());		    
-				}	
-		    }
-		 };
-		 new Thread(run).start();						
+				    mc.removeOrder(null, orderToBeRemoved.getId());	
+				}
+		   	};
+		   	new Thread(run).start();
+		}	
+		    						
 	}
 	
 	private ManagerController getManager(Job j){
