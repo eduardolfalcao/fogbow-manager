@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
@@ -38,8 +39,11 @@ public class AccountingDataStore {
 	private String managerId;
 
 	private static final Logger LOGGER = Logger.getLogger(AccountingDataStore.class);
+	private static final Logger LOGGER_EXP = Logger.getLogger("EXPERIMENT_LOGGER"+AccountingDataStore.class);
 	
 	public AccountingDataStore(Properties properties) {
+		
+		LOGGER_EXP.setLevel(Level.INFO);
 		
 		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);		
 		String dataStoreURLProperties = properties.getProperty(ACCOUNTING_DATASTORE_URL);
@@ -82,7 +86,7 @@ public class AccountingDataStore {
 	private static final String INSERT_MEMBER_USAGE_SQL = "INSERT INTO " + USAGE_TABLE_NAME
 			+ " VALUES(?, ?, ?, ?, ?, ?)";
 	
-	public boolean update(List<AccountingInfo> usage) {
+	public synchronized boolean update(List<AccountingInfo> usage) {
 		
 		setInstancesCountToZero();
 		
@@ -253,7 +257,10 @@ public class AccountingDataStore {
 		for (AccountingEntryKey currentKey : processedUsage.keySet()) {
 			AccountingInfo accountingEntry = processedUsage.get(currentKey);
 			// inserting new usage entry
+			
 			if (!entryKeys.contains(currentKey)) {
+				LOGGER_EXP.info("<"+managerId+">: "+"entryKeys=" + entryKeys);
+				LOGGER_EXP.info("<"+managerId+">: "+"New accountingEntry=" + accountingEntry);
 
 				LOGGER.debug("<"+managerId+">: "+"New accountingEntry=" + accountingEntry);
 				insertMemberStatement.setString(1, accountingEntry.getUser());

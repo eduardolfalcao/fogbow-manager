@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.experiments.scheduler.model.DataReader;
@@ -65,7 +66,7 @@ public class WorkloadScheduler {
 		}
 		
 		monitor = new WorkloadMonitor(fms);
-		triggerWorkloadMonitor(monitor);
+		triggerWorkloadMonitor(monitor, props);
 		
 		initOrderParams();		
 	}
@@ -106,7 +107,6 @@ public class WorkloadScheduler {
 			    	for(Job j : jobsToBeSubmitted){			    										
 						Map<String, String> xOCCIAttClone = new HashMap<String, String>();
 						xOCCIAttClone.putAll(xOCCIAtt);
-						//xOCCIAttClone.put(OrderAttribute.INSTANCE_COUNT.getValue(), String.valueOf(j.getTasks().size()));	
 						List<Category> categoriesClone = new ArrayList<Category>();
 						categoriesClone.addAll(categories);
 						for(int i = 0; i < j.getTasks().size(); i++){
@@ -164,27 +164,10 @@ public class WorkloadScheduler {
 		}
 	}
 	
-//	private void printJobs(int time){
-//		for(Peer p : this.peers){			
-//			for(User u : p.getUsers()){			
-//				for(Job j : u.getJobs()){
-//					if(j.getSubmitTime()==time)
-//						LOGGER.info("Peer "+p.getPeerId()+", User "+u.getUserId()+", job "+j);
-//					else if(j.getSubmitTime() > time)
-//						break;
-//				}
-//			}
-//		}
-//		time++;
-//		if(time <= 3600)
-//			printJobs(time);
-//	}
 	
-	
-	
-	private static void triggerWorkloadMonitor(final WorkloadMonitor monitor) {
-		final long monitorPeriod = 1000;
-		monitorTimer.scheduleAtFixedRate(new TimerTask() {
+	private static void triggerWorkloadMonitor(final WorkloadMonitor monitor, Properties props) {
+		final long monitorPeriod = ManagerControllerHelper.getWorkloadMonitorPeriod(props);
+		monitorTimer.scheduleWithFixedDelay(new TimerTask() {
 			@Override
 			public void run() {	
 				try {

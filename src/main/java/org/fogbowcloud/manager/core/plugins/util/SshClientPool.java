@@ -61,7 +61,7 @@ public class SshClientPool {
 	}
 	
 	protected void triggerSshConnectionPoolScheduler() {
-		sshConnectionSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
+		sshConnectionSchedulerTimer.scheduleWithFixedDelay(new TimerTask() {
 			@Override
 			public void run() {
 				removeTimedoutSSHConnection();

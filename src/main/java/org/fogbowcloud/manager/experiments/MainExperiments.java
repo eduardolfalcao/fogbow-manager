@@ -111,8 +111,8 @@ public class MainExperiments {
 	}
 	
 	private static void triggerWorkloadScheduler(final WorkloadScheduler scheduler, final Properties prop) {
-		final long schedulerPeriod = 1000;
-		schedulerTimer.scheduleAtFixedRate(new TimerTask() {
+		final long schedulerPeriod = ManagerControllerHelper.getSchedulerPeriod(prop);
+		schedulerTimer.scheduleWithFixedDelay(new TimerTask() {
 			@Override
 			public void run() {	
 				try {
@@ -127,7 +127,7 @@ public class MainExperiments {
 	private static void triggerDataMonitoring(final MonitorPeerState monitorPeers, Properties prop) {
 		final long dataMonitoringPeriod = ManagerControllerHelper.getPeerStateMonitoringPeriod(prop);
 
-		dataMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
+		dataMonitoringTimer.scheduleWithFixedDelay(new TimerTask() {
 			@Override
 			public void run() {	
 				try {

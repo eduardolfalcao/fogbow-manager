@@ -171,12 +171,12 @@ public class SimpleManagerFactory {
 			LOGGER.warn("Accounting plugin (compute) not specified in properties. Using the default one.", e);
 		}
 		
-		AccountingPlugin storageccountingPlugin = null;
+		AccountingPlugin storageAccountingPlugin = null;
 		try {
-			storageccountingPlugin = (AccountingPlugin) MainHelper.createInstance(
+			storageAccountingPlugin = (AccountingPlugin) MainHelper.createInstance(
 					ConfigurationConstants.STORAGE_ACCOUNTING_PLUGIN_CLASS_KEY, properties);
 		} catch (Exception e) {
-			storageccountingPlugin = new SimpleStorageAccountingPlugin(properties);
+			storageAccountingPlugin = new SimpleStorageAccountingPlugin(properties);
 			LOGGER.warn("Accounting plugin (storage) not specified in properties. Using the default one.", e);
 		}		
 		
@@ -256,7 +256,7 @@ public class SimpleManagerFactory {
 		fm.setValidator(validator);
 		fm.setBenchmarkingPlugin(benchmarkingPlugin);
 		fm.setComputeAccountingPlugin(computeAccountingPlugin);
-		fm.setStorageAccountingPlugin(storageccountingPlugin);
+		fm.setStorageAccountingPlugin(storageAccountingPlugin);
 		fm.setMemberPickerPlugin(memberPickerPlugin);
 		fm.setPrioritizationPlugin(prioritizationPlugin);
 		fm.setLocalCredentailsPlugin(mapperPlugin);

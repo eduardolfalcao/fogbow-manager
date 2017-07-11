@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.DateUtils;
@@ -21,7 +22,6 @@ public class MonitorPeerState {
 	private static final String OUTPUT_DATA_MONITORING_PERIOD_KEY = "output_data_monitoring_period";
 	public static final String OUTPUT_DATA_ENDING_TIME = "output_data_ending_time";
 	public static final String OUTPUT_FOLDER = "output_folder";
-	public static final int CONVERSION_VALUE = 1000;
 	
 	private DateUtils date = new DateUtils();
 	private long initialTime, lastWrite, outputTime, endingTime;
@@ -33,8 +33,8 @@ public class MonitorPeerState {
 	
 	public MonitorPeerState(List<ManagerController> fms) {
 		
-		outputTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_MONITORING_PERIOD_KEY))/CONVERSION_VALUE;
-		endingTime = Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_ENDING_TIME))/CONVERSION_VALUE;
+		outputTime = TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_MONITORING_PERIOD_KEY)));
+		endingTime = TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(fms.get(0).getProperties().getProperty(OUTPUT_DATA_ENDING_TIME)));
 		path = fms.get(0).getProperties().getProperty(OUTPUT_FOLDER);		
 		new File(path).mkdirs();
 		
@@ -58,7 +58,7 @@ public class MonitorPeerState {
 		}
 		
 		
-		lastWrite = (date.currentTimeMillis()-initialTime)/CONVERSION_VALUE;
+		lastWrite = TimeUnit.MILLISECONDS.toSeconds(date.currentTimeMillis()-initialTime);
 	}
 	
 	public void savePeerState() {		
@@ -75,7 +75,7 @@ public class MonitorPeerState {
 				data.get(fm).add(currentState);			
 		}
 		
-		long now = (date.currentTimeMillis()-initialTime)/CONVERSION_VALUE;
+		long now = TimeUnit.MILLISECONDS.toSeconds(date.currentTimeMillis()-initialTime);
 		if((now - lastWrite)>outputTime){
 			write();
 			lastWrite = now;	
@@ -127,7 +127,7 @@ public class MonitorPeerState {
 		oFed += maxCapacity;
 		dFed = Math.max(0, dTot - maxCapacity);
 		
-		int now = (int)((date.currentTimeMillis()-initialTime)/CONVERSION_VALUE);
+		int now = (int)(TimeUnit.MILLISECONDS.toSeconds(date.currentTimeMillis()-initialTime));
 		
 		return new PeerState(fm.getManagerId(),now, dTot, dFed, rFed, oFed, sFed);
 	}
@@ -159,9 +159,6 @@ public class MonitorPeerState {
 			w = CsvGenerator.createHeader(filePath, "id", "t", "dTot", "dFed", "rFed", "oFed", "sFed");
 		else if(states.size()>1){	//remove first state (already written), and write the rest
 			w = CsvGenerator.getFile(filePath);
-//			for(PeerState s : states)
-//				System.out.println(s);
-//			System.out.println();
 			states.remove(0);
 		}
 		else return;				//if theres only one state, keep updating

@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.mail.MessagingException;
 
@@ -150,7 +151,7 @@ public class ManagerController {
 	}
 	
 	public ManagerController(Properties properties, ScheduledExecutorService executor) {
-		LOGGER_EXP.setLevel(Level.ERROR);
+		LOGGER_EXP.setLevel(Level.INFO);
 		if (properties == null) {
 			throw new IllegalArgumentException();
 		}
@@ -320,7 +321,7 @@ public class ManagerController {
 		final long accountingUpdaterPeriod = accountingUpdaterPeriodStr == null ? DEFAULT_ACCOUNTING_UPDATE_PERIOD
 				: Long.valueOf(accountingUpdaterPeriodStr);
 
-		accountingUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
+		accountingUpdaterTimer.scheduleWithFixedDelay(new TimerTask() {
 			@Override
 			public void run() {
 				try {
@@ -377,7 +378,7 @@ public class ManagerController {
 		final long capacityControllerUpdaterPeriod = capacityControllerUpdaterPeriodStr == null ? DEFAULT_CAPACITY_CONTROLLER_UPDATE_PERIOD
 				: Long.valueOf(capacityControllerUpdaterPeriodStr);
 
-		capacityControllerUpdaterTimer.scheduleAtFixedRate(new TimerTask() {
+		capacityControllerUpdaterTimer.scheduleWithFixedDelay(new TimerTask() {
 			@Override
 			public void run() {
 				try {
@@ -390,12 +391,12 @@ public class ManagerController {
 	}
 	
 	private void updateVirtualQuotas() {
-		LOGGER.info("<"+managerId+">: "+"Updating virtual quotas (capacity controller plugin).");
+		LOGGER.debug("<"+managerId+">: "+"Updating virtual quotas (capacity controller plugin).");
 		for(FederationMember member : new ArrayList<FederationMember>(this.members)) {
 			if(!(member.getId().equals(getManagerId()))){				
 				int maxCapacity = getMaxCapacityDefaultUser();				
 				this.capacityControllerPlugin.updateCapacity(member, maxCapacity);
-				LOGGER.info("<"+managerId+">: "+"Member: " + member.getId() + "Quota: "
+				LOGGER.debug("<"+managerId+">: "+"Member: " + member.getId() + "Quota: "
 						+ this.capacityControllerPlugin.getMaxCapacityToSupply(member));
 			}
 		}
@@ -482,16 +483,15 @@ public class ManagerController {
 		return federationInstances;
 	}
 
-	// @@@
 	public boolean instanceHasOrderRelatedTo(String orderId, String instanceId) {
-		LOGGER.debug("<"+managerId+">: "+"Checking if instance " + instanceId + " is related to order " + orderId);
+		LOGGER.info("<"+managerId+">: "+"Checking if instance " + instanceId + " is related to order " + orderId);
 		// checking federation local user instances for local users
 		if (orderId == null) {
 			for (Order order : managerDataStoreController.getAllOrders()) {
 				if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
 					String reqInstanceId = generateGlobalId(order.getInstanceId(), order.getProvidingMemberId());
 					if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
-						LOGGER.debug("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
+						LOGGER.info("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
 						return true;
 					}
 				}
@@ -510,16 +510,17 @@ public class ManagerController {
 			// it is possible that the asynchronous order has not received instanceId yet
 			if ((order.getState().in(OrderState.OPEN) || order.getState().in(OrderState.PENDING)) 
 						&& managerDataStoreController.isOrderSyncronous(orderId)) {
-				LOGGER.debug("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
+				LOGGER.info("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
 				return true;
 			} else if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
 				String reqInstanceId = generateGlobalId(order.getInstanceId(), order.getProvidingMemberId());
 				if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
-					LOGGER.debug("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
+					LOGGER.info("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
 					return true;
 				}
 			}
 		}
+		LOGGER.info("<"+managerId+">: "+"The instance " + instanceId + " is NOT related to order " + orderId);
 		return false;
 	}
 
@@ -693,7 +694,7 @@ public class ManagerController {
 	}
 
 	public void removeOrder(String accessId, String orderId) {
-		LOGGER.debug("<"+managerId+">: "+"Removing orderId: " + orderId);
+		LOGGER.info("<"+managerId+">: "+"Removing orderId: " + orderId);
 		checkOrderId(accessId, orderId);
 		Order order = managerDataStoreController.getOrder(orderId);
 		if (order != null 
@@ -709,7 +710,7 @@ public class ManagerController {
 	}
 	
 	public void removeOrderForRemoteMember(String accessId, String orderId) {
-		LOGGER.debug("<"+managerId+">: "+"Removing orderId for remote member: " + orderId);
+		LOGGER.info("<"+managerId+">: "+"Removing orderId for remote member: " + orderId);
 		Order order = managerDataStoreController.getOrder(orderId, false);
 		if (order != null && order.getInstanceId() != null) {
 			try {
@@ -989,7 +990,7 @@ public class ManagerController {
 		
 		/** Added by Eduardo **/
 		if(order == null){
-			LOGGER.debug("<"+managerId+">: Trying to close null order!");
+			LOGGER.warn("<"+managerId+">: Trying to close null order: "+order);
 			return;
 		}
 		
@@ -1012,19 +1013,18 @@ public class ManagerController {
 		else if (isPersistent(order)) {			
 			boolean finished = order.getElapsedTime() >= order.getRuntime();			
 			if(order.isLocal() && !finished){
-				LOGGER.warn("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.OPEN);
-				LOGGER_EXP.info("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.OPEN);
+				LOGGER_EXP.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.OPEN);
 				order.setState(OrderState.OPEN);
 				if (!orderSchedulerTimer.isScheduled()) {
 					triggerOrderScheduler();
 				}
 			}
 			else{
-				LOGGER_EXP.info("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.CLOSED);
+				LOGGER_EXP.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);
 				order.setState(OrderState.CLOSED);
 			}			
 		} else {
-			LOGGER.debug("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.CLOSED);
+			LOGGER.info("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.CLOSED);
 			order.setState(OrderState.CLOSED);
 		}
 		
@@ -1061,12 +1061,10 @@ public class ManagerController {
 
 	public Order getOrderForInstance(String federationToken, String instanceId) {
 		String userId = getUserId(federationToken);
-		LOGGER.debug("<"+managerId+">: "+"Getting instance " + instanceId + " of user id " + userId);
+		LOGGER.debug("<"+managerId+">: "+"Getting order for instance " + instanceId + " of user id " + userId);
 		List<Order> userOrders = managerDataStoreController.getAllLocalOrders();
 
 		for (Order order : userOrders) {
-			if(instanceId==null || order==null)
-				LOGGER_EXP.info("<"+managerId+">: instanceId="+instanceId+", order="+order);
 			if (instanceId.equals(order.getInstanceId() + Order.SEPARATOR_GLOBAL_ID + order.getProvidingMemberId())) {
 				if (!order.getFederationToken().getUser().getId().equals(userId)) {
 					throw new OCCIException(ErrorType.UNAUTHORIZED, ResponseConstants.UNAUTHORIZED);
@@ -1239,8 +1237,7 @@ public class ManagerController {
 	}
 
 	protected void preemption(Order orderToPreemption) {
-		/** EDUARDO **/
-		LOGGER_EXP.info("<"+managerId+">: preempting "+orderToPreemption);
+		LOGGER_EXP.info("<"+managerId+">: preempting "+orderToPreemption.getId()+" from "+orderToPreemption.getRequestingMemberId());
 		removeInstance(orderToPreemption.getInstanceId(), orderToPreemption, OrderConstants.COMPUTE_TERM);
 	}
 
@@ -1248,7 +1245,7 @@ public class ManagerController {
 		if (this.forTest) { return; }
 		final long servedOrderMonitoringPeriod = ManagerControllerHelper.getServerOrderMonitoringPeriod(this.properties);
 
-		servedOrderMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
+		servedOrderMonitoringTimer.scheduleWithFixedDelay(new TimerTask() {
 			@Override
 			public void run() {	
 				try {
@@ -1354,7 +1351,7 @@ public class ManagerController {
 		LOGGER.debug("<"+managerId+">: "+"Federation User Token: " + federationToken);
 
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(OrderAttribute.INSTANCE_COUNT.getValue()));
-		LOGGER.info("<"+managerId+">: "+"Order " + instanceCount + " instances");
+		LOGGER.debug("<"+managerId+">: "+"Order " + instanceCount + " instances");
 
 		xOCCIAtt.put(OrderAttribute.BATCH_ID.getValue(), String.valueOf(UUID.randomUUID()));
 
@@ -1363,7 +1360,7 @@ public class ManagerController {
 			String orderId = String.valueOf(UUID.randomUUID());
 			Order order = new Order(orderId, federationToken, new LinkedList<Category>(categories),
 					new HashMap<String, String>(xOCCIAtt), true, properties.getProperty("xmpp_jid"));
-			LOGGER.info("<"+managerId+">: "+"Created order: " + order);
+			LOGGER.debug("<"+managerId+">: "+"Created order: " + order);
 			currentOrders.add(order);
 			managerDataStoreController.addOrder(order);
 		}
@@ -1378,7 +1375,7 @@ public class ManagerController {
 		if (this.forTest) { return; }
 		final long instanceMonitoringPeriod = ManagerControllerHelper.getInstanceMonitoringPeriod(this.properties);
 
-		instanceMonitoringTimer.scheduleAtFixedRate(new TimerTask() {
+		instanceMonitoringTimer.scheduleWithFixedDelay(new TimerTask() {
 			@Override
 			public void run() {
 				try {
@@ -1477,7 +1474,7 @@ public class ManagerController {
 				packetSender, new AsynchronousOrderCallback() {
 					@Override
 					public void success(String instanceId) {
-						LOGGER.debug("<"+managerId+">: "+"The order " + order + " forwarded to " + memberAddress + " gets instance "
+						LOGGER.info("<"+managerId+">: "+"The order " + order + " forwarded to " + memberAddress + " gets instance "
 								+ instanceId);
 						if (managerDataStoreController.isOrderSyncronous(order.getId()) == false) {
 							return;
@@ -1510,7 +1507,7 @@ public class ManagerController {
 						}
 						
 						try {
-							LOGGER.warn("<"+managerId+">: will execBenchmark on received instance, order "+order.getId()+", and instance "+order.getInstanceId());
+							LOGGER.info("<"+managerId+">: will execBenchmark on received instance, order "+order.getId()+", and instance "+order.getInstanceId());
 							execBenchmark(order);
 						} catch (Throwable e) {
 							LOGGER.error("<"+managerId+">: "+"Error while executing the benchmark in " + instanceId
@@ -1571,7 +1568,7 @@ public class ManagerController {
 				try {
 					benchmarkingPlugin.run(order.getGlobalInstanceId(), instance);
 				} catch (Exception e) {
-					LOGGER.warn("<"+managerId+">: "+"Couldn't run benchmark.", e);
+					LOGGER.debug("<"+managerId+">: "+"Couldn't run benchmark.", e);
 				}
 
 				if (instance != null) {
@@ -1597,14 +1594,6 @@ public class ManagerController {
 				LOGGER.debug("<"+managerId+">: "+"Fulfilled order: " + order);
 			}
 		});
-
-		//FIXME used to debug the thread above
-//		try {
-//			Thread.sleep(100000);
-//		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
 		
 		if (order.isLocal() && !instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
@@ -1682,7 +1671,7 @@ public class ManagerController {
 		if (this.forTest) { return; }		
 		String schedulerPeriodStr = properties.getProperty(ConfigurationConstants.SCHEDULER_PERIOD_KEY);
 		long schedulerPeriod = schedulerPeriodStr == null ? DEFAULT_SCHEDULER_PERIOD : Long.valueOf(schedulerPeriodStr);
-		orderSchedulerTimer.scheduleAtFixedRate(new TimerTask() {
+		orderSchedulerTimer.scheduleWithFixedDelay(new TimerTask() {
 			@Override
 			public void run() {
 				try {
@@ -1821,7 +1810,7 @@ public class ManagerController {
 		List<Order> ordersPedding = this.managerDataStoreController.getOrdersByState(OrderState.PENDING);
 		for (Order order : ordersPedding) {
 			if (timeoutReached(order.getSyncronousTime())) {
-				LOGGER.debug("<"+managerId+">: "+"The forwarded order " + order.getId()
+				LOGGER.info("<"+managerId+">: "+"The forwarded order " + order.getId()
 						+ " reached timeout and is been removed from asynchronousOrders list.");
 				order.setState(OrderState.OPEN);
 				this.managerDataStoreController.updateOrder(order);		

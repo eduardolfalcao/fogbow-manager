@@ -58,15 +58,20 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 			i.addAttribute("occi.compute.memory", "16");
 			return i;
 		}
-		LOGGER.warn("Existing instances: "+instances);//debug-EDUARDO
-		LOGGER.warn("Requested instance: "+instanceId);//debug-EDUARDO
+		LOGGER.info("<"+managerId+">: Existing instances: "+instances+". Requested instance: "+instanceId);//debug-EDUARDO
 		return null;
 	}	
 
 	@Override
 	public void removeInstance(Token token, String instanceId) {
 		instanceCounter--;
-		instances.remove(instanceId);		
+		boolean success = instances.remove(instanceId);
+		if(success)
+			LOGGER.info("<"+managerId+">: (FakeCloudComputePlugin) Removing instance (" + instanceId + ") "
+				+ "by FakeCloudComputePlugin.");
+		else
+			LOGGER.info("<"+managerId+">: (FakeCloudComputePlugin) Tried to remove instance (" + instanceId + ") "
+					+ "but it doesn't exist.");
 	}
 	
 	public int getQuota(){

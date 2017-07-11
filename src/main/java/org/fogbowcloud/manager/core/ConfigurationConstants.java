@@ -38,6 +38,7 @@ public class ConfigurationConstants {
 
 	// periods
 	public static final String SCHEDULER_PERIOD_KEY = "scheduler_period";
+	public static final String WORKLOAD_MONITOR_PERIOD_KEY = "workload_monitor_period";
 	public static final String INSTANCE_MONITORING_PERIOD_KEY = "instance_monitoring_period";
 	public static final String TOKEN_UPDATE_PERIOD_KEY = "token_update_period";
 	public static final String SERVED_ORDER_MONITORING_PERIOD_KEY = "served_order_monitoring_period";

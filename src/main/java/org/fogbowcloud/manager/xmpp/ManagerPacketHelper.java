@@ -184,8 +184,7 @@ public class ManagerPacketHelper {
 					userFederationToken.getUser().getName());			
 		}
 		
-		LOGGER_EXP.setLevel(Level.ERROR);
-		LOGGER_EXP.info("<"+managerId+">: Sending request with "+orderId+" to "+memberAddress);
+		LOGGER_EXP.info("<"+managerId+">(PacketHelper): Sending request with "+orderId+" to "+memberAddress);
 		
 		packetSender.addPacketCallback(iq, new PacketCallback() {
 

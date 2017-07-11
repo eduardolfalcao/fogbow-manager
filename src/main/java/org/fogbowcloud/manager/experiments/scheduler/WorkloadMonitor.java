@@ -14,6 +14,7 @@ import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.experiments.scheduler.model.Job;
 import org.fogbowcloud.manager.experiments.scheduler.model.Task;
 import org.fogbowcloud.manager.occi.model.Category;
+import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 
@@ -53,7 +54,7 @@ public class WorkloadMonitor {
 						if(durationInSec>=t.getRuntime()){							
 							ordersToBeRemoved.put(fm, order);
 							itTasks.remove();
-							LOGGER.info("Peer "+fm+" removing task "+t+", order "+order+" - ~ending time:"+(t.getRuntime()+j.getSubmitTime()));
+							LOGGER.info("Peer "+fm+" removing task "+t+", order "+order.getId()+" - ~ending time:"+(t.getRuntime()+j.getSubmitTime()));
 						}					
 					}
 				}
@@ -72,8 +73,17 @@ public class WorkloadMonitor {
 				    Order orderToBeRemoved = entry.getValue();
 				    if(orderToBeRemoved.getGlobalInstanceId()==null)
 				    	LOGGER.error("<"+mc.getManagerId()+">: trying to remove instance from order "+orderToBeRemoved);
-				    mc.removeInstance(null, orderToBeRemoved.getGlobalInstanceId(), orderToBeRemoved.getResourceKind());	
-				    mc.removeOrder(null, orderToBeRemoved.getId());	
+				    try{
+				    	mc.removeInstance(null, orderToBeRemoved.getGlobalInstanceId(), orderToBeRemoved.getResourceKind());
+				    } catch(OCCIException ex){
+				    	LOGGER.error("Exception while removing instance " + orderToBeRemoved.getGlobalInstanceId() + "\n" + ex.getMessage());
+				    }
+				    
+				    try{
+				    	mc.removeOrder(null, orderToBeRemoved.getId());
+				    } catch(OCCIException ex){
+				    	LOGGER.error("Exception while removing order " + orderToBeRemoved.getId() + "\n" + ex.getMessage());
+				    }
 				}
 		   	};
 		   	new Thread(run).start();
