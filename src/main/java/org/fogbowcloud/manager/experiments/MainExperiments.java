@@ -21,7 +21,7 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
-import org.fogbowcloud.manager.experiments.data.MonitorPeerState;
+import org.fogbowcloud.manager.experiments.monitor.MonitorPeerState;
 import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
 
 public class MainExperiments {

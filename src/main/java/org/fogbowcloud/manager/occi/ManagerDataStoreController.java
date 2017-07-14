@@ -8,6 +8,7 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateAssync;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -22,10 +23,12 @@ public class ManagerDataStoreController {
 	private ManagerDataStore managerDatabase;
 	
 	private String managerId;
-
-	public ManagerDataStoreController(Properties properties) {		
+	private MonitorPeerStateAssync monitor;
+	
+	public ManagerDataStoreController(Properties properties, MonitorPeerStateAssync monitor) {		
 		this.managerDatabase = new ManagerDataStore(properties);
 		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
+		this.monitor = monitor;
 	}
 	
 	public ManagerDataStore getManagerDatabase() {
@@ -188,7 +191,7 @@ public class ManagerDataStoreController {
 						LOGGER.debug("<"+managerId+">: "+"Order " + orderId + " does not have an instance. Excluding order.");
 						this.managerDatabase.removeOrder(order);
 					} else {
-						order.setState(OrderState.DELETED);
+						order.setState(OrderState.DELETED, monitor);
 						this.managerDatabase.updateOrder(order);
 					}
 					return;

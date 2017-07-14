@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.experiments.data;
+package org.fogbowcloud.manager.experiments.monitor;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -14,6 +14,8 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
+import org.fogbowcloud.manager.experiments.data.CsvGenerator;
+import org.fogbowcloud.manager.experiments.data.PeerState;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderState;
 

@@ -62,7 +62,9 @@ import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.core.plugins.localcredentials.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.experiments.SimpleManagerFactory;
+import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateAssync;
 import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitor;
+import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorAssync;
 import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorMC;
 import org.fogbowcloud.manager.occi.ManagerDataStoreController;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -141,8 +143,8 @@ public class ManagerController {
 	private FailedBatch failedBatch = new FailedBatch();
 	private ManagerControllerHelper.MonitoringHelper monitoringHelper;
 	
-//	private static final ManagerTimer monitorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-//	private WorkloadMonitorMC monitor;
+	private static final ManagerTimer monitorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+	private MonitorPeerStateAssync monitor;
 	
 	private DateUtils dateUtils = new DateUtils();
 
@@ -177,10 +179,11 @@ public class ManagerController {
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
 			this.capacityControllerUpdaterTimer = new ManagerTimer(executor);
 		}
-		this.managerDataStoreController = new ManagerDataStoreController(properties);
 		
-//		monitor = new WorkloadMonitorMC(this);
-//		triggerWorkloadMonitor(monitor, properties);
+		monitor = new MonitorPeerStateAssync(this);
+		triggerWorkloadMonitor(monitor, properties);
+		
+		this.managerDataStoreController = new ManagerDataStoreController(properties, monitor);	
 		
 		recoverPreviousOrders();
 	}
@@ -1023,18 +1026,18 @@ public class ManagerController {
 			boolean finished = order.getElapsedTime() >= order.getRuntime();			
 			if(order.isLocal() && !finished){
 				LOGGER_EXP.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.OPEN);
-				order.setState(OrderState.OPEN);
+				order.setState(OrderState.OPEN, monitor);
 				if (!orderSchedulerTimer.isScheduled()) {
 					triggerOrderScheduler();
 				}
 			}
 			else{
 				LOGGER_EXP.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);
-				order.setState(OrderState.CLOSED);
+				order.setState(OrderState.CLOSED, monitor);
 			}			
 		} else {
 			LOGGER.info("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.CLOSED);
-			order.setState(OrderState.CLOSED);
+			order.setState(OrderState.CLOSED, monitor);
 		}
 		
 		this.managerDataStoreController.updateOrder(order);
@@ -1476,7 +1479,7 @@ public class ManagerController {
 		List<Category> categoriesCopy = new LinkedList<Category>(order.getCategories());
 		populateWithManagerPublicKey(xOCCIAttCopy, categoriesCopy);
 		order.setProvidingMemberId(memberAddress);
-		order.setState(OrderState.PENDING);
+		order.setState(OrderState.PENDING, monitor);
 		this.managerDataStoreController.updateOrder(order);
 
 		LOGGER.info("<"+managerId+">: "+"Submiting order " + order + " to member " + memberAddress);		
@@ -1493,7 +1496,7 @@ public class ManagerController {
 						}
 						if (instanceId == null) {
 							if (order.getState().equals(OrderState.PENDING)) {
-								order.setState(OrderState.OPEN);
+								order.setState(OrderState.OPEN, monitor);
 								managerDataStoreController.updateOrder(order);
 							}
 							return;
@@ -1513,7 +1516,7 @@ public class ManagerController {
 						boolean isNetworkOrder = OrderConstants.NETWORK_TERM.equals(order.getResourceKind());						
 						if (isStorageOrder || isNetworkOrder) {
 							managerDataStoreController.removeOrderSyncronous(order.getId());
-							order.setState(OrderState.FULFILLED);
+							order.setState(OrderState.FULFILLED, monitor);
 							managerDataStoreController.updateOrder(order);
 							return;
 						}
@@ -1525,7 +1528,7 @@ public class ManagerController {
 							LOGGER.error("<"+managerId+">: "+"Error while executing the benchmark in " + instanceId
 									+ " from member " + memberAddress + ".", e);
 							if (order.getState().equals(OrderState.PENDING)) {
-								order.setState(OrderState.OPEN);
+								order.setState(OrderState.OPEN, monitor);
 								managerDataStoreController.updateOrder(order);
 							}
 							return;
@@ -1537,7 +1540,7 @@ public class ManagerController {
 						LOGGER.debug("<"+managerId+">: "+"The order " + order + " forwarded to " + memberAddress
 								+ " gets error ", t);
 						if (order.getState().equals(OrderState.PENDING)) {
-							order.setState(OrderState.OPEN);
+							order.setState(OrderState.OPEN, monitor);
 						}
 						order.setProvidingMemberId(null);
 						managerDataStoreController.updateOrder(order);
@@ -1599,7 +1602,7 @@ public class ManagerController {
 				}
 
 				if (!order.getState().in(OrderState.DELETED)) {
-					order.setState(OrderState.FULFILLED);
+					order.setState(OrderState.FULFILLED, monitor);
 					managerDataStoreController.updateOrder(order);
 				}
 
@@ -1741,7 +1744,7 @@ public class ManagerController {
 					allFulfilled &= isFulfilled;
 				}
 			} else if (order.isExpired()) {
-				order.setState(OrderState.CLOSED);
+				order.setState(OrderState.CLOSED, monitor);
 				this.managerDataStoreController.updateOrder(order);
 			} else {
 				allFulfilled = false;
@@ -1752,19 +1755,19 @@ public class ManagerController {
 		}
 	}
 	
-//	private static void triggerWorkloadMonitor(final WorkloadMonitorMC monitor, Properties props) {
-//		final long monitorPeriod = ManagerControllerHelper.getWorkloadMonitorPeriod(props);
-//		monitorTimer.scheduleWithFixedDelay(new TimerTask() {
-//			@Override
-//			public void run() {	
-//				try {					
-//					monitor.monitorOrders();
-//				} catch (Throwable e) {
-//					LOGGER.error("Error while monitoring workload", e);
-//				}
-//			}
-//		}, 0, monitorPeriod);
-//	}
+	private static void triggerWorkloadMonitor(final MonitorPeerStateAssync monitor, Properties props) {
+		final long monitorPeriod = ManagerControllerHelper.getWorkloadMonitorPeriod(props);
+		monitorTimer.scheduleWithFixedDelay(new TimerTask() {
+			@Override
+			public void run() {	
+				try {					
+					monitor.savePeerState();
+				} catch (Throwable e) {
+					LOGGER.error("Error while monitoring workload", e);
+				}
+			}
+		}, 0, monitorPeriod);
+	}
 
 	protected List<FederationMember> getAllowedFederationMembers(String requirements) {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>(members);
@@ -1838,7 +1841,7 @@ public class ManagerController {
 			if (timeoutReached(order.getSyncronousTime())) {
 				LOGGER.info("<"+managerId+">: "+"The forwarded order " + order.getId()
 						+ " reached timeout and is been removed from asynchronousOrders list.");
-				order.setState(OrderState.OPEN);
+				order.setState(OrderState.OPEN, monitor);
 				this.managerDataStoreController.updateOrder(order);		
 			}			
 		}
@@ -1924,7 +1927,7 @@ public class ManagerController {
 				removePublicKeyFromCategoriesAndAttributes(xOCCIAttCopy, categories);
 				String instanceId = computePlugin.requestInstance(federationUserToken, categories, xOCCIAttCopy,
 						localImageId);
-				order.setState(OrderState.SPAWNING);
+				order.setState(OrderState.SPAWNING, monitor);
 				order.setInstanceId(instanceId);
 				order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 				this.managerDataStoreController.updateOrder(order);
@@ -1966,7 +1969,7 @@ public class ManagerController {
 				String instanceId = storagePlugin.requestInstance(federationUserToken, 
 						order.getCategories(), order.getxOCCIAtt());
 				
-				order.setState(OrderState.FULFILLED);
+				order.setState(OrderState.FULFILLED, monitor);
 				order.setInstanceId(instanceId);
 				order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 				this.managerDataStoreController.updateOrder(order);
@@ -1984,7 +1987,7 @@ public class ManagerController {
 				String instanceId = networkPlugin.requestInstance(federationUserToken, 
 						order.getCategories(),order.getxOCCIAtt());
 				
-				order.setState(OrderState.FULFILLED);
+				order.setState(OrderState.FULFILLED, monitor);
 				order.setInstanceId(instanceId);
 				order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 				this.managerDataStoreController.updateOrder(order);

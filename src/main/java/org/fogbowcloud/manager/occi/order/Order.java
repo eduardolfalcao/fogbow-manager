@@ -8,7 +8,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.DateUtils;
+import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateAssync;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
 
@@ -32,10 +36,14 @@ public class Order {
 	private boolean syncronousStatus;
 	
 	private DateUtils dateUtils = new DateUtils();
+	private static final Logger LOGGER = Logger.getLogger(Order.class);
+	private MonitorPeerStateAssync monitor;
+	
 		
 	public Order(String id, Token federationToken, String instanceId, String providingMemberId,
 			String requestingMemberId, long fulfilledTime, boolean isLocal, OrderState state,
 			List<Category> categories, Map<String, String> xOCCIAtt) {
+		LOGGER.setLevel(Level.INFO);
 		this.id = id;
 		this.federationToken = federationToken;
 		this.instanceId = instanceId;
@@ -150,6 +158,11 @@ public class Order {
 	public OrderState getState() {
 		return state;
 	}
+	
+	public void setState(OrderState state, MonitorPeerStateAssync monitor) {
+		this.monitor = monitor;
+		setState(state);
+	}
 
 	public void setState(OrderState state) {
 		if (state.in(OrderState.FULFILLED)) {
@@ -158,6 +171,12 @@ public class Order {
 			fulfilledTime = 0;
 		}
 		this.state = state;
+		if(getId()==null){
+			LOGGER.warn("Trying to set order state while it doesn't have the orderId");
+		} else{
+			monitor.monitorOrder(this);
+		}
+					
 	}
 
 	public String getId() {
@@ -274,58 +293,21 @@ public class Order {
 		return expirationDate.getTime() < now;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
+		if(obj == null)
 			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Order other = (Order) obj;
-		if (categories == null) {
-			if (other.categories != null)
-				return false;
-		} else if (!categories.equals(other.categories))
-			return false;
-		if (federationToken == null) {
-			if (other.federationToken != null)
-				return false;
-		} else if (!federationToken.equals(other.federationToken))
-			return false;
-		if (fulfilledTime != other.fulfilledTime)
-			return false;
-		if (id == null) {
-			if (other.id != null)
-				return false;
-		} else if (!id.equals(other.id))
-			return false;
-		if (instanceId == null) {
-			if (other.instanceId != null)
-				return false;
-		} else if (!instanceId.equals(other.instanceId))
-			return false;
-		if (isLocal != other.isLocal)
-			return false;
-		if (providingMemberId == null) {
-			if (other.providingMemberId != null)
-				return false;
-		} else if (!providingMemberId.equals(other.providingMemberId))
-			return false;
-		if (requestingMemberId == null) {
-			if (other.requestingMemberId != null)
-				return false;
-		} else if (!requestingMemberId.equals(other.requestingMemberId))
-			return false;
-		if (state != other.state)
-			return false;
-		if (xOCCIAtt == null) {
-			if (other.xOCCIAtt != null)
-				return false;
-		} else if (xOCCIAtt != null && !new HashSet(xOCCIAtt.values()).equals(new HashSet(other.xOCCIAtt.values())))
-			return false;
-		return true;
+		else if(obj instanceof Order){
+			Order o = (Order) obj;
+			if(o.getId().equals(getId()))
+				return true;
+		}
+		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+		return getId().hashCode();
 	}
 	
 }

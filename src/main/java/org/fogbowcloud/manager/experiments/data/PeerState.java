@@ -41,8 +41,12 @@ public class PeerState{
 		return dTot;
 	}
 
-	public void setdTot(int dTot) {
-		this.dTot = dTot;
+	public void incDTot() {
+		this.dTot++;
+	}
+	
+	public void decDTot() {
+		this.dTot--;
 	}
 
 	public int getdFed() {
@@ -57,24 +61,40 @@ public class PeerState{
 		return rFed;
 	}
 
-	public void setrFed(int rFed) {
-		this.rFed = rFed;
+	public void incRFed() {
+		this.rFed++;
+	}
+	
+	public void decRFed() {
+		this.rFed--;
 	}
 
 	public int getoFed() {
 		return oFed;
 	}
 
-	public void setoFed(int oFed) {
-		this.oFed = oFed;
+	public void incOFed() {
+		this.oFed++;
+	}
+	
+	public void incOFed(int n) {
+		this.oFed += n;
+	}
+	
+	public void decOFed() {
+		this.oFed--;
 	}
 
 	public int getsFed() {
 		return sFed;
 	}
 
-	public void setsFed(int sFed) {
-		this.sFed = sFed;
+	public void incSFed() {
+		this.sFed++;
+	}
+	
+	public void decSFed() {
+		this.sFed--;
 	}
 
 	@Override
