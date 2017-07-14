@@ -62,6 +62,8 @@ import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.core.plugins.localcredentials.MapperHelper;
 import org.fogbowcloud.manager.core.plugins.util.SshClientPool;
 import org.fogbowcloud.manager.experiments.SimpleManagerFactory;
+import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitor;
+import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorMC;
 import org.fogbowcloud.manager.occi.ManagerDataStoreController;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -139,6 +141,9 @@ public class ManagerController {
 	private FailedBatch failedBatch = new FailedBatch();
 	private ManagerControllerHelper.MonitoringHelper monitoringHelper;
 	
+//	private static final ManagerTimer monitorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+//	private WorkloadMonitorMC monitor;
+	
 	private DateUtils dateUtils = new DateUtils();
 
 	private PoolingHttpClientConnectionManager cm; 
@@ -173,6 +178,9 @@ public class ManagerController {
 			this.capacityControllerUpdaterTimer = new ManagerTimer(executor);
 		}
 		this.managerDataStoreController = new ManagerDataStoreController(properties);
+		
+//		monitor = new WorkloadMonitorMC(this);
+//		triggerWorkloadMonitor(monitor, properties);
 		
 		recoverPreviousOrders();
 	}
@@ -995,7 +1003,8 @@ public class ManagerController {
 		}
 		
 		/** EDUARDO **/
-		order.updateElapsedTime();
+		boolean isRemoving = true;
+		order.updateElapsedTime(isRemoving);
 		LOGGER_EXP.info("<"+managerId+">: "+"checking if the order will be removed or rescheduled - order: " + order);
 		
 		if (order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
@@ -1072,7 +1081,10 @@ public class ManagerController {
 				return order;
 			}
 		}
-		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND);
+		
+		LOGGER.info("<"+managerId+">: "+"Orders: " + userOrders);
+		
+		throw new OCCIException(ErrorType.NOT_FOUND, ResponseConstants.NOT_FOUND + "getOrderForInstance");
 	}
 
 	public Order getOrder(String accessId, String orderId) {
@@ -1739,6 +1751,20 @@ public class ManagerController {
 			LOGGER.info("<"+managerId+">: "+"All orders fulfilled.");
 		}
 	}
+	
+//	private static void triggerWorkloadMonitor(final WorkloadMonitorMC monitor, Properties props) {
+//		final long monitorPeriod = ManagerControllerHelper.getWorkloadMonitorPeriod(props);
+//		monitorTimer.scheduleWithFixedDelay(new TimerTask() {
+//			@Override
+//			public void run() {	
+//				try {					
+//					monitor.monitorOrders();
+//				} catch (Throwable e) {
+//					LOGGER.error("Error while monitoring workload", e);
+//				}
+//			}
+//		}, 0, monitorPeriod);
+//	}
 
 	protected List<FederationMember> getAllowedFederationMembers(String requirements) {
 		List<FederationMember> federationMembers = new ArrayList<FederationMember>(members);
@@ -1907,7 +1933,8 @@ public class ManagerController {
 			} catch (OCCIException e) {
 				ErrorType errorType = e.getType();
 				if (errorType == ErrorType.QUOTA_EXCEEDED) {
-					LOGGER.warn("<"+managerId+">: "+"Order failed locally for quota exceeded.", e);
+					LOGGER.warn("<"+managerId+">: "+"Order("+order.getId()+") requested by "+order.getRequestingMemberId()+" "
+							+ "and provided by "+order.getProvidingMemberId()+", failed locally for quota exceeded.", e);
 					ArrayList<Order> ordersWithInstances = new ArrayList<Order>(
 							managerDataStoreController.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
 					Order orderToPreempt = prioritizationPlugin.takeFrom(order, ordersWithInstances);

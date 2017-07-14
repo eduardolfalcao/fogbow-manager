@@ -11,11 +11,18 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.ManagerControllerHelper;
+import org.fogbowcloud.manager.core.ManagerTimer;
+import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
+import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderState;
@@ -24,6 +31,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.JournalMode;
+import org.sqlite.SQLiteConfig.SynchronousMode;
+import org.sqlite.SQLiteConfig.TempStore;
 
 public class ManagerDataStore {
 
@@ -54,7 +63,7 @@ public class ManagerDataStore {
 	protected static final String DEVICE_ID = "device_id";
 	protected static final String SOURCE = "source";
 	protected static final String FEDERATION_MEMBER_SERVERED_TABLE_NAME = "t_federation_member_servered";
-	protected static final String FEDERTION_MEMBER_ID = "federation_member_id";
+	protected static final String FEDERATION_MEMBER_ID = "federation_member_id";
 	
 	private String dataStoreURL;
 	private String managerId;
@@ -64,6 +73,7 @@ public class ManagerDataStore {
 		String dataStoreURLProperties = properties.getProperty(MANAGER_DATASTORE_URL);		
 		this.dataStoreURL = DataStoreHelper.getDataStoreUrl(dataStoreURLProperties,
 				DEFAULT_DATASTORE_NAME);
+		
 		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		
 		Statement statement = null;
@@ -99,17 +109,36 @@ public class ManagerDataStore {
 							+ PROVIDING_MEMBER_ID + " VARCHAR(255), "
 							+ IS_LOCAL + " BOOLEAN)");			
 			statement.execute("CREATE TABLE IF NOT EXISTS " + FEDERATION_MEMBER_SERVERED_TABLE_NAME + "(" 
-							+ FEDERTION_MEMBER_ID + " VARCHAR(255) NOT NULL, "
+							+ FEDERATION_MEMBER_ID + " VARCHAR(255) NOT NULL, "
 							+ ORDER_ID + " VARCHAR(255) NOT NULL, "
 							+ "FOREIGN KEY (" + ORDER_ID + ") REFERENCES " 
-							+ ORDER_TABLE_NAME + "(" + ORDER_ID + ") ON DELETE CASCADE)");			
+							+ ORDER_TABLE_NAME + "(" + ORDER_ID + ") ON DELETE CASCADE)");
 			statement.close();
+			triggerDBPerformanceInspector(properties);
 		} catch (Exception e) {
 			LOGGER.error("<"+managerId+">: "+ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 			throw new Error("<"+managerId+">: "+ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 		} finally {
 			close(statement, connection);
 		}
+	}
+	
+	int count = 0;
+	private final ManagerTimer bdInspectorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+	private void triggerDBPerformanceInspector(final Properties prop) {
+		bdInspectorTimer.scheduleWithFixedDelay(new TimerTask() {
+			@Override
+			public void run() {	
+				try {
+					if(count>40){
+						LOGGER.info("<"+managerId+">: "+"opened "+count+" connections in database!");
+					}
+					count = 0;
+				} catch (Throwable e) {
+					LOGGER.error("<"+managerId+">: "+"Error while counting bd calls", e);
+				}
+			}
+		}, 0, 5000);
 	}
 	
 	private static final String INSERT_ORDER_SQL = "INSERT INTO " + ORDER_TABLE_NAME
@@ -121,7 +150,7 @@ public class ManagerDataStore {
 	public boolean addOrder(Order order) throws SQLException, JSONException {
 		PreparedStatement orderStmt = null;
 		Connection connection = null;
-		try {
+		try {			
 			connection = getConnection();
 			connection.setAutoCommit(false);
 			
@@ -139,7 +168,7 @@ public class ManagerDataStore {
 			orderStmt.setTimestamp(10, new Timestamp(new Date().getTime()));
 			JSONObject xOCCIAtt = JSONHelper.mountXOCCIAttrJSON(order.getxOCCIAtt());
 			orderStmt.setString(11, xOCCIAtt != null ? xOCCIAtt.toString() : null);
-			orderStmt.executeUpdate();
+			orderStmt.executeUpdate();			
 			
 			connection.commit();
 			return true;
@@ -172,8 +201,16 @@ public class ManagerDataStore {
 		Connection connection = null;
 		List<Order> orders = new ArrayList<Order>();
 		try {
+			DateUtils d = new DateUtils();
+			long t1 = d.currentTimeMillis();
+					
 			connection = getConnection();
 			connection.setAutoCommit(false);
+			
+			long t2 = d.currentTimeMillis();
+			long now = t2-t1;
+			if(now > 1000)
+				LOGGER.info("<"+managerId+">: "+" Time to get connection: "+now);
 			
 			String ordersStmtStr = GET_ORDERS_SQL;
 			if (orderState != null) {
@@ -551,7 +588,7 @@ public class ManagerDataStore {
 	public boolean removeStorageLink(StorageLink storageLink) throws SQLException {
 		PreparedStatement removeStorageLinkStmt = null;
 		Connection connection = null;
-		try {	
+		try {
 			connection = getConnection();
 			connection.setAutoCommit(false);
 			
@@ -621,7 +658,7 @@ public class ManagerDataStore {
 	 */	
 	
 	private static final String INSERT_FEDERATION_MEMBER_SERVERED_SQL = "INSERT INTO " + 
-			FEDERATION_MEMBER_SERVERED_TABLE_NAME + " (" + FEDERTION_MEMBER_ID + "," + ORDER_ID + ")"			
+			FEDERATION_MEMBER_SERVERED_TABLE_NAME + " (" + FEDERATION_MEMBER_ID + "," + ORDER_ID + ")"			
 			+ " VALUES (?,?)";
 	
 	public boolean addFederationMemberServered(String orderId, String federationMemberServerd) throws SQLException, JSONException {
@@ -653,7 +690,7 @@ public class ManagerDataStore {
 		return false;
 	}
 	
-	private static final String GET_FEDERATION_MEMBERS_SQL = "SELECT " + FEDERTION_MEMBER_ID
+	private static final String GET_FEDERATION_MEMBERS_SQL = "SELECT " + FEDERATION_MEMBER_ID
 			+ " FROM " + FEDERATION_MEMBER_SERVERED_TABLE_NAME 
 			+ " WHERE " + ORDER_ID + "=?";
 	
@@ -699,7 +736,7 @@ public class ManagerDataStore {
 	
 	private static final String REMOVE_FEDERATION_MEMBER_SERVERED_SQL = "DELETE"
 			+ " FROM " + FEDERATION_MEMBER_SERVERED_TABLE_NAME 
-			+ " WHERE " + FEDERTION_MEMBER_ID + " = ?";
+			+ " WHERE " + FEDERATION_MEMBER_ID + " = ?";
 	
 	public boolean removeFederationMemberServed(String federationMemberServered) throws SQLException {
 		PreparedStatement removeFederationMemberServeredStmt = null;
@@ -773,11 +810,17 @@ public class ManagerDataStore {
 	
 	public Connection getConnection() throws SQLException {
 		try {
+			count++;
 			SQLiteConfig config = new SQLiteConfig();
 			config.enforceForeignKeys(true);  
 			config.setBusyTimeout("30000");
-			config.setJournalMode(JournalMode.WAL);
-			return DriverManager.getConnection(this.dataStoreURL, config.toProperties());				
+//			config.setJournalMode(JournalMode.WAL);
+			config.setJournalMode(JournalMode.MEMORY);
+			config.setTempStore(TempStore.MEMORY);
+			config.setSynchronous(SynchronousMode.OFF);
+			config.setCacheSize(100000);
+			Connection con = DriverManager.getConnection(this.dataStoreURL, config.toProperties());
+			return con;
 		} catch (SQLException e) {
 			LOGGER.error("<"+managerId+">: "+"Error while getting a new connection from the connection pool.", e);
 			throw e;

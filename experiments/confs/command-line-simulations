@@ -4,6 +4,8 @@
 ##################################
 ##################################
 #XMPP
+./fogbow-cli order --url http://localhost:9193 --create --n 1 --public-key ~/.ssh/id_rsa.pub --resource-kind compute --auth-token a --image fogbow-ubuntu
+
 /etc/prosody/prosody.cfg.lua
 sudo service prosody restart
 

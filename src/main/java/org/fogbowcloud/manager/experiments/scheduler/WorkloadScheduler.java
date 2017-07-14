@@ -19,6 +19,8 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.core.model.DateUtils;
+import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitor;
+import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorAssync;
 import org.fogbowcloud.manager.experiments.scheduler.model.DataReader;
 import org.fogbowcloud.manager.experiments.scheduler.model.Job;
 import org.fogbowcloud.manager.experiments.scheduler.model.Peer;
@@ -40,7 +42,8 @@ public class WorkloadScheduler {
 	
 	private long time = 0;
 	private List<Peer> peers;
-	private Map<String, ManagerController> relations;	
+	private Map<String, ManagerController> relations;
+	private Map<ManagerController, WorkloadMonitorAssync> monitors;
 	
 	private Map<String, String> xOCCIAtt;
 	private List<Category> categories;
@@ -56,17 +59,19 @@ public class WorkloadScheduler {
 		sortJobsAndTasks();
 		
 		relations = new HashMap<String, ManagerController>();
+		monitors = new HashMap<ManagerController, WorkloadMonitorAssync>();
 		for(Peer p : peers){
 			for(ManagerController mc : fms){
+				monitors.put(mc, new WorkloadMonitorAssync(mc));
 				if(mc.getManagerId().equals(p.getPeerId())){
 					relations.put(p.getPeerId(), mc);
 					break;
 				}				
 			}			
-		}
+		}		
 		
-		monitor = new WorkloadMonitor(fms);
-		triggerWorkloadMonitor(monitor, props);
+//		monitor = new WorkloadMonitor(fms);
+//		triggerWorkloadMonitor(monitor, props);
 		
 		initOrderParams();		
 	}
@@ -109,12 +114,14 @@ public class WorkloadScheduler {
 						xOCCIAttClone.putAll(xOCCIAtt);
 						List<Category> categoriesClone = new ArrayList<Category>();
 						categoriesClone.addAll(categories);
+						//TODO how to make this faster
 						for(int i = 0; i < j.getTasks().size(); i++){
 							xOCCIAttClone.put(OrderAttribute.RUNTIME.getValue(), String.valueOf(j.getTasks().get(i).getRuntime()*1000));
-							List<Order> orders = mc.createOrders("", categoriesClone, xOCCIAttClone);					
+							List<Order> orders = mc.createOrders("", categoriesClone, xOCCIAttClone);
+							monitors.get(mc).monitorOrder(orders.get(0),TimeUnit.SECONDS.toMillis(j.getTasks().get(i).getRuntime()));
 							j.getTasks().get(i).setOrderId(orders.get(0).getId());
 						}															
-						monitor.addJob(j);
+						//monitor.addJob(j);
 						LOGGER.info("Time: "+jobTime+", Peer "+j.getPeerId()+" creating "+j);
 			    	}
 			    } 		    		    
@@ -165,19 +172,19 @@ public class WorkloadScheduler {
 	}
 	
 	
-	private static void triggerWorkloadMonitor(final WorkloadMonitor monitor, Properties props) {
-		final long monitorPeriod = ManagerControllerHelper.getWorkloadMonitorPeriod(props);
-		monitorTimer.scheduleWithFixedDelay(new TimerTask() {
-			@Override
-			public void run() {	
-				try {
-					monitor.monitorJobs();
-				} catch (Throwable e) {
-					LOGGER.error("Error while monitoring workload", e);
-				}
-			}
-		}, 0, monitorPeriod);
-	}
+//	private static void triggerWorkloadMonitor(final WorkloadMonitor monitor, Properties props) {
+//		final long monitorPeriod = ManagerControllerHelper.getWorkloadMonitorPeriod(props);
+//		monitorTimer.scheduleWithFixedDelay(new TimerTask() {
+//			@Override
+//			public void run() {	
+//				try {
+//					monitor.monitorJobs();
+//				} catch (Throwable e) {
+//					LOGGER.error("Error while monitoring workload", e);
+//				}
+//			}
+//		}, 0, monitorPeriod);
+//	}
 
 	private void readWorkloads(){
 		DataReader df = new DataReader();

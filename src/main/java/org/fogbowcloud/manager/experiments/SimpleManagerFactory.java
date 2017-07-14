@@ -45,12 +45,10 @@ public class SimpleManagerFactory {
 	private static final Logger LOGGER = Logger.getLogger(SimpleManagerFactory.class);
 	
 	private static final String BASE_PLUGINS = "org.fogbowcloud.manager.core.plugins.";
-	private static final String XMPP_JID_FREERIDER = "free-rider-manager";
 	private static final String XMPP_JID_COOPERATIVE = "p";
 	
 	public static final String PATH_FOGBOW_MANAGER = System.getProperty("user.dir");
 	public static final String PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/datastores/";
-	private static final String PATH_LOG = PATH_FOGBOW_MANAGER+"/log/";
 	
 	private static final int HTTP_PORT = 9192;
 	

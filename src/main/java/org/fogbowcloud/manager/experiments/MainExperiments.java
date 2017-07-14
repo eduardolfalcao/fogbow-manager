@@ -2,6 +2,9 @@ package org.fogbowcloud.manager.experiments;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -26,12 +29,12 @@ public class MainExperiments {
 	private static final Logger LOGGER = Logger.getLogger(MainExperiments.class);
 	private static final ManagerTimer dataMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 	private static final ManagerTimer schedulerTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+	
+	private static final String LOG4J_CONF = "log4j";
 
-	public static void main(String[] args) throws Exception {
-		
-		MainHelper.configureLog4j();	
+	public static void main(String[] args) throws Exception {		
+
 		LOGGER.setLevel(Level.INFO);
-
 		String managerConfigFilePath = args[0];
 		String infrastructureConfigFilePath = args[1];
 		String federationConfigFilePath = args[2];
@@ -51,7 +54,7 @@ public class MainExperiments {
 		if(!federationConfgFile.exists()){
 			LOGGER.info("Informed path to federation.conf file must be valid.");
 			System.exit(MainHelper.EXIT_ERROR_CODE);
-		}
+		}	
 		
 		Properties properties = new Properties();
 		
@@ -67,7 +70,7 @@ public class MainExperiments {
 		
 		properties.putAll(managerProperties);
 		properties.putAll(infraProperties);
-		properties.putAll(fedProperties);
+		properties.putAll(fedProperties);	
 		
 		int numberOfPeers = Integer.parseInt(args[3]);
 		properties.put(FakeCloudComputePlugin.COMPUTE_FAKE_QUOTA, args[4]);	//compute_fake_quota
@@ -78,6 +81,7 @@ public class MainExperiments {
 		String outputfolder = "data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";
 		properties.put(MonitorPeerState.OUTPUT_FOLDER, outputfolder);		
 		
+		MainHelper.configureLog4j(properties.getProperty(LOG4J_CONF));
 		try{
 			FileUtils.cleanDirectory(new File(SimpleManagerFactory.PATH_DATASTORES));
 		}catch(Exception e){

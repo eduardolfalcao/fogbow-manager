@@ -47,7 +47,7 @@ public class Main {
 	private static final Logger LOGGER = Logger.getLogger(Main.class);
 
 	public static void main(String[] args) throws Exception {
-		MainHelper.configureLog4j();
+		MainHelper.configureLog4j("");
 
 		Properties properties = new Properties();
 
