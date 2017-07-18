@@ -19,7 +19,7 @@ public class PeerState{
 		this.rFed = rFed;
 		this.oFed = oFed;
 		this.sFed = sFed;
-	}	
+	}
 	
 	public String getId() {
 		return id;
@@ -99,7 +99,7 @@ public class PeerState{
 
 	@Override
 	public String toString() {
-		return "id:"+id+", time:"+time+", demand(tot):"+dTot+", demand(fed):"+dFed+", \n"
+		return "id:"+id+", time:"+time+", demand(tot):"+dTot+", demand(fed):"+dFed+", "
 				+ "received(fed):"+rFed+", offered(fed):"+oFed+", supplied(fed):"+sFed;
 	}
 	

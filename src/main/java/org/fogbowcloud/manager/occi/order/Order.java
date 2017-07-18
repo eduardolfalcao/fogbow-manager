@@ -10,9 +10,8 @@ import java.util.Map;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.DateUtils;
-import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateAssync;
+import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
 
@@ -36,9 +35,7 @@ public class Order {
 	private boolean syncronousStatus;
 	
 	private DateUtils dateUtils = new DateUtils();
-	private static final Logger LOGGER = Logger.getLogger(Order.class);
-	private MonitorPeerStateAssync monitor;
-	
+	private static final Logger LOGGER = Logger.getLogger(Order.class);	
 		
 	public Order(String id, Token federationToken, String instanceId, String providingMemberId,
 			String requestingMemberId, long fulfilledTime, boolean isLocal, OrderState state,
@@ -62,6 +59,11 @@ public class Order {
 			this.elapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.ELAPSED_TIME.getValue()));
 		}		
 	}
+	
+	public Order(String id, Token federationToken, 
+			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId, String providingMemberId) {
+		this(id, federationToken, categories, xOCCIAtt, isLocal, requestingMemberId, providingMemberId, new DateUtils());
+	}
 
 	public Order(String id, Token federationToken, 
 			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId) {
@@ -76,6 +78,26 @@ public class Order {
 		this.xOCCIAtt = xOCCIAtt;
 		this.isLocal = isLocal;
 		this.requestingMemberId = requestingMemberId;
+		this.dateUtils = dateUtils;
+		setState(OrderState.OPEN);		
+		if (this.xOCCIAtt == null) {
+			this.resourceKind = null;			
+		} else {
+			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
+			this.runtime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.RUNTIME.getValue()));
+			this.elapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.ELAPSED_TIME.getValue()));
+		}
+	}
+	
+	public Order(String id, Token federationToken, 
+			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId, String providingMemberId, DateUtils dateUtils) {
+		this.id = id;
+		this.federationToken = federationToken;
+		this.categories = categories;
+		this.xOCCIAtt = xOCCIAtt;
+		this.isLocal = isLocal;
+		this.requestingMemberId = requestingMemberId;
+		this.providingMemberId = providingMemberId;
 		this.dateUtils = dateUtils;
 		setState(OrderState.OPEN);		
 		if (this.xOCCIAtt == null) {
@@ -158,11 +180,6 @@ public class Order {
 	public OrderState getState() {
 		return state;
 	}
-	
-	public void setState(OrderState state, MonitorPeerStateAssync monitor) {
-		this.monitor = monitor;
-		setState(state);
-	}
 
 	public void setState(OrderState state) {
 		if (state.in(OrderState.FULFILLED)) {
@@ -174,9 +191,19 @@ public class Order {
 		if(getId()==null){
 			LOGGER.warn("Trying to set order state while it doesn't have the orderId");
 		} else{
-			monitor.monitorOrder(this);
-		}
-					
+			if(state!=OrderState.SPAWNING){				
+				//TODO run a thread
+				final String managerId = isLocal?requestingMemberId:providingMemberId;
+				final Order o = this;
+				Runnable r = new Runnable() {					
+					@Override
+					public void run() {
+						MonitorPeerStateSingleton.getInstance().getMonitors().get(managerId).monitorOrder(o);
+					}
+				};
+				new Thread(r).start();
+			}
+		}					
 	}
 
 	public String getId() {

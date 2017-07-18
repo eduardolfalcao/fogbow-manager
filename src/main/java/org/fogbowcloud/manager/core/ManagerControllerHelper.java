@@ -15,9 +15,8 @@ public class ManagerControllerHelper {
 
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_SERVED_ORDER_MONITORING_PERIOD = 120000; // 2 minutes
-	private static final long DEFAULT_PEER_STATE_MONITORING_PERIOD = 2000; // 2 seconds
+	private static final long DEFAULT_PEER_STATE_OUTPUT_PERIOD = 10000; // 10 seconds
 	private static final long DEFAULT_SCHEDULER_PERIOD = 1000; // 1 seconds
-	private static final long DEFAULT_WORKLOAD_PERIOD = 2000; // 1 seconds
 	private static final long DEFAULT_BOOTSTRAPPING_PERIOD_KEY = 10000; // 10 seconds
 	
 	private static final Logger LOGGER = Logger.getLogger(ManagerControllerHelper.class);
@@ -32,14 +31,6 @@ public class ManagerControllerHelper {
 		return instanceMonitoringPeriod;
 	}
 	
-	public static long getWorkloadMonitorPeriod(Properties properties) {
-		String workloadMonitorPeriodStr = properties
-				.getProperty(ConfigurationConstants.WORKLOAD_MONITOR_PERIOD_KEY);
-		final long workloadMonitorPeriod = workloadMonitorPeriodStr == null
-				? DEFAULT_WORKLOAD_PERIOD : Long.valueOf(workloadMonitorPeriodStr);
-		return workloadMonitorPeriod;
-	}	
-	
 	public static long getSchedulerPeriod(Properties properties) {
 		String schedulerPeriodStr = properties
 				.getProperty(ConfigurationConstants.SCHEDULER_PERIOD_KEY);
@@ -48,12 +39,12 @@ public class ManagerControllerHelper {
 		return schedulerPeriod;
 	}	
 	
-	public static long getPeerStateMonitoringPeriod(Properties properties) {
-		String metricsMonitoringPeriodStr = properties
-				.getProperty(ConfigurationConstants.PEER_STATE_MONITORING_PERIOD_KEY);
-		final long metricsMonitoringPeriod = metricsMonitoringPeriodStr == null
-				? DEFAULT_PEER_STATE_MONITORING_PERIOD : Long.valueOf(metricsMonitoringPeriodStr);
-		return metricsMonitoringPeriod;
+	public static long getPeerStateOutputPeriod(Properties properties) {
+		String peerStateOutputPeriodStr = properties
+				.getProperty(ConfigurationConstants.PEER_STATE_OUTPUT_PERIOD_KEY);
+		final long peerStateOutputPeriod = peerStateOutputPeriodStr == null
+				? DEFAULT_PEER_STATE_OUTPUT_PERIOD : Long.valueOf(peerStateOutputPeriodStr);
+		return peerStateOutputPeriod;
 	}	
 	
 	public static long getBootstrappingPeriod(Properties properties) {

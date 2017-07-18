@@ -22,6 +22,7 @@ import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.experiments.monitor.MonitorPeerState;
+import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton;
 import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
 
 public class MainExperiments {
@@ -78,7 +79,9 @@ public class MainExperiments {
 		properties.put(WorkloadScheduler.WORKLOAD_FOLDER, args[6]);			//workload_folder
 		properties.put(MonitorPeerState.OUTPUT_DATA_ENDING_TIME, args[7]);	//output_data_ending_time
 		
-		String outputfolder = "data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";
+//		String outputfolder = "data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";
+		String outputfolder = System.getProperty("user.dir")+"/experiments/data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";
+		
 		properties.put(MonitorPeerState.OUTPUT_FOLDER, outputfolder);		
 		
 		MainHelper.configureLog4j(properties.getProperty(LOG4J_CONF));
@@ -101,14 +104,15 @@ public class MainExperiments {
 		
 		List<ManagerController> fms = new ArrayList<ManagerController>();
 		for(Properties prop : propertiesList)
-			fms.add(SimpleManagerFactory.createFM(prop));
+			fms.add(SimpleManagerFactory.createFM(prop));			
 		
 		WorkloadScheduler scheduler = new WorkloadScheduler(fms, properties);
 		triggerWorkloadScheduler(scheduler, properties);		
 		
 		Thread.sleep(ManagerControllerHelper.getBootstrappingPeriod(managerProperties));
-		MonitorPeerState monitorPeerState = new MonitorPeerState(fms);
-		triggerDataMonitoring(monitorPeerState, properties);
+		MonitorPeerStateSingleton.getInstance().init(fms); 		//starting peer state monitoring
+		for(ManagerController fm : fms)
+			fm.triggerWorkloadMonitor(MonitorPeerStateSingleton.getInstance().getMonitors().get(fm.getManagerId()));	
 		
 		LOGGER.info("The federation is up!");
 		
@@ -126,21 +130,6 @@ public class MainExperiments {
 				}
 			}
 		}, ManagerControllerHelper.getBootstrappingPeriod(prop), schedulerPeriod);
-	}
-	
-	private static void triggerDataMonitoring(final MonitorPeerState monitorPeers, Properties prop) {
-		final long dataMonitoringPeriod = ManagerControllerHelper.getPeerStateMonitoringPeriod(prop);
-
-		dataMonitoringTimer.scheduleWithFixedDelay(new TimerTask() {
-			@Override
-			public void run() {	
-				try {
-					monitorPeers.savePeerState();
-				} catch (Throwable e) {
-					LOGGER.error("Error while monitoring peer states", e);
-				}
-			}
-		}, 0, dataMonitoringPeriod);
 	}
 	
 }

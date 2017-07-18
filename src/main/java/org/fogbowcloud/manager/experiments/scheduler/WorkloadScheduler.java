@@ -68,10 +68,7 @@ public class WorkloadScheduler {
 					break;
 				}				
 			}			
-		}		
-		
-//		monitor = new WorkloadMonitor(fms);
-//		triggerWorkloadMonitor(monitor, props);
+		}	
 		
 		initOrderParams();		
 	}
