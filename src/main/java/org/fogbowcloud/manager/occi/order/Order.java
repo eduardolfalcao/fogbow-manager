@@ -191,8 +191,7 @@ public class Order {
 		if(getId()==null){
 			LOGGER.warn("Trying to set order state while it doesn't have the orderId");
 		} else{
-			if(state!=OrderState.SPAWNING){				
-				//TODO run a thread
+			if(state!=OrderState.SPAWNING){	
 				final String managerId = isLocal?requestingMemberId:providingMemberId;
 				final Order o = this;
 				Runnable r = new Runnable() {					

@@ -1017,14 +1017,14 @@ public class ManagerController {
 		else if (isPersistent(order)) {			
 			boolean finished = order.getElapsedTime() >= order.getRuntime();			
 			if(order.isLocal() && !finished){
-				LOGGER_EXP.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.OPEN);
+				LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.OPEN);
 				order.setState(OrderState.OPEN);
 				if (!orderSchedulerTimer.isScheduled()) {
 					triggerOrderScheduler();
 				}
 			}
 			else{
-				LOGGER_EXP.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);
+				LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);
 				order.setState(OrderState.CLOSED);
 			}			
 		} else {
@@ -1743,7 +1743,7 @@ public class ManagerController {
 			}
 		}
 		if (allFulfilled) {
-			LOGGER.info("<"+managerId+">: "+"All orders fulfilled.");
+			LOGGER.debug("<"+managerId+">: "+"All orders fulfilled.");
 		}
 	}
 	

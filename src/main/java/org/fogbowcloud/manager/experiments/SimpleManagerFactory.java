@@ -48,8 +48,8 @@ public class SimpleManagerFactory {
 	private static final String XMPP_JID_COOPERATIVE = "p";
 	
 	public static final String PATH_FOGBOW_MANAGER = System.getProperty("user.dir");
-//	public static final String PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/datastores/";
-	public static final String PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/experiments/datastores/";
+	public static final String PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/datastores/";
+//	public static final String PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/experiments/datastores/";	//execution in eclipse
 	
 	private static final int HTTP_PORT = 9192;
 	
