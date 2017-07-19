@@ -30,18 +30,18 @@ public class ManagerTimer {
 		}, delay, period, TimeUnit.MILLISECONDS);		
 	}
 	
-//	public void scheduleAtFixedRate(final Runnable task, long delay, long period) {
-//		this.future = executor.scheduleAtFixedRate(new Runnable() {
-//			@Override
-//			public void run() {
-//				try {
-//					task.run();
-//				} catch (Throwable e) {
-//					LOGGER.error("Failed while executing timer task", e);
-//				}
-//			}
-//		}, delay, period, TimeUnit.MILLISECONDS);
-//	}	
+	public void scheduleAtFixedRate(final Runnable task, long delay, long period) {
+		this.future = executor.scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					task.run();
+				} catch (Throwable e) {
+					LOGGER.error("Failed while executing timer task", e);
+				}
+			}
+		}, delay, period, TimeUnit.MILLISECONDS);
+	}	
 
 	public void cancel() {
 		if (future != null) {

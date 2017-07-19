@@ -9,17 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.core.model.DateUtils;
-import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitor;
 import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorAssync;
 import org.fogbowcloud.manager.experiments.scheduler.model.DataReader;
 import org.fogbowcloud.manager.experiments.scheduler.model.Job;
@@ -38,7 +35,6 @@ public class WorkloadScheduler {
 	private Properties props;
 	
 	private static final ManagerTimer monitorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-	private WorkloadMonitor monitor;
 	
 	private long time = 0;
 	private List<Peer> peers;

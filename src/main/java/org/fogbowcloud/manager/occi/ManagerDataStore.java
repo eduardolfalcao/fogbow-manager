@@ -33,6 +33,7 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.JournalMode;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 import org.sqlite.SQLiteConfig.TempStore;
+import org.sqlite.javax.SQLiteConnectionPoolDataSource;
 
 public class ManagerDataStore {
 
@@ -67,6 +68,7 @@ public class ManagerDataStore {
 	
 	private String dataStoreURL;
 	private String managerId;
+	private SQLiteConnectionPoolDataSource dataSource;
 
 	public ManagerDataStore(Properties properties) {
 		
@@ -83,7 +85,8 @@ public class ManagerDataStore {
 			LOGGER.debug("DatastoreDriver: " + MANAGER_DATASTORE_SQLITE_DRIVER);
 
 			Class.forName(MANAGER_DATASTORE_SQLITE_DRIVER);
-
+			
+			initDB();
 			connection = getConnection();
 			statement = connection.createStatement();		
 			statement.execute("CREATE TABLE IF NOT EXISTS " + ORDER_TABLE_NAME + "(" 
@@ -114,7 +117,7 @@ public class ManagerDataStore {
 							+ "FOREIGN KEY (" + ORDER_ID + ") REFERENCES " 
 							+ ORDER_TABLE_NAME + "(" + ORDER_ID + ") ON DELETE CASCADE)");
 			statement.close();
-			triggerDBPerformanceInspector(properties);
+//			triggerDBPerformanceInspector(properties);
 		} catch (Exception e) {
 			LOGGER.error("<"+managerId+">: "+ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 			throw new Error("<"+managerId+">: "+ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
@@ -123,23 +126,23 @@ public class ManagerDataStore {
 		}
 	}
 	
-	int count = 0;
-	private final ManagerTimer bdInspectorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-	private void triggerDBPerformanceInspector(final Properties prop) {
-		bdInspectorTimer.scheduleWithFixedDelay(new TimerTask() {
-			@Override
-			public void run() {	
-				try {
-					if(count>40){
-						LOGGER.info("<"+managerId+">: "+"opened "+count+" connections in database!");
-					}
-					count = 0;
-				} catch (Throwable e) {
-					LOGGER.error("<"+managerId+">: "+"Error while counting bd calls", e);
-				}
-			}
-		}, 0, 5000);
-	}
+//	int count = 0;
+//	private final ManagerTimer bdInspectorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
+//	private void triggerDBPerformanceInspector(final Properties prop) {
+//		bdInspectorTimer.scheduleWithFixedDelay(new TimerTask() {
+//			@Override
+//			public void run() {	
+//				try {
+//					if(count>40){
+//						LOGGER.info("<"+managerId+">: "+"opened "+count+" connections in database!");
+//					}
+//					count = 0;
+//				} catch (Throwable e) {
+//					LOGGER.error("<"+managerId+">: "+"Error while counting bd calls", e);
+//				}
+//			}
+//		}, 0, 5000);
+//	}
 	
 	private static final String INSERT_ORDER_SQL = "INSERT INTO " + ORDER_TABLE_NAME
 			+ " (" + ORDER_ID + "," + INSTANCE_ID + "," + PROVIDING_MEMBER_ID + "," + REQUESTING_MEMBER_ID + "," 
@@ -210,7 +213,7 @@ public class ManagerDataStore {
 			long t2 = d.currentTimeMillis();
 			long now = t2-t1;
 			if(now > 1000)
-				LOGGER.info("<"+managerId+">: "+" Time to get connection: "+now);
+				LOGGER.debug("<"+managerId+">: "+" Time to get connection: "+now);
 			
 			String ordersStmtStr = GET_ORDERS_SQL;
 			if (orderState != null) {
@@ -808,19 +811,17 @@ public class ManagerDataStore {
 		return false;		
 	}
 	
+	private void initDB(){
+		this.dataSource = new SQLiteConnectionPoolDataSource();
+		this.dataSource.setUrl(this.dataStoreURL);
+		this.dataSource.setEnforceForeinKeys(true);
+		this.dataSource.getConfig().setBusyTimeout("30000");
+		this.dataSource.setJournalMode("WAL");
+	}
+	
 	public Connection getConnection() throws SQLException {
 		try {
-			count++;
-			SQLiteConfig config = new SQLiteConfig();
-			config.enforceForeignKeys(true);  
-			config.setBusyTimeout("30000");
-//			config.setJournalMode(JournalMode.WAL);
-			config.setJournalMode(JournalMode.MEMORY);
-			config.setTempStore(TempStore.MEMORY);
-			config.setSynchronous(SynchronousMode.OFF);
-			config.setCacheSize(100000);
-			Connection con = DriverManager.getConnection(this.dataStoreURL, config.toProperties());
-			return con;
+			return this.dataSource.getConnection();
 		} catch (SQLException e) {
 			LOGGER.error("<"+managerId+">: "+"Error while getting a new connection from the connection pool.", e);
 			throw e;

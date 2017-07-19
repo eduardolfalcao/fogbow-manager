@@ -40,14 +40,17 @@ public class ConfigurationConstants {
 	public static final String SCHEDULER_PERIOD_KEY = "scheduler_period";
 	public static final String INSTANCE_MONITORING_PERIOD_KEY = "instance_monitoring_period";
 	public static final String TOKEN_UPDATE_PERIOD_KEY = "token_update_period";
-	public static final String SERVED_ORDER_MONITORING_PERIOD_KEY = "served_order_monitoring_period";
-	public static final String BOOTSTRAPPING_PERIOD_KEY = "bootstrapping_period";
-	public static final String PEER_STATE_OUTPUT_PERIOD_KEY = "peer_state_output_period";
+	public static final String SERVED_ORDER_MONITORING_PERIOD_KEY = "served_order_monitoring_period";	
 	public static final String GARBAGE_COLLECTOR_PERIOD_KEY = "garbage_collector_period";
 	public static final String ACCOUNTING_UPDATE_PERIOD_KEY = "accounting_update_period";
 	public static final String CAPACITY_CONTROLLER_UPDATE_PERIOD_KEY = "capacity_controller_update_period";
 	public static final String ASYNC_ORDER_WAITING_INTERVAL_KEY = "async_order_waiting_interval";
 	public static final String MAXIMUM_ORDER_ATTEMPTS_PROPERTIES = ManagerControllerHelper.MonitoringHelper.MAXIMUM_ORDER_ATTEMPTS_PROPERTIES;
+	
+	//eduardo's experiments
+	public static final String WORKLOAD_SCHEDULER_PERIOD_KEY = "workload_scheduler_period";
+	public static final String BOOTSTRAPPING_PERIOD_KEY = "bootstrapping_period";
+	public static final String PEER_STATE_OUTPUT_PERIOD_KEY = "peer_state_output_period";
 
 	// token host
 	public static final String TOKEN_HOST_PRIVATE_ADDRESS_KEY = "token_host_private_address";

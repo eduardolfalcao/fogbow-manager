@@ -16,7 +16,8 @@ public class ManagerControllerHelper {
 	private static final long DEFAULT_INSTANCE_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_SERVED_ORDER_MONITORING_PERIOD = 120000; // 2 minutes
 	private static final long DEFAULT_PEER_STATE_OUTPUT_PERIOD = 10000; // 10 seconds
-	private static final long DEFAULT_SCHEDULER_PERIOD = 1000; // 1 seconds
+	private static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
+	private static final long DEFAULT_WORKLOAD_SCHEDULER_PERIOD = 1000; // 1 seconds
 	private static final long DEFAULT_BOOTSTRAPPING_PERIOD_KEY = 10000; // 10 seconds
 	
 	private static final Logger LOGGER = Logger.getLogger(ManagerControllerHelper.class);
@@ -29,6 +30,14 @@ public class ManagerControllerHelper {
 		final long instanceMonitoringPeriod = instanceMonitoringPeriodStr == null ? DEFAULT_INSTANCE_MONITORING_PERIOD
 				: Long.valueOf(instanceMonitoringPeriodStr);
 		return instanceMonitoringPeriod;
+	}
+	
+	public static long getWorkloadSchedulerPeriod(Properties properties) {
+		String workloadSchedulerPeriodStr = properties
+				.getProperty(ConfigurationConstants.WORKLOAD_SCHEDULER_PERIOD_KEY);
+		final long workloadSchedulerPeriod = workloadSchedulerPeriodStr == null
+				? DEFAULT_WORKLOAD_SCHEDULER_PERIOD : Long.valueOf(workloadSchedulerPeriodStr);
+		return workloadSchedulerPeriod;
 	}
 	
 	public static long getSchedulerPeriod(Properties properties) {

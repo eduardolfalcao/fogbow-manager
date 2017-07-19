@@ -19,6 +19,7 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.DataStoreHelper;
+import org.sqlite.javax.SQLiteConnectionPoolDataSource;
 
 public class AccountingDataStore {
 
@@ -37,6 +38,7 @@ public class AccountingDataStore {
 
 	private String dataStoreURL;
 	private String managerId;
+	private SQLiteConnectionPoolDataSource dataSource;
 
 	private static final Logger LOGGER = Logger.getLogger(AccountingDataStore.class);
 	private static final Logger LOGGER_EXP = Logger.getLogger("EXPERIMENT_LOGGER"+AccountingDataStore.class);
@@ -56,7 +58,8 @@ public class AccountingDataStore {
 			LOGGER.debug("DatastoreURL: " + dataStoreURL);
 
 			Class.forName(ACCOUNTING_DATASTORE_SQLITE_DRIVER);
-
+			
+			initDB();
 			connection = getConnection();
 			statement = connection.createStatement();
 			statement
@@ -369,14 +372,18 @@ public class AccountingDataStore {
 
 		return null;
 	}
-
-	/**
-	 * @return the connection
-	 * @throws SQLException
-	 */
+	
+	private void initDB(){
+		this.dataSource = new SQLiteConnectionPoolDataSource();
+		this.dataSource.setUrl(this.dataStoreURL);
+		this.dataSource.setEnforceForeinKeys(true);
+		this.dataSource.getConfig().setBusyTimeout("30000");
+		this.dataSource.setJournalMode("WAL");
+	}
+	
 	public Connection getConnection() throws SQLException {
 		try {
-			return DriverManager.getConnection(this.dataStoreURL);
+			return this.dataSource.getConnection();
 		} catch (SQLException e) {
 			LOGGER.error("<"+managerId+">: "+"Error while getting a new connection from the connection pool.", e);
 			throw e;

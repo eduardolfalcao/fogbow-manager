@@ -22,7 +22,6 @@ import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
-import org.fogbowcloud.manager.experiments.monitor.MonitorPeerState;
 import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton;
 import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton.MonitorPeerStateAssync;
 import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
@@ -78,12 +77,12 @@ public class MainExperiments {
 		properties.put(FakeCloudComputePlugin.COMPUTE_FAKE_QUOTA, args[4]);	//compute_fake_quota
 		boolean fdnof = args[5].equals("fdnof")?true:false;					//fdnof or sdnof
 		properties.put(WorkloadScheduler.WORKLOAD_FOLDER, args[6]);			//workload_folder
-		properties.put(MonitorPeerState.OUTPUT_DATA_ENDING_TIME, args[7]);	//output_data_ending_time
+		properties.put(MonitorPeerStateSingleton.OUTPUT_DATA_ENDING_TIME, args[7]);	//output_data_ending_time
 		
 		String outputfolder = "data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";
 //		String outputfolder = System.getProperty("user.dir")+"/experiments/data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";	//execution on eclipse
 		
-		properties.put(MonitorPeerState.OUTPUT_FOLDER, outputfolder);		
+		properties.put(MonitorPeerStateSingleton.OUTPUT_FOLDER, outputfolder);		
 		
 		MainHelper.configureLog4j(properties.getProperty(LOG4J_CONF));
 		try{
@@ -92,7 +91,7 @@ public class MainExperiments {
 			LOGGER.warn(e.getMessage());
 		}
 		try{
-			FileUtils.cleanDirectory(new File(properties.getProperty(MonitorPeerState.OUTPUT_FOLDER)));
+			FileUtils.cleanDirectory(new File(properties.getProperty(MonitorPeerStateSingleton.OUTPUT_FOLDER)));
 		}catch(Exception e){
 			LOGGER.warn(e.getMessage());
 		}
@@ -124,8 +123,8 @@ public class MainExperiments {
 	}
 	
 	private static void triggerWorkloadScheduler(final WorkloadScheduler scheduler, final Properties prop) {
-		final long schedulerPeriod = ManagerControllerHelper.getSchedulerPeriod(prop);
-		schedulerTimer.scheduleWithFixedDelay(new TimerTask() {
+		final long workloadSchedulerPeriod = ManagerControllerHelper.getWorkloadSchedulerPeriod(prop);
+		schedulerTimer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {	
 				try {
@@ -134,7 +133,7 @@ public class MainExperiments {
 					LOGGER.error("Error while scheduling workload", e);
 				}
 			}
-		}, ManagerControllerHelper.getBootstrappingPeriod(prop), schedulerPeriod);
+		}, ManagerControllerHelper.getBootstrappingPeriod(prop), workloadSchedulerPeriod);
 	}
 	
 }

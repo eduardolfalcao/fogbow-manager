@@ -1822,7 +1822,7 @@ public class ManagerController {
 			return true;
 		} catch (OCCIException e) {
 			LOGGER.warn("<"+managerId+">: "+"Error while checking if instance " + globalInstanceId + " is being used by "
-							+ servedOrder.getRequestingMemberId(), e);
+							+ servedOrder.getRequestingMemberId());
 			throw e;
 		}
 	}
@@ -1929,7 +1929,7 @@ public class ManagerController {
 				ErrorType errorType = e.getType();
 				if (errorType == ErrorType.QUOTA_EXCEEDED) {
 					LOGGER.warn("<"+managerId+">: "+"Order("+order.getId()+") requested by "+order.getRequestingMemberId()+" "
-							+ "and provided by "+order.getProvidingMemberId()+", failed locally for quota exceeded.", e);
+							+ "and provided by "+order.getProvidingMemberId()+", failed locally for quota exceeded.");
 					ArrayList<Order> ordersWithInstances = new ArrayList<Order>(
 							managerDataStoreController.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
 					Order orderToPreempt = prioritizationPlugin.takeFrom(order, ordersWithInstances);

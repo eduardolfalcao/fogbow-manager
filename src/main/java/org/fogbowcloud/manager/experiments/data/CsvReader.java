@@ -8,21 +8,15 @@ import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.fogbowcloud.manager.experiments.monitor.MonitorPeerState;
+import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton;
 
 public class CsvReader {
 	
 	private int time, dTot, dFed, rFed, oFed, sFed;
-	private int consumingTimeFed, consumingTimeTot, supplyingTime;
-	
-	
+	private int consumingTimeFed, consumingTimeTot, supplyingTime;	
 	
 	public int getTime() {
 		return time;
@@ -211,7 +205,7 @@ public class CsvReader {
 		FileInputStream input = new FileInputStream(managerConfigFile);
 		properties.load(input);
 		
-		CsvReader csv = new CsvReader(properties.getProperty(MonitorPeerState.OUTPUT_FOLDER));
+		CsvReader csv = new CsvReader(properties.getProperty(MonitorPeerStateSingleton.OUTPUT_FOLDER));
 		
 		List<Results> results = new ArrayList<Results>();
 		
