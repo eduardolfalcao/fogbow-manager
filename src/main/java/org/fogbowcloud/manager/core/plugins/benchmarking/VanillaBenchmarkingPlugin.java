@@ -13,7 +13,7 @@ import org.fogbowcloud.manager.occi.instance.Instance;
 
 public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 	
-	Map<String, Double> instanceToPower = new HashMap<String, Double>();
+	private Map<String, Double> instanceToPower = new HashMap<String, Double>();
 	
 	private static final Logger LOGGER = Logger.getLogger(VanillaBenchmarkingPlugin.class);
 	private String managerId;
@@ -46,7 +46,10 @@ public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 		}
 		
 		LOGGER.debug("<"+managerId+">: "+"Putting instanceId " + globalInstanceId + " and power " + power);
-		instanceToPower.put(globalInstanceId, power);
+
+		synchronized(instanceToPower){
+			instanceToPower.put(globalInstanceId, power);
+		}
 	}
 
 	private double parseDouble(String str) {
@@ -55,17 +58,21 @@ public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 
 	@Override
 	public double getPower(String globalInstanceId) {
-		LOGGER.debug("<"+managerId+">: "+"Getting power of instance " + globalInstanceId);
-		LOGGER.debug("<"+managerId+">: "+"Current instanceToPower=" + instanceToPower);
-		if (instanceToPower.get(globalInstanceId) == null) {
-			return UNDEFINED_POWER;
+		//LOGGER.debug("<"+managerId+">: "+"Getting power of instance " + globalInstanceId);
+		//LOGGER.debug("<"+managerId+">: "+"Current instanceToPower=" + instanceToPower);
+		synchronized(instanceToPower){
+			if (instanceToPower.get(globalInstanceId) == null) {		
+				return UNDEFINED_POWER;
+			}
+			return instanceToPower.get(globalInstanceId);
 		}
-		return instanceToPower.get(globalInstanceId);
 	}
 
 	@Override
 	public void remove(String globalInstanceId) {
 		LOGGER.debug("<"+managerId+">: "+"Removing instance: " + globalInstanceId + " from benchmarking map.");
-		instanceToPower.remove(globalInstanceId);		
+		synchronized(instanceToPower){
+			instanceToPower.remove(globalInstanceId);
+		}		
 	}
 }

@@ -19,10 +19,19 @@ public class ManagerControllerHelper {
 	private static final long DEFAULT_SCHEDULER_PERIOD = 30000; // 30 seconds
 	private static final long DEFAULT_WORKLOAD_SCHEDULER_PERIOD = 1000; // 1 seconds
 	private static final long DEFAULT_BOOTSTRAPPING_PERIOD_KEY = 10000; // 10 seconds
+	private static final long DEFAULT_BUSY_TIMEOUT_PERIOD_KEY = 30000; // 30 seconds
 	
 	private static final Logger LOGGER = Logger.getLogger(ManagerControllerHelper.class);
 		
 	public ManagerControllerHelper() {}
+	
+	public static long getBusyTimeoutPeriod(Properties properties) {
+		String busyTimeoutPeriodStr = properties
+				.getProperty(ConfigurationConstants.BUSY_TIMEOUT_PERIOD_KEY);
+		final long busyTimeoutPeriod = busyTimeoutPeriodStr == null ? DEFAULT_BUSY_TIMEOUT_PERIOD_KEY
+				: Long.valueOf(busyTimeoutPeriodStr);
+		return busyTimeoutPeriod;
+	}
 	
 	public static long getInstanceMonitoringPeriod(Properties properties) {
 		String instanceMonitoringPeriodStr = properties

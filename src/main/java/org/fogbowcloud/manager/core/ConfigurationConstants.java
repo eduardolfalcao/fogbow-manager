@@ -51,6 +51,7 @@ public class ConfigurationConstants {
 	public static final String WORKLOAD_SCHEDULER_PERIOD_KEY = "workload_scheduler_period";
 	public static final String BOOTSTRAPPING_PERIOD_KEY = "bootstrapping_period";
 	public static final String PEER_STATE_OUTPUT_PERIOD_KEY = "peer_state_output_period";
+	public static final String BUSY_TIMEOUT_PERIOD_KEY = "busy_timeout_period";	
 
 	// token host
 	public static final String TOKEN_HOST_PRIVATE_ADDRESS_KEY = "token_host_private_address";

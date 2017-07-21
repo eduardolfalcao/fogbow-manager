@@ -33,7 +33,7 @@ public class TwoFoldCapacityController implements CapacityControllerPlugin {
 	public void updateCapacity(FederationMember member, double maximumCapacity) {
 		this.pairwiseController.updateCapacity(member, maximumCapacity);		
 		this.globalController.updateCapacity(member, maximumCapacity);
-		this.accountingPlugin.update(member,getMaxCapacityToSupply(member));
+//		this.accountingPlugin.update(member,getMaxCapacityToSupply(member));	//this is only for debugging
 	}
 	
 	protected void setGlobalController(

@@ -140,7 +140,6 @@ public class ManagerController {
 	private ManagerControllerHelper.MonitoringHelper monitoringHelper;
 	
 	private static final ManagerTimer monitorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-	private MonitorPeerStateAssync monitor;
 	
 	private DateUtils dateUtils = new DateUtils();
 
@@ -707,6 +706,8 @@ public class ManagerController {
 			removeAsynchronousRemoteOrders(order, true);
 		}
 		managerDataStoreController.removeOrder(orderId);
+		order.updateElapsedTime(true);
+		order.setState(OrderState.CLOSED);
 		if (!instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
 		}
@@ -730,6 +731,8 @@ public class ManagerController {
 			}
 		}
 		managerDataStoreController.excludeOrder(order.getId());
+		order.updateElapsedTime(true);
+		order.setState(OrderState.CLOSED);
 	}	
 
 	private void checkOrderId(String accessId, String orderId) {
@@ -1000,7 +1003,7 @@ public class ManagerController {
 		/** EDUARDO **/
 		boolean isRemoving = true;
 		order.updateElapsedTime(isRemoving);
-		LOGGER_EXP.info("<"+managerId+">: "+"checking if the order will be removed or rescheduled - order: " + order);
+		LOGGER.info("<"+managerId+">: "+"checking if the order will be removed or rescheduled - order: " + order);
 		
 		if (order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
 			updateAccounting();
@@ -1008,13 +1011,14 @@ public class ManagerController {
 		}
 		
 		String instanceId = order.getInstanceId();
-		order.setInstanceId(null);
-		order.setProvidingMemberId(null);
+//		order.setInstanceId(null);
+//		order.setProvidingMemberId(null);
 
-		if (order.getState().equals(OrderState.DELETED) || !order.isLocal()) {
+		if (order.getState().equals(OrderState.DELETED)) {
 			managerDataStoreController.excludeOrder(order.getId());
 		} 
-		else if (isPersistent(order)) {			
+		
+		if (isPersistent(order)) {			
 			boolean finished = order.getElapsedTime() >= order.getRuntime();			
 			if(order.isLocal() && !finished){
 				LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.OPEN);
@@ -1244,7 +1248,7 @@ public class ManagerController {
 	}
 
 	protected void preemption(Order orderToPreemption) {
-		LOGGER_EXP.info("<"+managerId+">: preempting "+orderToPreemption.getId()+" from "+orderToPreemption.getRequestingMemberId());
+		LOGGER.info("<"+managerId+">: preempting "+orderToPreemption.getId()+" from "+orderToPreemption.getRequestingMemberId());
 		removeInstance(orderToPreemption.getInstanceId(), orderToPreemption, OrderConstants.COMPUTE_TERM);
 	}
 
@@ -1400,7 +1404,11 @@ public class ManagerController {
 		long monitorPeriod = ManagerControllerHelper.getInstanceMonitoringPeriod(this.properties);
 		this.monitoringHelper.checkFailedMonitoring(monitorPeriod);
 		
-		for (Order order : this.managerDataStoreController.getAllLocalOrders()) {
+		List<Order> localOrders = this.managerDataStoreController.getAllLocalOrders();
+		if(managerId.equals("p11")){
+			LOGGER.info("<"+managerId+">: "+"Local orders: " + localOrders);
+		}
+		for (Order order : localOrders) {
 			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
 				turnOffTimer = false;
 			}
@@ -1580,7 +1588,7 @@ public class ManagerController {
 
 				if (instance != null) {
 					LOGGER.debug("<"+managerId+">: "+"Replacing public keys on " + order.getId());
-					//replacePublicKeys(instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT), order);	// FIXME commented by Eduardo
+					//replacePublicKeys(instance.getAttributes().get(Instance.SSH_PUBLIC_ADDRESS_ATT), order);	
 					LOGGER.debug("<"+managerId+">: "+"Public keys replaced on " + order.getId());
 				}
 
@@ -1786,6 +1794,9 @@ public class ManagerController {
 		this.monitoringHelper.checkFailedMonitoring(monitorPeriod);
 
 		List<Order> servedOrders = this.managerDataStoreController.getAllServedOrders();
+		if(managerId.equals("p11")){
+			LOGGER.info("<"+managerId+">: "+"Served orders: " + servedOrders);
+		}
 		for (Order order : servedOrders) {
 			try {
 				isInstanceBeingUsedByRemoteMember(order);
@@ -1872,7 +1883,7 @@ public class ManagerController {
 		try {
 			return createInstance(order);
 		} catch (Exception e) {
-			LOGGER.info("<"+managerId+">: "+"Could not create instance with federation user locally. ", e);	//DEBUG-EDUARDO
+			LOGGER.warn("<"+managerId+">: "+"Could not create instance with federation user locally. ==> "+e.getMessage());	//DEBUG-EDUARDO
 			return false;
 		}
 	}
@@ -1929,10 +1940,12 @@ public class ManagerController {
 				ErrorType errorType = e.getType();
 				if (errorType == ErrorType.QUOTA_EXCEEDED) {
 					LOGGER.warn("<"+managerId+">: "+"Order("+order.getId()+") requested by "+order.getRequestingMemberId()+" "
-							+ "and provided by "+order.getProvidingMemberId()+", failed locally for quota exceeded.");
+							+ "and provided by "+order.getProvidingMemberId()+", failed locally for quota exceeded. ==> "+e.getMessage());
 					ArrayList<Order> ordersWithInstances = new ArrayList<Order>(
 							managerDataStoreController.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
 					Order orderToPreempt = prioritizationPlugin.takeFrom(order, ordersWithInstances);
+					if(managerId.equals("p11"))
+						LOGGER.info("<"+managerId+">: "+"Order to be preempted: "+orderToPreempt);
 					if (orderToPreempt == null) {
 						throw e;
 					}

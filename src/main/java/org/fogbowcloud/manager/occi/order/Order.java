@@ -289,7 +289,7 @@ public class Order {
 				+ requestingMemberId + ", state: " + state + ", isLocal " + isLocal
 				+ ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt 
 				+ ", runtime: " + runtime + ", fulfilledTime: "+fulfilledTime
-				+ ", elapsedTime: "+elapsedTime;
+				+ ", elapsedTime: "+elapsedTime+"\n\n";
 	}
 
 

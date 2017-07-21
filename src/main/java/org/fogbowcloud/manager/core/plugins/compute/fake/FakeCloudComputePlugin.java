@@ -27,7 +27,7 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	private static final Logger LOGGER = Logger.getLogger(FakeCloudComputePlugin.class);
 	
 	private int quota;	
-	private int instanceCounter = 0;
+	private Integer instanceCounter = 0;
 	private List<String> instances = new ArrayList<String>();
 	
 	private String managerId;
@@ -35,15 +35,20 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	public FakeCloudComputePlugin(Properties properties){
 		quota = Integer.parseInt(properties.getProperty(COMPUTE_FAKE_QUOTA));
 		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
+		LOGGER.info("<"+managerId+">: quota: "+quota+"!");
 	}
 	
 	@Override
 	public String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt, String imageId) {
-		if(instanceCounter>=quota)
-			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, "<"+managerId+">: "+"There is no more quota in the underlying cloud.");
+		synchronized (instanceCounter) {
+			if(instanceCounter>=quota){
+				throw new OCCIException(ErrorType.QUOTA_EXCEEDED, "<"+managerId+">: "+"There is no more quota in the underlying cloud.");
+			}
+			instanceCounter++;
+		}		
 		
-		String name = "instance"+(++instanceCounter);
+		String name = "instance"+instanceCounter;
 		name += "-"+ String.valueOf(UUID.randomUUID());
 		instances.add(name);
 		
@@ -64,13 +69,14 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 
 	@Override
 	public void removeInstance(Token token, String instanceId) {
-		instanceCounter--;
+		synchronized (instanceCounter) {
+			instanceCounter--;
+		}
 		boolean success = instances.remove(instanceId);
 		if(success)
-			LOGGER.info("<"+managerId+">: (FakeCloudComputePlugin) Removing instance (" + instanceId + ") "
-				+ "by FakeCloudComputePlugin.");
+			LOGGER.info("<"+managerId+">: FakeCloudComputePlugin removing instance (" + instanceId + ").");
 		else
-			LOGGER.info("<"+managerId+">: (FakeCloudComputePlugin) Tried to remove instance (" + instanceId + ") "
+			LOGGER.info("<"+managerId+">: FakeCloudComputePlugin tried to remove instance (" + instanceId + ") "
 					+ "but it doesn't exist.");
 	}
 	
@@ -79,7 +85,9 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	}
 	
 	public int getFreeQuota(){
-		return quota-instanceCounter;
+		synchronized (instanceCounter) {
+			return quota-instanceCounter;
+		}
 	}
 
 	/**

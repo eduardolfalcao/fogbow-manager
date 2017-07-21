@@ -68,10 +68,12 @@ public class ManagerDataStore {
 	
 	private String dataStoreURL;
 	private String managerId;
+	private Properties properties;
 	private SQLiteConnectionPoolDataSource dataSource;
 
 	public ManagerDataStore(Properties properties) {
 		
+		this.properties = properties;
 		String dataStoreURLProperties = properties.getProperty(MANAGER_DATASTORE_URL);		
 		this.dataStoreURL = DataStoreHelper.getDataStoreUrl(dataStoreURLProperties,
 				DEFAULT_DATASTORE_NAME);
@@ -117,7 +119,6 @@ public class ManagerDataStore {
 							+ "FOREIGN KEY (" + ORDER_ID + ") REFERENCES " 
 							+ ORDER_TABLE_NAME + "(" + ORDER_ID + ") ON DELETE CASCADE)");
 			statement.close();
-//			triggerDBPerformanceInspector(properties);
 		} catch (Exception e) {
 			LOGGER.error("<"+managerId+">: "+ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 			throw new Error("<"+managerId+">: "+ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
@@ -125,24 +126,6 @@ public class ManagerDataStore {
 			close(statement, connection);
 		}
 	}
-	
-//	int count = 0;
-//	private final ManagerTimer bdInspectorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-//	private void triggerDBPerformanceInspector(final Properties prop) {
-//		bdInspectorTimer.scheduleWithFixedDelay(new TimerTask() {
-//			@Override
-//			public void run() {	
-//				try {
-//					if(count>40){
-//						LOGGER.info("<"+managerId+">: "+"opened "+count+" connections in database!");
-//					}
-//					count = 0;
-//				} catch (Throwable e) {
-//					LOGGER.error("<"+managerId+">: "+"Error while counting bd calls", e);
-//				}
-//			}
-//		}, 0, 5000);
-//	}
 	
 	private static final String INSERT_ORDER_SQL = "INSERT INTO " + ORDER_TABLE_NAME
 			+ " (" + ORDER_ID + "," + INSTANCE_ID + "," + PROVIDING_MEMBER_ID + "," + REQUESTING_MEMBER_ID + "," 
@@ -815,7 +798,8 @@ public class ManagerDataStore {
 		this.dataSource = new SQLiteConnectionPoolDataSource();
 		this.dataSource.setUrl(this.dataStoreURL);
 		this.dataSource.setEnforceForeinKeys(true);
-		this.dataSource.getConfig().setBusyTimeout("30000");
+		String busyTimeout = String.valueOf(ManagerControllerHelper.getBusyTimeoutPeriod(this.properties));
+		this.dataSource.getConfig().setBusyTimeout(busyTimeout);
 		this.dataSource.setJournalMode("WAL");
 	}
 	

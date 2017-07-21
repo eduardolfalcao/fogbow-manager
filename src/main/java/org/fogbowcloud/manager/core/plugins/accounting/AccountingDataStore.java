@@ -38,6 +38,7 @@ public class AccountingDataStore {
 
 	private String dataStoreURL;
 	private String managerId;
+	private Properties properties;
 	private SQLiteConnectionPoolDataSource dataSource;
 
 	private static final Logger LOGGER = Logger.getLogger(AccountingDataStore.class);
@@ -45,6 +46,7 @@ public class AccountingDataStore {
 	
 	public AccountingDataStore(Properties properties) {
 		
+		this.properties = properties;
 		LOGGER_EXP.setLevel(Level.INFO);
 		
 		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);		
@@ -55,7 +57,6 @@ public class AccountingDataStore {
 		Statement statement = null;
 		Connection connection = null;
 		try {
-			LOGGER.debug("DatastoreURL: " + dataStoreURL);
 
 			Class.forName(ACCOUNTING_DATASTORE_SQLITE_DRIVER);
 			
@@ -309,6 +310,10 @@ public class AccountingDataStore {
 		} catch (SQLException e) {
 			LOGGER.error("<"+managerId+">: "+"Couldn't get keys from DB.", e);
 			return null;
+		} finally {
+			List<Statement> statements = new ArrayList<Statement>();
+			statements.add(statement);
+			close(statements, conn);
 		}
 	}
 
@@ -325,7 +330,11 @@ public class AccountingDataStore {
 		} catch (SQLException e) {
 			LOGGER.error("<"+managerId+">: "+"Couldn't get keys from DB.", e);
 			return null;
-		}	
+		} finally {
+			List<Statement> statements = new ArrayList<Statement>();
+			statements.add(statement);
+			close(statements, conn);
+		}
 	}
 
 	private static final String SELECT_SPECIFIC_USAGE_SQL = "SELECT * FROM " + USAGE_TABLE_NAME
@@ -377,7 +386,8 @@ public class AccountingDataStore {
 		this.dataSource = new SQLiteConnectionPoolDataSource();
 		this.dataSource.setUrl(this.dataStoreURL);
 		this.dataSource.setEnforceForeinKeys(true);
-		this.dataSource.getConfig().setBusyTimeout("30000");
+		String busyTimeout = String.valueOf(ManagerControllerHelper.getBusyTimeoutPeriod(this.properties));
+		this.dataSource.getConfig().setBusyTimeout(busyTimeout);
 		this.dataSource.setJournalMode("WAL");
 	}
 	
@@ -387,7 +397,7 @@ public class AccountingDataStore {
 		} catch (SQLException e) {
 			LOGGER.error("<"+managerId+">: "+"Error while getting a new connection from the connection pool.", e);
 			throw e;
-		}
+		} 
 	}
 	
 	private void close(List<Statement> statements, Connection conn) {
@@ -395,7 +405,7 @@ public class AccountingDataStore {
 			for(Statement s : statements){
 				try {
 					if (!s.isClosed())
-						s.close();//
+						s.close();
 				} catch (SQLException e) {
 					LOGGER.error("<"+managerId+">: "+"Couldn't close statement"+s, e);
 				}

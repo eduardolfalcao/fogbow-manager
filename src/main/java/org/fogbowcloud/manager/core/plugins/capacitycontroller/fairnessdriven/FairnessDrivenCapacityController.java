@@ -57,7 +57,7 @@ public abstract class FairnessDrivenCapacityController implements CapacityContro
 		} else {
 			this.lastMaximumCapacity = maximumCapacity;
 		}
-		LOGGER.info("<"+managerId+">: "+"The maximum capacity is " + maximumCapacity 
+		LOGGER.debug("<"+managerId+">: "+"The maximum capacity is " + maximumCapacity 
 				+ " and the last maximum capacity is " + this.lastMaximumCapacity);
 		
 		return maximumCapacity;
