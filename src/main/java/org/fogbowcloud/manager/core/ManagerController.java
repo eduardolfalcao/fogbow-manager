@@ -705,16 +705,14 @@ public class ManagerController {
 						|| order.getState().equals(OrderState.PENDING))) {
 			removeAsynchronousRemoteOrders(order, true);
 		}
-		managerDataStoreController.removeOrder(orderId);
-		order.updateElapsedTime(true);
-		order.setState(OrderState.CLOSED);
+		managerDataStoreController.removeOrder(orderId);		
 		if (!instanceMonitoringTimer.isScheduled()) {
 			triggerInstancesMonitor();
 		}
 	}
 	
 	public void removeOrderForRemoteMember(String accessId, String orderId) {
-		LOGGER.info("<"+managerId+">: "+"Removing orderId for remote member: " + orderId);
+		LOGGER.info("<"+managerId+">: "+"Removing order for remote member: " + orderId);
 		Order order = managerDataStoreController.getOrder(orderId, false);
 		if (order != null && order.getInstanceId() != null) {
 			try {
@@ -968,7 +966,7 @@ public class ManagerController {
 		}
 				
 		Token localToken = getFederationUserToken(order);
-		if (isFulfilledByLocalMember(order)) {
+		if (isFulfilledByLocalMember(order)) {	
 			if (resourceKind.equals(OrderConstants.COMPUTE_TERM)) {
 				this.computePlugin.removeInstance(localToken, instanceId);				
 			} else if (resourceKind.equals(OrderConstants.STORAGE_TERM)) {
@@ -976,7 +974,8 @@ public class ManagerController {
 			} else if (resourceKind.equals(OrderConstants.NETWORK_TERM)) {
 				this.networkPlugin.removeInstance(localToken, instanceId);
 			}
-		} else {					
+		} else {
+			LOGGER.info("<"+managerId+">: Trying to remove remote instance with orderId("+order.getId()+"), and instanceId("+order.getInstanceId()+"). Order: "+order);
 			removeRemoteInstance(order);
 		}
 		
@@ -1010,31 +1009,33 @@ public class ManagerController {
 			benchmarkingPlugin.remove(order.getInstanceId());			
 		}
 		
-		String instanceId = order.getInstanceId();
-//		order.setInstanceId(null);
-//		order.setProvidingMemberId(null);
-
-		if (order.getState().equals(OrderState.DELETED)) {
-			managerDataStoreController.excludeOrder(order.getId());
-		} 
+		Order clonedOrder = new Order(order.getId(), order.getFederationToken(), order.getInstanceId(), order.getProvidingMemberId(),
+				order.getRequestingMemberId(), order.getFulfilledTime(), order.isLocal(), order.getState(),
+				order.getCategories(), order.getxOCCIAtt());
 		
-		if (isPersistent(order)) {			
+		String instanceId = order.getInstanceId();
+		order.setInstanceId(null);
+		order.setProvidingMemberId(null);
+
+		if (order.getState().equals(OrderState.DELETED)  || !order.isLocal()) {			
+			LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.DELETED);
+			clonedOrder.setState(OrderState.DELETED);
+			managerDataStoreController.excludeOrder(order.getId());
+		} else if (isPersistent(order)) {			
 			boolean finished = order.getElapsedTime() >= order.getRuntime();			
 			if(order.isLocal() && !finished){
 				LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.OPEN);
-				order.setState(OrderState.OPEN);
+				clonedOrder.setState(OrderState.OPEN);
+				order.setState(OrderState.OPEN,false);
 				if (!orderSchedulerTimer.isScheduled()) {
 					triggerOrderScheduler();
 				}
+			} else {
+				LOGGER.info("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.CLOSED);
+				clonedOrder.setState(OrderState.CLOSED);
+				order.setState(OrderState.CLOSED,false);
 			}
-			else{
-				LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);
-				order.setState(OrderState.CLOSED);
-			}			
-		} else {
-			LOGGER.info("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.CLOSED);
-			order.setState(OrderState.CLOSED);
-		}
+		} 
 		
 		this.managerDataStoreController.updateOrder(order);
 		if (instanceId != null) {
@@ -1048,7 +1049,7 @@ public class ManagerController {
 				&& order.getAttValue(OrderAttribute.TYPE.getValue()).equals(OrderType.PERSISTENT.getValue());
 	}
 
-	private void removeRemoteOrder(final String providingMember, final Order order) {
+	public void removeRemoteOrder(final String providingMember, final Order order) {
 		ManagerPacketHelper.deleteRemoteOrder(providingMember ,order, packetSender, new AsynchronousOrderCallback() {
 			
 			@Override
@@ -1333,7 +1334,8 @@ public class ManagerController {
 		Order order = managerDataStoreController.getOrderByInstance(instanceId);
 		String resourceKind = order != null ? order.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()) : null;
 		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;
-		LOGGER.info("<"+managerId+">: "+"Removing instance(" + resourceKind + ") " + instanceId + " for remote member.");
+		LOGGER.info("<"+managerId+">: "+"Removing instance(" + resourceKind + ") with instanceId(" + instanceId + ") "
+				+ "and orderId("+order.getId()+") for remote member.");
 
 		Token federationUserToken = getFederationUserToken(order);
 		if (OrderConstants.COMPUTE_TERM.equals(resourceKind)) {
@@ -1620,7 +1622,8 @@ public class ManagerController {
 	}
 	
 	private void removeAsynchronousRemoteOrders(Order order, boolean removeAll) {
-		List<String> federationMembersServered = this.managerDataStoreController.getFederationMembersServeredBy(order.getId());
+		List<String> federationMembersServered = this.managerDataStoreController.getFederationMembersServeredBy(order.getId());		
+		LOGGER.info("<"+managerId+">: "+"Order with id("+order.getId()+") was just fulfilled by "+order.getProvidingMemberId()+"!");		
 		if (federationMembersServered == null) {
 			return;
 		}
@@ -1629,6 +1632,8 @@ public class ManagerController {
 				continue;
 			}
 			try {
+				LOGGER.info("<"+managerId+">: "+"Order with id("+order.getId()+") was just fulfilled by "+order.getProvidingMemberId()+"! "
+						+ "Removing order request sent to " + federationMemberServered+".");
 				removeRemoteOrder(federationMemberServered, order);		
 			} catch (Exception e) {}
 		}

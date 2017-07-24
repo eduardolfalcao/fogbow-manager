@@ -180,8 +180,12 @@ public class Order {
 	public OrderState getState() {
 		return state;
 	}
-
+	
 	public void setState(OrderState state) {
+		setState(state,true);
+	}
+
+	public void setState(OrderState state, boolean triggerMonitor) {
 		if (state.in(OrderState.FULFILLED)) {
 			fulfilledTime = dateUtils.currentTimeMillis();
 		} else if (state.in(OrderState.OPEN)) {
@@ -190,7 +194,7 @@ public class Order {
 		this.state = state;
 		if(getId()==null){
 			LOGGER.warn("Trying to set order state while it doesn't have the orderId");
-		} else{
+		} else if(triggerMonitor){
 			if(state!=OrderState.SPAWNING){	
 				final String managerId = isLocal?requestingMemberId:providingMemberId;
 				final Order o = this;
