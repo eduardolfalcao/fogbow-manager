@@ -9,13 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
-import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorAssync;
 import org.fogbowcloud.manager.experiments.scheduler.model.DataReader;
@@ -31,11 +29,10 @@ import org.fogbowcloud.manager.occi.order.OrderType;
 public class WorkloadScheduler {
 	
 	private static final Logger LOGGER = Logger.getLogger(WorkloadScheduler.class);
-	public static final String 	WORKLOAD_FOLDER = "workload_folder";	
+	public static final String 	WORKLOAD_FOLDER = "workload_folder";
+	public static final String 	FAKE_TOKEN = "fake-token";	
 	private Properties props;
-	
-	private static final ManagerTimer monitorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-	
+		
 	private long time = 0;
 	private List<Peer> peers;
 	private Map<String, ManagerController> relations;
@@ -110,11 +107,10 @@ public class WorkloadScheduler {
 						//TODO how to make this faster
 						for(int i = 0; i < j.getTasks().size(); i++){
 							xOCCIAttClone.put(OrderAttribute.RUNTIME.getValue(), String.valueOf(j.getTasks().get(i).getRuntime()*1000));
-							List<Order> orders = mc.createOrders("", categoriesClone, xOCCIAttClone);
+							List<Order> orders = mc.createOrders(WorkloadScheduler.FAKE_TOKEN, categoriesClone, xOCCIAttClone);
 							monitors.get(mc).monitorOrder(orders.get(0),TimeUnit.SECONDS.toMillis(j.getTasks().get(i).getRuntime()));
 							j.getTasks().get(i).setOrderId(orders.get(0).getId());
-						}															
-						//monitor.addJob(j);
+						}					
 						LOGGER.info("Time: "+jobTime+", Peer "+j.getPeerId()+" creating "+j);
 			    	}
 			    } 		    		    

@@ -72,7 +72,7 @@ public class Token {
 
 	@Override
 	public String toString() {
-		return "Token [attributes=" + attributes + ", " + ", user=" + user + "]";
+		return "Token [attributes=" + this.attributes + ", " + "user=" + user + ", accessId=" + this.accessId+ "]";
 	}
 
 	public User getUser() {

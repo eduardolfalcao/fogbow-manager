@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
@@ -17,7 +18,9 @@ import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
+import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
+import org.fogbowcloud.manager.occi.order.OrderState;
 import org.restlet.Request;
 import org.restlet.Response;
 
@@ -27,7 +30,6 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	private static final Logger LOGGER = Logger.getLogger(FakeCloudComputePlugin.class);
 	
 	private int quota;	
-	private Integer instanceCounter = 0;
 	private List<String> instances = new ArrayList<String>();
 	
 	private String managerId;
@@ -39,24 +41,26 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	}
 	
 	@Override
-	public String requestInstance(Token token, List<Category> categories,
+	public synchronized String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt, String imageId) {
-		synchronized (instanceCounter) {
-			if(instanceCounter>=quota){
-				throw new OCCIException(ErrorType.QUOTA_EXCEEDED, "<"+managerId+">: "+"There is no more quota in the underlying cloud.");
-			}
-			instanceCounter++;
-		}		
 		
-		String name = "instance"+instanceCounter;
+		if(instances.size()>=quota){
+			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, "<"+managerId+">: "+"There is no more quota in the underlying cloud.");
+		}					
+				
+		String name = "instance"+instances.size();
 		name += "-"+ String.valueOf(UUID.randomUUID());
 		instances.add(name);
+		
+		if(instances.size()>quota){
+			LOGGER.info("<"+managerId+">: Existing instances("+instances.size()+"): "+instances+". Created instance: "+name+".");
+		}
 		
 		return name;
 	}
 	
 	@Override
-	public Instance getInstance(Token token, String instanceId) {
+	public synchronized Instance getInstance(Token token, String instanceId) {
 		if(instances.contains(instanceId)){
 			Instance i = new Instance(instanceId);
 			i.addAttribute("occi.compute.cores", "8");
@@ -66,12 +70,20 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 		LOGGER.info("<"+managerId+">: Existing instances: "+instances+". Requested instance: "+instanceId);//debug-EDUARDO
 		return null;
 	}	
+	
+	public synchronized void removeInstance(Token token, String instanceId, Order order) {
+		order.setState(OrderState.CLOSED);
+		
+		boolean success = instances.remove(instanceId);
+		if(success)
+			LOGGER.info("<"+managerId+">: FakeCloudComputePlugin removing instance (" + instanceId + ").");
+		else
+			LOGGER.info("<"+managerId+">: FakeCloudComputePlugin tried to remove instance (" + instanceId + ") "
+					+ "but it doesn't exist.");
+	}
 
 	@Override
-	public void removeInstance(Token token, String instanceId) {
-		synchronized (instanceCounter) {
-			instanceCounter--;
-		}
+	public synchronized void removeInstance(Token token, String instanceId) {		
 		boolean success = instances.remove(instanceId);
 		if(success)
 			LOGGER.info("<"+managerId+">: FakeCloudComputePlugin removing instance (" + instanceId + ").");
@@ -84,10 +96,8 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 		return quota;
 	}
 	
-	public int getFreeQuota(){
-		synchronized (instanceCounter) {
-			return quota-instanceCounter;
-		}
+	public synchronized int getFreeQuota(){
+			return quota-instances.size();
 	}
 
 	/**
@@ -111,6 +121,12 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 		 * FIXME
 		 * Usado apenas em testes.
 		 */		
+	}
+	
+	
+	public synchronized List<String> getInstances() {
+		LOGGER.info("<"+managerId+">: FakeCloudComputePlugin number of instances " + instances.size() + ".");
+		return instances;
 	}
 	
 	@Override

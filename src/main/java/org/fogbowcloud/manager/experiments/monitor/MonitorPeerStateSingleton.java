@@ -171,7 +171,13 @@ public class MonitorPeerStateSingleton{
 			oFed += maxCapacity;
 			dFed = Math.max(0, dTot - maxCapacity);
 			
+			
 			int now = (int)(TimeUnit.MILLISECONDS.toSeconds(date.currentTimeMillis()-initialTime));
+			
+			if(oFed<0){
+				LOGGER.info("<"+fm.getManagerId()+">: ## time("+now+") current orders:"+currentOrders+"<"+fm.getManagerId()+">FIM\n\n");
+				LOGGER.info("<"+fm.getManagerId()+">: FakeCloudComputePlugin instances: "+((FakeCloudComputePlugin)fm.getComputePlugin()).getInstances());
+			}
 			
 			return new PeerState(fm.getManagerId(),now, dTot, dFed, rFed, oFed, sFed);		
 		}
@@ -190,9 +196,6 @@ public class MonitorPeerStateSingleton{
 					skipFirst = true;				
 				}
 				else return;				//if theres only one state, keep updating
-				
-				if(fm.getManagerId().equals("p11"))
-					LOGGER.info("<"+fm.getManagerId()+">: ## time("+now+") current orders:"+currentOrders+"<"+fm.getManagerId()+">FIM\n\n");
 				
 				Iterator<Entry<Integer, PeerState>> it = states.entrySet().iterator();
 				while(it.hasNext()){

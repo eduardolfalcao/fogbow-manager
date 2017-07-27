@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.order.Order;
 
@@ -52,7 +53,7 @@ public class WorkloadMonitorAssync {
 				public void run() {
 				    try{				    	
 				    	LOGGER.info("<"+fm.getManagerId()+">: "+"removing instance ("+order.getInstanceId()+"), requested by "+order.getRequestingMemberId());
-				    	fm.removeInstance(null, order.getGlobalInstanceId(), order.getResourceKind()); 
+				    	fm.removeInstance(WorkloadScheduler.FAKE_TOKEN, order.getGlobalInstanceId(), order.getResourceKind()); 
 				    } catch(OCCIException ex){
 				    	LOGGER.error("Exception while removing instance " + order.getGlobalInstanceId(),ex);
 				    }
@@ -60,7 +61,7 @@ public class WorkloadMonitorAssync {
 				    try{
 				    	if(fm.getManagerId().equals(order.getProvidingMemberId())){
 				    		LOGGER.info("<"+fm.getManagerId()+">: "+"removing local order ("+order.getId()+"), requested by "+order.getRequestingMemberId());
-					    	fm.removeOrder(null, order.getId());
+					    	fm.removeOrder(WorkloadScheduler.FAKE_TOKEN, order.getId());
 				    	}
 				    	else{
 				    		LOGGER.info("<"+fm.getManagerId()+">: "+"removing remote order ("+order.getId()+"), requested by "+order.getRequestingMemberId()+". order: "+order);
@@ -77,88 +78,7 @@ public class WorkloadMonitorAssync {
 		    						
 }
 	
-	//TODO implement equals and hashCode
-	
-//	public void monitorOrders(){
-//		String managerId = fm.getManagerId();
-//		List<Order> localOrders = fm.getManagerDataStoreController().getAllOrders();
-//		List<Order> ordersToBeRemoved = new ArrayList<Order>();
-//		for(Order order : localOrders){			
-//			if(order == null){
-//				LOGGER.warn("<"+managerId+">: Trying to close null order...");
-//				continue;
-//			}
-//			if (!order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
-//				LOGGER.warn("<"+managerId+">: There is an order that is not a compute: "+order);
-//				continue;
-//			}
-////			if(order.getProvidingMemberId()!=null && order.getProvidingMemberId().equals(managerId) && !order.getState().equals(OrderState.CLOSED)){
-//			if(order.getProvidingMemberId()!=null && order.getProvidingMemberId().equals(managerId)){
-//				boolean isRemoving = false;
-//				order.updateElapsedTime(isRemoving);	
-//				LOGGER.info("<"+managerId+">: "+"checking if the order("+order.getId()+"), with instance("+order.getInstanceId()+"), requested by "+order.getRequestingMemberId()+
-//						" will be removed or rescheduled. runtime: " + order.getRuntime()+
-//						", elapsedTime: "+order.getElapsedTime()+", fulfilledTime: "+order.getFulfilledTime());
-//				
-//				boolean finished = order.getElapsedTime() >= order.getRuntime();
-//				if(finished)
-//					ordersToBeRemoved.add(order);
-//			}
-//		}
-//		removeOrders(fm, ordersToBeRemoved);		
-//		
-//	}
-	
-	
-	
-//	private void removeOrders(final ManagerController fm, List<Order> ordersToBeRemoved){
-//		for (final Order order : ordersToBeRemoved){
-//			Runnable run = new Runnable() {
-//				public void run() {
-//				    if(order.getGlobalInstanceId()==null)
-//				    	LOGGER.error("<"+fm.getManagerId()+">: trying to remove instance from order "+order);
-//				    try{
-//				    	LOGGER.info("<"+fm.getManagerId()+">: "+"removing instance ("+order.getInstanceId()+"), requested by "+order.getRequestingMemberId());
-//				    	if (order.isLocal()) {
-//				    		fm.removeInstance(null, order.getGlobalInstanceId(), order.getResourceKind());				    		
-//				    	} else {
-//				    		fm.removeInstanceForRemoteMember(order.getInstanceId());
-//				    	}
-//				    } catch(OCCIException ex){
-//				    	LOGGER.error("Exception while removing instance " + order.getGlobalInstanceId(),ex);
-//				    }
-//				    
-//				    try{
-//				    	LOGGER.info("<"+fm.getManagerId()+">: "+"removing order ("+order.getId()+"), requested by "+order.getRequestingMemberId());
-//				    	if (order.isLocal()) {
-//				    		fm.removeOrder(null, order.getId());				    		
-//				    	} else {
-//				    		fm.removeOrderForRemoteMember("", order.getId());
-//				    	}
-//				    } catch(OCCIException ex){
-//				    	LOGGER.error("Exception while removing order " + order.getId(), ex);
-//				    }
-//				}
-//		   	};
-//		   	new Thread(run).start();
-//		}	
-//		    						
-//	}
-	
-//	public void addJob(Job j){
-//		long endingTime = (t.getRuntime()+j.getSubmitTime())
-//		executor.schedule(
-//				new Runnable() {					
-//					@Override
-//					public void run() {
-//						// TODO Auto-generated method stub
-//						
-//					}
-//				}, 10, TimeUnit.MILLISECONDS);
-////		synchronized(jobsSubmitted) {
-////			jobsSubmitted.add(j);
-////		}
-//	}
+
 	
 	
 

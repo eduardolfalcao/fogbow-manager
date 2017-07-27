@@ -63,19 +63,19 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		
 		List<String> servedMemberIds = getServedMemberIds(ordersWithInstance);
 		LOGGER.debug("<"+managerId+">: "+"Current servedMemberIds=" + servedMemberIds);
-		if(managerId.equals("p11")){
+		if(managerId.equals("p3")){
 			LOGGER.info("<"+managerId+">: "+"Current servedMemberIds=" + servedMemberIds);
 		}
 		List<AccountingInfo> accounting = accountingPlugin.getAccountingInfo();
 		Map<String, ResourceUsage> membersUsage = NoFHelper.calculateMembersUsage(localMemberId, accounting);
 		LOGGER.debug("<"+managerId+">: "+"Current membersUsage=" + membersUsage);		
-		if(managerId.equals("p11")){
+		if(managerId.equals("p3")){
 			LOGGER.info("<"+managerId+">: "+"Current membersUsage=" + membersUsage);
 		}
 		LinkedList<FederationMemberDebt> memberDebts = calctMemberDebts(servedMemberIds, membersUsage);
 		if (memberDebts.isEmpty()) {
 			LOGGER.debug("<"+managerId+">: "+"There are no member debts.");
-			if(managerId.equals("p11")){
+			if(managerId.equals("p3")){
 				LOGGER.debug("<"+managerId+">: "+"There are no member debts.");
 			}
 			return null;
@@ -83,13 +83,13 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 
 		Collections.sort(memberDebts, new FederationMemberDebtComparator());
 		LOGGER.debug("<"+managerId+">: "+"Current memberDebts=" + memberDebts);
-		if(managerId.equals("p11")){
+		if(managerId.equals("p3")){
 			LOGGER.info("<"+managerId+">: "+"Current memberDebts=" + memberDebts);
 		}
 		
 		double requestingMemberDebt = calcDebt(membersUsage, newOrder.getRequestingMemberId());
 		LOGGER.debug("<"+managerId+">: "+"Requesting member debt=" + requestingMemberDebt);
-		if(managerId.equals("p11")){
+		if(managerId.equals("p3")){
 			LOGGER.info("<"+managerId+">: "+"Requesting member debt=" + requestingMemberDebt);
 		}
 		FederationMemberDebt firstMember = memberDebts.getFirst();

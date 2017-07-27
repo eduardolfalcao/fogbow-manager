@@ -719,7 +719,7 @@ public class ManagerController {
 				Token token = localIdentityPlugin.createToken(mapperPlugin.getLocalCredentials(accessId));
 				String instanceId = order.getInstanceId();
 				if (order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
-					computePlugin.removeInstance(token, instanceId);					
+					((FakeCloudComputePlugin)computePlugin).removeInstance(token, instanceId, order);					
 				} else if (order.getResourceKind().equals(OrderConstants.STORAGE_TERM)) {
 					storagePlugin.removeInstance(token, instanceId);
 				} else if (order.getResourceKind().equals(OrderConstants.NETWORK_TERM)) {
@@ -730,7 +730,7 @@ public class ManagerController {
 		}
 		managerDataStoreController.excludeOrder(order.getId());
 		order.updateElapsedTime(true);
-		order.setState(OrderState.CLOSED);
+//		order.setState(OrderState.CLOSED); //already set by compute plugin
 	}	
 
 	private void checkOrderId(String accessId, String orderId) {
@@ -968,7 +968,8 @@ public class ManagerController {
 		Token localToken = getFederationUserToken(order);
 		if (isFulfilledByLocalMember(order)) {	
 			if (resourceKind.equals(OrderConstants.COMPUTE_TERM)) {
-				this.computePlugin.removeInstance(localToken, instanceId);				
+				((FakeCloudComputePlugin)this.computePlugin).removeInstance(localToken, instanceId, order);
+//				this.computePlugin.removeInstance(localToken, instanceId);
 			} else if (resourceKind.equals(OrderConstants.STORAGE_TERM)) {
 				this.storagePlugin.removeInstance(localToken, instanceId);
 			} else if (resourceKind.equals(OrderConstants.NETWORK_TERM)) {
@@ -1050,6 +1051,7 @@ public class ManagerController {
 	}
 
 	public void removeRemoteOrder(final String providingMember, final Order order) {
+		LOGGER.info("<"+managerId+">: "+"Asking to remove remote order with id " + order.getId() + " on member " + providingMember + ". order: "+order);
 		ManagerPacketHelper.deleteRemoteOrder(providingMember ,order, packetSender, new AsynchronousOrderCallback() {
 			
 			@Override
@@ -1341,12 +1343,17 @@ public class ManagerController {
 		if (OrderConstants.COMPUTE_TERM.equals(resourceKind)) {
 			updateAccounting();
 			benchmarkingPlugin.remove(instanceId);
-			computePlugin.removeInstance(federationUserToken, instanceId);			
+//			computePlugin.removeInstance(federationUserToken, instanceId);
+			((FakeCloudComputePlugin)computePlugin).removeInstance(federationUserToken, instanceId, order);
 		} else if (OrderConstants.STORAGE_TERM.equals(resourceKind)) {
 			storagePlugin.removeInstance(federationUserToken, instanceId);
 		} else if (OrderConstants.NETWORK_TERM.equals(resourceKind)) {
 			networkPlugin.removeInstance(federationUserToken, instanceId);			
 		}
+		
+		instanceRemoved(order);
+		
+		
 	}
 
 	public Token getTokenFromFederationIdP(String accessId) {
@@ -1407,9 +1414,6 @@ public class ManagerController {
 		this.monitoringHelper.checkFailedMonitoring(monitorPeriod);
 		
 		List<Order> localOrders = this.managerDataStoreController.getAllLocalOrders();
-		if(managerId.equals("p11")){
-			LOGGER.info("<"+managerId+">: "+"Local orders: " + localOrders);
-		}
 		for (Order order : localOrders) {
 			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
 				turnOffTimer = false;
@@ -1799,9 +1803,6 @@ public class ManagerController {
 		this.monitoringHelper.checkFailedMonitoring(monitorPeriod);
 
 		List<Order> servedOrders = this.managerDataStoreController.getAllServedOrders();
-		if(managerId.equals("p11")){
-			LOGGER.info("<"+managerId+">: "+"Served orders: " + servedOrders);
-		}
 		for (Order order : servedOrders) {
 			try {
 				isInstanceBeingUsedByRemoteMember(order);
@@ -1949,8 +1950,7 @@ public class ManagerController {
 					ArrayList<Order> ordersWithInstances = new ArrayList<Order>(
 							managerDataStoreController.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
 					Order orderToPreempt = prioritizationPlugin.takeFrom(order, ordersWithInstances);
-					if(managerId.equals("p11"))
-						LOGGER.info("<"+managerId+">: "+"Order to be preempted: "+orderToPreempt);
+					LOGGER.info("<"+managerId+">: "+"Order to be preempted: "+orderToPreempt);
 					if (orderToPreempt == null) {
 						throw e;
 					}
