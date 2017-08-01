@@ -116,7 +116,7 @@ public class MainExperiments {
 		
 		LOGGER.info("The federation is up!");
 		
-		Thread.sleep(Long.parseLong(properties.getProperty(MonitorPeerStateAssync.OUTPUT_DATA_ENDING_TIME))+1000);
+		Thread.sleep(Long.parseLong(properties.getProperty(MonitorPeerStateAssync.OUTPUT_DATA_ENDING_TIME))+ManagerControllerHelper.getBootstrappingPeriod(properties));
 		
 		LOGGER.info("Ending experiment!");
 		System.exit(0);		

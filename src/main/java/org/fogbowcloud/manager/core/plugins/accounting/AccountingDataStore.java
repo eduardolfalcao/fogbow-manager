@@ -263,8 +263,8 @@ public class AccountingDataStore {
 			// inserting new usage entry
 			
 			if (!entryKeys.contains(currentKey)) {
-				LOGGER_EXP.info("<"+managerId+">: "+"entryKeys=" + entryKeys);
-				LOGGER_EXP.info("<"+managerId+">: "+"New accountingEntry=" + accountingEntry);
+				//LOGGER_EXP.info("<"+managerId+">: "+"entryKeys=" + entryKeys);
+				//LOGGER_EXP.info("<"+managerId+">: "+"New accountingEntry=" + accountingEntry);
 
 				LOGGER.debug("<"+managerId+">: "+"New accountingEntry=" + accountingEntry);
 				insertMemberStatement.setString(1, accountingEntry.getUser());

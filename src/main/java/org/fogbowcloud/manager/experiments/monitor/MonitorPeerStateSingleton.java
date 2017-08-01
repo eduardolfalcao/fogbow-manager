@@ -69,6 +69,7 @@ public class MonitorPeerStateSingleton{
 		private String path;
 		
 		private boolean firstWrite = true;
+		private boolean finished = false;
 		
 		public MonitorPeerStateAssync(ManagerController fm) {
 			
@@ -92,14 +93,16 @@ public class MonitorPeerStateSingleton{
 		public void savePeerState() {
 			long now = TimeUnit.MILLISECONDS.toSeconds(date.currentTimeMillis()-initialTime);
 			if(states.size()>1){			
-				if((now - lastWrite)>outputTime){
+				if((now - lastWrite)>outputTime && !finished){
 					writeStates(now);
 					lastWrite = now;	
 				}			
 			}
 			if(now >= endingTime){
 				states.put((int)now, new PeerState(fm.getManagerId(), (int)now, 0, 0, 0, 0, 0));
-				writeStates(now);				
+				writeStates(now);
+				finished = true;
+				
 			}	
 		}
 		

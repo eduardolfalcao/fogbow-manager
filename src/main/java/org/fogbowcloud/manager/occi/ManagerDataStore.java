@@ -399,6 +399,12 @@ public class ManagerDataStore {
 			}
 		} finally {
 			close(updateOrderStmt, connection);
+			
+//			if ( order.getState().equals(OrderState.FULFILLED)) {
+//				// New thread
+//			} else if () {
+//				
+//			}
 		}
 		return false;
 	}

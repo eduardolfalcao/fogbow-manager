@@ -200,7 +200,7 @@ public class Order {
 				final Order o = this;
 				Runnable r = new Runnable() {					
 					@Override
-					public void run() {
+					public void run() {						
 						MonitorPeerStateSingleton.getInstance().getMonitors().get(managerId).monitorOrder(o);
 					}
 				};

@@ -1003,7 +1003,9 @@ public class ManagerController {
 		/** EDUARDO **/
 		boolean isRemoving = true;
 		order.updateElapsedTime(isRemoving);
-		LOGGER.info("<"+managerId+">: "+"checking if the order will be removed or rescheduled - order: " + order);
+		LOGGER.info("<"+managerId+">: "+"checking if the order requested by "+order.getRequestingMemberId()+" and provided by "
+				+ order.getProvidingMemberId()+" will be removed or rescheduled - order: id(" + order.getId()+"), instanceId("+order.getInstanceId()
+				+ "), runtime("+order.getRuntime()+")" + ", elapsedTime("+order.getElapsedTime()+")");
 		
 		if (order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
 			updateAccounting();
@@ -1032,7 +1034,7 @@ public class ManagerController {
 					triggerOrderScheduler();
 				}
 			} else {
-				LOGGER.info("<"+managerId+">: "+"Order: " + order + ", setting state to " + OrderState.CLOSED);
+				LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);
 				clonedOrder.setState(OrderState.CLOSED);
 				order.setState(OrderState.CLOSED,false);
 			}
@@ -1051,7 +1053,7 @@ public class ManagerController {
 	}
 
 	public void removeRemoteOrder(final String providingMember, final Order order) {
-		LOGGER.info("<"+managerId+">: "+"Asking to remove remote order with id " + order.getId() + " on member " + providingMember + ". order: "+order);
+		LOGGER.info("<"+managerId+">: "+"Asking to remove remote order with id " + order.getId() + " on member " + providingMember + ".");
 		ManagerPacketHelper.deleteRemoteOrder(providingMember ,order, packetSender, new AsynchronousOrderCallback() {
 			
 			@Override
@@ -1872,7 +1874,8 @@ public class ManagerController {
 	}
 
 	protected boolean createLocalInstanceWithFederationUser(Order order) {
-		LOGGER.info("<"+managerId+">: "+"Submitting order " + order + " with federation user locally.");
+		LOGGER.info("<"+managerId+">: "+"Submitting order " + order.getId() + " requested by "+order.getRequestingMemberId()+","
+				+ "with runtime "+order.getRuntime()+" with federation user locally.");
 		
 		FederationMember member = null;
 		boolean isRemoteDonation = !properties.getProperty("xmpp_jid").equals(order.getRequestingMemberId());

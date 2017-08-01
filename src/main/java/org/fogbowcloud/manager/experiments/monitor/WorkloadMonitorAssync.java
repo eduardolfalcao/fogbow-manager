@@ -15,7 +15,7 @@ public class WorkloadMonitorAssync {
 	private static final Logger LOGGER = Logger.getLogger(WorkloadMonitorAssync.class);
 	private ManagerController fm;
 	private String managerId;
-	private ScheduledExecutorService executor = Executors.newScheduledThreadPool(100);
+	private ScheduledExecutorService executor = Executors.newScheduledThreadPool(10000);
 	
 	public WorkloadMonitorAssync(ManagerController fm) {
 		this.fm = fm;
