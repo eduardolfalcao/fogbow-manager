@@ -180,33 +180,23 @@ public class Order {
 	public OrderState getState() {
 		return state;
 	}
-	
-	public void setState(OrderState state) {
-		setState(state,true);
-	}
 
-	public void setState(OrderState state, boolean triggerMonitor) {
+	public void setState(OrderState state) {
 		if (state.in(OrderState.FULFILLED)) {
 			fulfilledTime = dateUtils.currentTimeMillis();
 		} else if (state.in(OrderState.OPEN)) {
 			fulfilledTime = 0;
 		}
-		this.state = state;
-		if(getId()==null){
-			LOGGER.warn("Trying to set order state while it doesn't have the orderId");
-		} else if(triggerMonitor){
-			if(state!=OrderState.SPAWNING){	
-				final String managerId = isLocal?requestingMemberId:providingMemberId;
-				final Order o = this;
-				Runnable r = new Runnable() {					
-					@Override
-					public void run() {						
-						MonitorPeerStateSingleton.getInstance().getMonitors().get(managerId).monitorOrder(o);
-					}
-				};
-				new Thread(r).start();
-			}
-		}					
+		this.state = state;									
+	}
+	
+	public void updateElapsedTime(boolean isRemoving){
+		long now = dateUtils.currentTimeMillis();
+		if(fulfilledTime!=0)
+			this.elapsedTime = (now - fulfilledTime);
+		if(isRemoving)
+			fulfilledTime = 0;
+		this.xOCCIAtt.put(OrderAttribute.ELAPSED_TIME.getValue(), String.valueOf(elapsedTime));
 	}
 
 	public String getId() {
@@ -246,15 +236,6 @@ public class Order {
 	public long getElapsedTime() {
 		return elapsedTime;
 	}
-	
-	public void updateElapsedTime(boolean isRemoving){
-		long now = dateUtils.currentTimeMillis();
-		if(fulfilledTime!=0)
-			this.elapsedTime = (now - fulfilledTime);
-		if(isRemoving)
-			fulfilledTime = 0;
-		this.xOCCIAtt.put(OrderAttribute.ELAPSED_TIME.getValue(), String.valueOf(elapsedTime));
-	}
 
 	public Map<String, String> getxOCCIAtt() {
 		if (xOCCIAtt == null) {
@@ -293,7 +274,7 @@ public class Order {
 				+ requestingMemberId + ", state: " + state + ", isLocal " + isLocal
 				+ ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt 
 				+ ", runtime: " + runtime + ", fulfilledTime: "+fulfilledTime
-				+ ", elapsedTime: "+elapsedTime+"\n\n";
+				+ ", elapsedTime: "+elapsedTime+"\n";
 	}
 
 

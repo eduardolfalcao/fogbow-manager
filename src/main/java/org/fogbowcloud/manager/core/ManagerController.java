@@ -111,6 +111,8 @@ public class ManagerController {
 	private final ManagerTimer servedOrderMonitoringTimer;
 	private final ManagerTimer accountingUpdaterTimer;
 	private final ManagerTimer capacityControllerUpdaterTimer;
+	
+	private ScheduledExecutorService createOrderOnDBExecutor = Executors.newScheduledThreadPool(1);
 
 	private boolean forTest = false;
 	private Map<String, Token> instanceIdToToken = new HashMap<String, Token>();
@@ -174,7 +176,8 @@ public class ManagerController {
 			this.accountingUpdaterTimer = new ManagerTimer(executor);
 			this.capacityControllerUpdaterTimer = new ManagerTimer(executor);
 		}				
-		this.managerDataStoreController = new ManagerDataStoreController(properties);	
+		this.managerDataStoreController = new ManagerDataStoreController(properties);
+		this.ordersToBeCreated = new ArrayList<Order>();
 		
 		recoverPreviousOrders();
 	}
@@ -976,7 +979,7 @@ public class ManagerController {
 				this.networkPlugin.removeInstance(localToken, instanceId);
 			}
 		} else {
-			LOGGER.info("<"+managerId+">: Trying to remove remote instance with orderId("+order.getId()+"), and instanceId("+order.getInstanceId()+"). Order: "+order);
+			LOGGER.info("<"+managerId+">: Trying to remove remote instance with orderId("+order.getId()+"), and instanceId("+order.getInstanceId()+").");
 			removeRemoteInstance(order);
 		}
 		
@@ -994,12 +997,6 @@ public class ManagerController {
 
 	protected void instanceRemoved(Order order) {
 		
-		/** Added by Eduardo **/
-		if(order == null){
-			LOGGER.warn("<"+managerId+">: Trying to close null order: "+order);
-			return;
-		}
-		
 		/** EDUARDO **/
 		boolean isRemoving = true;
 		order.updateElapsedTime(isRemoving);
@@ -1012,31 +1009,23 @@ public class ManagerController {
 			benchmarkingPlugin.remove(order.getInstanceId());			
 		}
 		
-		Order clonedOrder = new Order(order.getId(), order.getFederationToken(), order.getInstanceId(), order.getProvidingMemberId(),
-				order.getRequestingMemberId(), order.getFulfilledTime(), order.isLocal(), order.getState(),
-				order.getCategories(), order.getxOCCIAtt());
-		
 		String instanceId = order.getInstanceId();
 		order.setInstanceId(null);
 		order.setProvidingMemberId(null);
 
 		if (order.getState().equals(OrderState.DELETED)  || !order.isLocal()) {			
-			LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.DELETED);
-			clonedOrder.setState(OrderState.DELETED);
 			managerDataStoreController.excludeOrder(order.getId());
-		} else if (isPersistent(order)) {			
+		} else if (isPersistent(order)) {
 			boolean finished = order.getElapsedTime() >= order.getRuntime();			
-			if(order.isLocal() && !finished){
+			if(!finished){	//and is local
 				LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.OPEN);
-				clonedOrder.setState(OrderState.OPEN);
-				order.setState(OrderState.OPEN,false);
+				order.setState(OrderState.OPEN);
 				if (!orderSchedulerTimer.isScheduled()) {
 					triggerOrderScheduler();
 				}
 			} else {
 				LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);
-				clonedOrder.setState(OrderState.CLOSED);
-				order.setState(OrderState.CLOSED,false);
+				order.setState(OrderState.CLOSED);
 			}
 		} 
 		
@@ -1252,9 +1241,29 @@ public class ManagerController {
 				OrderConstants.MIXIN_CLASS));
 	}
 
-	protected void preemption(Order orderToPreemption) {
-		LOGGER.info("<"+managerId+">: preempting "+orderToPreemption.getId()+" from "+orderToPreemption.getRequestingMemberId());
-		removeInstance(orderToPreemption.getInstanceId(), orderToPreemption, OrderConstants.COMPUTE_TERM);
+	protected void preemption(final Order orderToBePreempted) {
+		LOGGER.info("<"+managerId+">: preempting "+orderToBePreempted.getId()+" from "+orderToBePreempted.getRequestingMemberId());
+		removeInstance(orderToBePreempted.getInstanceId(), orderToBePreempted, OrderConstants.COMPUTE_TERM);
+		
+		//added by Eduardo
+		ManagerPacketHelper.preemptOrder(orderToBePreempted.getRequestingMemberId(), orderToBePreempted, packetSender,new AsynchronousOrderCallback() {			
+			@Override
+			public void success(String instanceId) {
+				LOGGER.info("<"+managerId+">: "+"Servered order id " + orderToBePreempted.getId() + " from " + orderToBePreempted.getRequestingMemberId() + "preempted!");
+			}
+			
+			@Override
+			public void error(Throwable t) {
+				LOGGER.warn("<"+managerId+">: "+"Error while preempting servered order id " + orderToBePreempted.getId() + " from " + orderToBePreempted.getRequestingMemberId());
+			}
+		});
+	}
+	
+	//added by Eduardo
+	public void remoteMemberPreemptedOrder(String orderId){
+		LOGGER.info("<"+managerId+">: "+"Removing local order (id="+orderId+") preempted by remote member");
+		Order o = managerDataStoreController.getOrder(orderId);
+		instanceRemoved(o);		
 	}
 
 	private void triggerServedOrderMonitoring() {
@@ -1365,16 +1374,46 @@ public class ManagerController {
 		}
 		return token;
 	}
-
+	
+	//a thread that each second try to submit	
+	private boolean isCreateOrderOnDBTimerScheduled = false;
+	private List<Order> ordersToBeCreated;	
+	protected void triggerOrderCreationOnDB() {	
+		Runnable run = new Runnable() {
+			public void run() {
+				boolean isEmpty = false;
+				synchronized(ordersToBeCreated){
+					isEmpty = ordersToBeCreated.isEmpty();
+				}
+				if(!isEmpty){
+					createOrdersOnDB();
+				}
+			}
+		};		
+		createOrderOnDBExecutor.scheduleWithFixedDelay(run, 0, 1000, TimeUnit.MILLISECONDS);
+	}
+	
+	private void createOrdersOnDB(){
+		List<Order> ordersToBeCreatedClone = new ArrayList<Order>();
+		synchronized(ordersToBeCreated){
+			ordersToBeCreatedClone.addAll(ordersToBeCreated);
+			ordersToBeCreated.clear();
+		}
+		for(Order o : ordersToBeCreatedClone){
+			managerDataStoreController.addOrder(o);
+			LOGGER.info("<"+managerId+">: "+"Just created order on bd: "+o);
+		}
+		
+		if (!orderSchedulerTimer.isScheduled()) {
+			triggerOrderScheduler();
+		}
+	}
+	
+	
 	public List<Order> createOrders(String federationAccessTokenStr, List<Category> categories,
 			Map<String, String> xOCCIAtt) {
 		Token federationToken = getTokenFromFederationIdP(federationAccessTokenStr);
-
-		LOGGER.debug("<"+managerId+">: "+"Federation User Token: " + federationToken);
-
 		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(OrderAttribute.INSTANCE_COUNT.getValue()));
-		LOGGER.debug("<"+managerId+">: "+"Order " + instanceCount + " instances");
-
 		xOCCIAtt.put(OrderAttribute.BATCH_ID.getValue(), String.valueOf(UUID.randomUUID()));
 
 		List<Order> currentOrders = new ArrayList<Order>();
@@ -1382,16 +1421,46 @@ public class ManagerController {
 			String orderId = String.valueOf(UUID.randomUUID());
 			Order order = new Order(orderId, federationToken, new LinkedList<Category>(categories),
 					new HashMap<String, String>(xOCCIAtt), true, properties.getProperty("xmpp_jid"));
-			LOGGER.debug("<"+managerId+">: "+"Created order: " + order);
 			currentOrders.add(order);
-			managerDataStoreController.addOrder(order);
 		}
-		if (!orderSchedulerTimer.isScheduled()) {
-			triggerOrderScheduler();
+		
+		synchronized(ordersToBeCreated){
+			ordersToBeCreated.addAll(currentOrders);
+		}		
+		
+		if (!isCreateOrderOnDBTimerScheduled) {
+			triggerOrderCreationOnDB();
 		}
-
+		
 		return currentOrders;
 	}
+
+//	public List<Order> createOrders(String federationAccessTokenStr, List<Category> categories,
+//			Map<String, String> xOCCIAtt) {
+//		Token federationToken = getTokenFromFederationIdP(federationAccessTokenStr);
+//
+//		LOGGER.debug("<"+managerId+">: "+"Federation User Token: " + federationToken);
+//
+//		Integer instanceCount = Integer.valueOf(xOCCIAtt.get(OrderAttribute.INSTANCE_COUNT.getValue()));
+//		LOGGER.debug("<"+managerId+">: "+"Order " + instanceCount + " instances");
+//
+//		xOCCIAtt.put(OrderAttribute.BATCH_ID.getValue(), String.valueOf(UUID.randomUUID()));
+//
+//		List<Order> currentOrders = new ArrayList<Order>();
+//		for (int i = 0; i < instanceCount; i++) {
+//			String orderId = String.valueOf(UUID.randomUUID());
+//			Order order = new Order(orderId, federationToken, new LinkedList<Category>(categories),
+//					new HashMap<String, String>(xOCCIAtt), true, properties.getProperty("xmpp_jid"));
+//			LOGGER.debug("<"+managerId+">: "+"Created order: " + order);
+//			currentOrders.add(order);
+//			managerDataStoreController.addOrder(order);
+//		}
+//		if (!orderSchedulerTimer.isScheduled()) {
+//			triggerOrderScheduler();
+//		}
+//
+//		return currentOrders;
+//	}
 
 	protected void triggerInstancesMonitor() {
 		if (this.forTest) { return; }

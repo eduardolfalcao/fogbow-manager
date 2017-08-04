@@ -24,6 +24,7 @@ import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton;
 import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton.MonitorPeerStateAssync;
+import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorAssync;
 import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
 
 public class MainExperiments {
@@ -103,8 +104,12 @@ public class MainExperiments {
 			propertiesList.add(SimpleManagerFactory.adjustPropertiesManager(id, fdnof, properties));
 		
 		List<ManagerController> fms = new ArrayList<ManagerController>();
-		for(Properties prop : propertiesList)
-			fms.add(SimpleManagerFactory.createFM(prop));			
+		for(Properties prop : propertiesList) {
+			ManagerController manager = SimpleManagerFactory.createFM(prop);
+			manager.getManagerDataStoreController().getManagerDatabase().setWorkloadMonitorAssync(new WorkloadMonitorAssync(manager));
+			fms.add(manager);
+		}	
+			
 		
 		WorkloadScheduler scheduler = new WorkloadScheduler(fms, properties);
 		triggerWorkloadScheduler(scheduler, properties);		
@@ -116,7 +121,7 @@ public class MainExperiments {
 		
 		LOGGER.info("The federation is up!");
 		
-		Thread.sleep(Long.parseLong(properties.getProperty(MonitorPeerStateAssync.OUTPUT_DATA_ENDING_TIME))+ManagerControllerHelper.getBootstrappingPeriod(properties));
+		Thread.sleep(Long.parseLong(properties.getProperty(MonitorPeerStateAssync.OUTPUT_DATA_ENDING_TIME)));
 		
 		LOGGER.info("Ending experiment!");
 		System.exit(0);		

@@ -26,6 +26,7 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 	public static final String INSTANCEBEINGUSED_NAMESPACE = "http://fogbowcloud.org/manager/instancebeingused";
 	public static final String REMOVEORDER_NAMESPACE = "http://fogbowcloud.org/manager/removeorder";
 	public static final String GETREMOTEUSERQUOTA_NAMESPACE = "http://fogbowcloud.org/manager/getremoteuserquota";
+	public static final String PREEMPTIONWARN_NAMESPACE = "http://fogbowcloud.org/manager/preemptionwarn";
 
 	private static long PERIOD = 30000;
 	private static final Logger LOGGER = Logger.getLogger(ManagerXmppComponent.class);
@@ -49,7 +50,8 @@ public class ManagerXmppComponent extends XMPPComponent implements AsyncPacketSe
 		addSetHandler(new RemoveOrderHandler(managerFacade));
 		addGetHandler(new GetRemoteUserQuotaHandler(managerFacade));
 		addSetHandler(new StorageLinkHandler(managerFacade));	
-		addSetHandler(new RemoveStorageLinkHandler(managerFacade));	
+		addSetHandler(new RemoveStorageLinkHandler(managerFacade));
+		addSetHandler(new PreemptionWarnHandler(managerFacade));
 	}
 
 	public void init() {

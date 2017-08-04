@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
@@ -36,7 +38,7 @@ public class WorkloadScheduler {
 	private long time = 0;
 	private List<Peer> peers;
 	private Map<String, ManagerController> relations;
-	private Map<ManagerController, WorkloadMonitorAssync> monitors;
+	private ScheduledExecutorService executor = Executors.newScheduledThreadPool(200);
 	
 	private Map<String, String> xOCCIAtt;
 	private List<Category> categories;
@@ -52,10 +54,8 @@ public class WorkloadScheduler {
 		sortJobsAndTasks();
 		
 		relations = new HashMap<String, ManagerController>();
-		monitors = new HashMap<ManagerController, WorkloadMonitorAssync>();
 		for(Peer p : peers){
 			for(ManagerController mc : fms){
-				monitors.put(mc, new WorkloadMonitorAssync(mc));
 				if(mc.getManagerId().equals(p.getPeerId())){
 					relations.put(p.getPeerId(), mc);
 					break;
@@ -108,14 +108,14 @@ public class WorkloadScheduler {
 						for(int i = 0; i < j.getTasks().size(); i++){
 							xOCCIAttClone.put(OrderAttribute.RUNTIME.getValue(), String.valueOf(j.getTasks().get(i).getRuntime()*1000));
 							List<Order> orders = mc.createOrders(WorkloadScheduler.FAKE_TOKEN, categoriesClone, xOCCIAttClone);
-							monitors.get(mc).monitorOrder(orders.get(0),TimeUnit.SECONDS.toMillis(j.getTasks().get(i).getRuntime()));
 							j.getTasks().get(i).setOrderId(orders.get(0).getId());
 						}					
 						LOGGER.info("Time: "+jobTime+", Peer "+j.getPeerId()+" creating "+j);
 			    	}
 			    } 		    		    
-		    }; 
-		    new Thread(run).start();
+		    };
+		    executor.schedule(run, 0, TimeUnit.SECONDS);
+//		    new Thread(run).start();
 		}
 	}
 	

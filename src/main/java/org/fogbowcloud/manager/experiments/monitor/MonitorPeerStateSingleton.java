@@ -64,6 +64,7 @@ public class MonitorPeerStateSingleton{
 		private Map<Integer,PeerState> states;		//time as key, PeerState as value
 		private PeerState lastState;
 		private Map<String,Order> currentOrders;
+		private Map<String,OrderState> currentOrderStates;
 		
 		private ManagerController fm;
 		private String path;
@@ -80,6 +81,7 @@ public class MonitorPeerStateSingleton{
 			new File(path).mkdirs();		
 			
 			currentOrders = new HashMap<String,Order>();
+			currentOrderStates = new HashMap<String,OrderState>();
 			states = new LinkedHashMap<Integer,PeerState>();
 			int capacity = Integer.parseInt(fm.getProperties().getProperty(FakeCloudComputePlugin.COMPUTE_FAKE_QUOTA));
 			lastState = new PeerState(fm.getManagerId(), 0, 0, 0, 0, capacity, 0);
@@ -106,16 +108,23 @@ public class MonitorPeerStateSingleton{
 			}	
 		}
 		
-		public void monitorOrder(Order o){
-			LOGGER.info("<"+fm.getManagerId()+">: orderid("+o.getId()+") changed state to state("+o.getState()+") - requesting("+o.getRequestingMemberId()+") and providing("+o.getProvidingMemberId()+"); "
-					+ "other attrs: instanceid("+o.getInstanceId()+"), elapsedTime("+o.getElapsedTime()+"), runtime("+o.getRuntime()+")");
+		public void monitorOrder(Order o){			
 			synchronized(currentOrders){
+				//do nothing if state hasnt changed
+				if(currentOrderStates.get(o.getId())!=null && currentOrderStates.get(o.getId()).equals(o.getState())){					
+					return;
+				}				
+					
+				LOGGER.info("<"+fm.getManagerId()+">: orderid("+o.getId()+") changed state to state("+o.getState()+") - requesting("+o.getRequestingMemberId()+") and providing("+o.getProvidingMemberId()+"); "
+						+ "other attrs: instanceid("+o.getInstanceId()+"), elapsedTime("+o.getElapsedTime()+"), runtime("+o.getRuntime()+")");
 				if(o.getState().equals(OrderState.CLOSED) ||
 						o.getState().equals(OrderState.FAILED) ||
-						o.getState().equals(OrderState.DELETED)){
+						o.getState().equals(OrderState.DELETED)){					
 					currentOrders.remove(o.getId());
+					currentOrderStates.remove(o.getId());
 				} else{
 					currentOrders.put(o.getId(), o);
+					currentOrderStates.put(o.getId(), o.getState());
 				}
 			}
 			PeerState currentState = getPeerState();

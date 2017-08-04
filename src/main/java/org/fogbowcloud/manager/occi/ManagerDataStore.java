@@ -22,6 +22,8 @@ import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
+import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton;
+import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorAssync;
 import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -127,6 +129,18 @@ public class ManagerDataStore {
 		}
 	}
 	
+	private void monitorOrderState(final Order order) {
+		if(!order.getState().equals(OrderState.SPAWNING)){	
+			Runnable r = new Runnable() {					
+				@Override
+				public void run() {						
+					MonitorPeerStateSingleton.getInstance().getMonitors().get(managerId).monitorOrder(order);
+				}
+			};
+			new Thread(r).start();
+		}							
+	}
+	
 	private static final String INSERT_ORDER_SQL = "INSERT INTO " + ORDER_TABLE_NAME
 			+ " (" + ORDER_ID + "," + INSTANCE_ID + "," + PROVIDING_MEMBER_ID + "," + REQUESTING_MEMBER_ID + "," 
 			+ FEDERATION_TOKEN + "," + FULFILLED_TIME + "," + IS_LOCAL + "," + STATE + "," + CATEGORIES + ","
@@ -157,6 +171,13 @@ public class ManagerDataStore {
 			orderStmt.executeUpdate();			
 			
 			connection.commit();
+			
+			//added by Eduardo
+			try{
+				monitorOrderState(order);
+			}catch(Exception e){
+				LOGGER.error("<"+managerId+">: Exception while monitoring order with id "+order.getId(), e);
+			}
 			return true;
 		} catch (SQLException e) {
 			LOGGER.error("<"+managerId+">: "+"Couldn't create order with id "+order.getId()+". "+e.getMessage());
@@ -169,6 +190,15 @@ public class ManagerDataStore {
 			}
 		} finally {
 			close(orderStmt, connection);
+			
+			if (order.getState().equals(OrderState.FULFILLED)) {
+				// New thread
+				this.workloadMonitorAssync.monitorOrder(order);
+				threads.add(order.getId());
+			} else if (threads.contains(order.getId())) {
+				threads.remove(order.getId());
+				this.workloadMonitorAssync.stopMonitoring(order);
+			}
 		}
 		return false;
 	}
@@ -312,6 +342,13 @@ public class ManagerDataStore {
 			removeOrderStmt.executeUpdate();
 			
 			connection.commit();
+			
+			//added by Eduardo
+			try{
+				monitorOrderState(order);
+			}catch(Exception e){
+				LOGGER.error("<"+managerId+">: Exception while monitoring order with id "+order.getId(), e);
+			}
 			return true;
 		} catch (SQLException e) {
 			LOGGER.error("<"+managerId+">: "+"Couldn't remove order.", e);
@@ -324,6 +361,11 @@ public class ManagerDataStore {
 			}
 		} finally {
 			close(removeOrderStmt, connection);
+			
+			if (threads.contains(order.getId())) {
+				threads.remove(order.getId());
+				this.workloadMonitorAssync.stopMonitoring(order);
+			}
 		}
 		return false;
 	}	
@@ -387,6 +429,13 @@ public class ManagerDataStore {
 			updateOrderStmt.executeUpdate();
 			
 			connection.commit();
+			
+			//added by Eduardo
+			try{
+				monitorOrderState(order);
+			}catch(Exception e){
+				LOGGER.error("<"+managerId+">: Exception while monitoring order with id "+order.getId(), e);
+			}
 			return true;
 		} catch (SQLException e) {
 			LOGGER.error("<"+managerId+">: "+"Couldn't update order.", e);
@@ -400,13 +449,28 @@ public class ManagerDataStore {
 		} finally {
 			close(updateOrderStmt, connection);
 			
-//			if ( order.getState().equals(OrderState.FULFILLED)) {
-//				// New thread
-//			} else if () {
-//				
-//			}
+			if (order.getState().equals(OrderState.FULFILLED)) {
+				// New thread
+				this.workloadMonitorAssync.monitorOrder(order);
+				if(!threads.contains(order.getId())){
+					LOGGER.info("<"+managerId+">: "+"Added order id"+order.getId()+" on threads list");
+					threads.add(order.getId());
+				}
+			} else if (threads.contains(order.getId())) {
+				LOGGER.info("<"+managerId+">: "+"Removed order id"+order.getId()+" from threads list");
+				threads.remove(order.getId());
+				this.workloadMonitorAssync.stopMonitoring(order);
+			}
 		}
 		return false;
+	}
+	
+	private List<String> threads = new ArrayList<String>();
+	private WorkloadMonitorAssync workloadMonitorAssync;
+	
+	public void setWorkloadMonitorAssync(
+			WorkloadMonitorAssync workloadMonitorAssync) {
+		this.workloadMonitorAssync = workloadMonitorAssync;
 	}
 	
 	private static final String UPDATE_ORDER_ASYNCRONOUS_SQL = "UPDATE " + ORDER_TABLE_NAME + " SET "
