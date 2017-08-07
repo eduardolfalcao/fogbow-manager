@@ -453,7 +453,7 @@ public class ManagerDataStore {
 				// New thread
 				this.workloadMonitorAssync.monitorOrder(order);
 				if(!threads.contains(order.getId())){
-					LOGGER.info("<"+managerId+">: "+"Added order id"+order.getId()+" on threads list");
+					LOGGER.info("<"+managerId+">: "+"Added order id "+order.getId()+" on threads list");
 					threads.add(order.getId());
 				}
 			} else if (threads.contains(order.getId())) {

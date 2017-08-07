@@ -119,10 +119,9 @@ public class MainExperiments {
 		for(ManagerController fm : fms)
 			fm.triggerWorkloadMonitor(MonitorPeerStateSingleton.getInstance().getMonitors().get(fm.getManagerId()));
 		
-		LOGGER.info("The federation is up!");
-		
-		Thread.sleep(Long.parseLong(properties.getProperty(MonitorPeerStateAssync.OUTPUT_DATA_ENDING_TIME)));
-		
+		LOGGER.info("The federation is up!");		
+		final long delay = 1000;
+		Thread.sleep(Long.parseLong(properties.getProperty(MonitorPeerStateAssync.OUTPUT_DATA_ENDING_TIME))+delay);		
 		LOGGER.info("Ending experiment!");
 		System.exit(0);		
 	}
