@@ -1,10 +1,13 @@
 package org.fogbowcloud.manager.experiments.monitor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
@@ -18,13 +21,15 @@ public class WorkloadMonitorAssync {
 	private static final Logger LOGGER = Logger.getLogger(WorkloadMonitorAssync.class);
 	private ManagerController fm;
 	private String managerId;
-	private ScheduledExecutorService executor = Executors.newScheduledThreadPool(100);
-	private Map<Order, ScheduledFuture<?>> orders;	
+	private ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(10);
+	private Map<Order, List<ScheduledFuture<?>>> orders;	
 	
 	public WorkloadMonitorAssync(ManagerController fm) {
 		this.fm = fm;
 		this.managerId = fm.getManagerId();
-		this.orders = new HashMap<Order, ScheduledFuture<?>>();
+		this.orders = new HashMap<Order, List<ScheduledFuture<?>>>();
+		executor.setRemoveOnCancelPolicy(true);
+		executor.setMaximumPoolSize(10);
 	}
 	
 	public void monitorOrder(final Order order){
@@ -50,12 +55,16 @@ public class WorkloadMonitorAssync {
 					}
 				}
 			}, time, TimeUnit.MILLISECONDS);
-		orders.put(order, schedule);
+		if(!orders.containsKey(order))
+			orders.put(order, new ArrayList<ScheduledFuture<?>>());
+		orders.get(order).add(schedule);		
 	}
 	
-	public void stopMonitoring(Order o){
-		orders.get(o).cancel(true);
-		LOGGER.info("<"+managerId+">: Stopped monitoring order "+o.getId());
+	public synchronized void stopMonitoring(Order o){
+		LOGGER.info("<"+managerId+">: 1 - number of threads executing on executor "+executor.getActiveCount()+", and total: "+java.lang.Thread.activeCount());
+		List<ScheduledFuture<?>> threads = orders.get(o); 
+		for(ScheduledFuture<?> thread : threads)
+			thread.cancel(true);
 	}
 	
 	private void removeOrder(final ManagerController fm, final Order order){
@@ -71,20 +80,6 @@ public class WorkloadMonitorAssync {
 				    	} 
 				    } catch(OCCIException ex){
 				    	LOGGER.error("<"+fm.getManagerId()+">: Exception while removing instance " + order.getGlobalInstanceId(),ex);
-				    }
-				    
-				    try{
-				    	if(order.isLocal()){
-				    		//LOGGER.info("<"+fm.getManagerId()+">: "+"removing local order ("+order.getId()+"), requested by "+order.getRequestingMemberId());
-					    	//fm.removeOrder(WorkloadScheduler.FAKE_TOKEN, order.getId());
-				    	}
-				    	else{
-//				    		LOGGER.info("<"+fm.getManagerId()+">: "+"removing remote order ("+order.getId()+"), requested by "+order.getRequestingMemberId()+". order: "+order);
-//				    		fm.removeOrderForRemoteMember(WorkloadScheduler.FAKE_TOKEN, order.getId());
-				    	}
-				    	
-				    } catch(OCCIException ex){
-				    	LOGGER.error("<"+fm.getManagerId()+">: Exception while removing order " + order.getId(), ex);
 				    }
 				}
 		   	};

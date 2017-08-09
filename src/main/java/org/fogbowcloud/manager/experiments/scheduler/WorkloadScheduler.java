@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
@@ -38,7 +39,9 @@ public class WorkloadScheduler {
 	private long time = 0;
 	private List<Peer> peers;
 	private Map<String, ManagerController> relations;
-	private ScheduledExecutorService executor = Executors.newScheduledThreadPool(200);
+	
+	private final int POOL_SIZE = 200;
+	private ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(POOL_SIZE);
 	
 	private Map<String, String> xOCCIAtt;
 	private List<Category> categories;
@@ -49,6 +52,7 @@ public class WorkloadScheduler {
 		LOGGER.setLevel(Level.INFO);
 		this.props = props;
 		this.peers = new ArrayList<Peer>();
+		executor.setMaximumPoolSize(POOL_SIZE);
 		
 		readWorkloads();
 		sortJobsAndTasks();
@@ -96,8 +100,8 @@ public class WorkloadScheduler {
 		Map<ManagerController, List<Job>> peersAndJobs = getJobs(jobTime);
 		    	
 		for(final Entry<ManagerController, List<Job>> e : peersAndJobs.entrySet()){
-			Runnable run = new Runnable() {
-			    public void run() {
+//			Runnable run = new Runnable() {
+//			    public void run() {
 			    	List<Job> jobsToBeSubmitted = e.getValue();
 			    	ManagerController mc = e.getKey();
 			    	for(Job j : jobsToBeSubmitted){			    										
@@ -113,9 +117,9 @@ public class WorkloadScheduler {
 						}					
 						LOGGER.info("Time: "+jobTime+", Peer "+j.getPeerId()+" creating "+j);
 			    	}
-			    } 		    		    
-		    };
-		    executor.schedule(run, 0, TimeUnit.SECONDS);
+//			    } 		    		    
+//		    };
+//		    executor.schedule(run, 0, TimeUnit.SECONDS);
 		}
 	}
 	
