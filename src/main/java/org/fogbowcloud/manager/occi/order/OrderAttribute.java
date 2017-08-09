@@ -23,7 +23,8 @@ public enum OrderAttribute {
 	STORAGE_SIZE("org.fogbowcloud.order.storage-size"),
 	NETWORK_ID("org.fogbowcloud.order.network-id"),
 	RUNTIME("org.fogbowcloud.order.runtime"),
-	ELAPSED_TIME("org.fogbowcloud.order.elapsedtime");
+	PREVIOUS_ELAPSED_TIME("org.fogbowcloud.order.previouselapsedtime"),
+	CURRENT_ELAPSED_TIME("org.fogbowcloud.order.currentelapsedtime");
 	
 	private String value;
 	

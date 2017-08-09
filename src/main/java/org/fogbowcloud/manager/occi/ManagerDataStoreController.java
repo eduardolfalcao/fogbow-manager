@@ -24,7 +24,7 @@ public class ManagerDataStoreController {
 	private String managerId;
 	
 	public ManagerDataStoreController(Properties properties) {		
-		this.managerDatabase = new ManagerDataStore(properties);
+		this.managerDatabase = new ManagerDataStoreXP(properties);
 		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 	

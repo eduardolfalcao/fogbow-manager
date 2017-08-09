@@ -110,14 +110,12 @@ public class MainExperiments {
 			fms.add(manager);
 		}	
 			
-		
-		WorkloadScheduler scheduler = new WorkloadScheduler(fms, properties);
-		triggerWorkloadScheduler(scheduler, properties);		
-		
-		Thread.sleep(ManagerControllerHelper.getBootstrappingPeriod(managerProperties));
 		MonitorPeerStateSingleton.getInstance().init(fms); 		//starting peer state monitoring
 		for(ManagerController fm : fms)
 			fm.triggerWorkloadMonitor(MonitorPeerStateSingleton.getInstance().getMonitors().get(fm.getManagerId()));
+		
+		WorkloadScheduler scheduler = new WorkloadScheduler(fms, properties);
+		triggerWorkloadScheduler(scheduler, properties);		
 		
 		LOGGER.info("The federation is up!");		
 		final long delay = 1000;
@@ -137,7 +135,7 @@ public class MainExperiments {
 					LOGGER.error("Error while scheduling workload", e);
 				}
 			}
-		}, ManagerControllerHelper.getBootstrappingPeriod(prop), workloadSchedulerPeriod);
+		}, 0, workloadSchedulerPeriod);
 	}
 	
 }

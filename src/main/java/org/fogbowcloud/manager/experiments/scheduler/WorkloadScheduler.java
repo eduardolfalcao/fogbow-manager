@@ -72,7 +72,8 @@ public class WorkloadScheduler {
 		xOCCIAtt.put(OrderAttribute.INSTANCE_COUNT.getValue(), "1");
 		xOCCIAtt.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), "public key");
 		xOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderType.PERSISTENT.getValue());
-		xOCCIAtt.put(OrderAttribute.ELAPSED_TIME.getValue(), "0");
+		xOCCIAtt.put(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue(), "0");
+		xOCCIAtt.put(OrderAttribute.CURRENT_ELAPSED_TIME.getValue(), "0");
 		
 		categories = new ArrayList<Category>();
 		categories.add(new Category(OrderConstants.TERM,OrderConstants.SCHEME,OrderConstants.KIND_CLASS));
@@ -115,7 +116,6 @@ public class WorkloadScheduler {
 			    } 		    		    
 		    };
 		    executor.schedule(run, 0, TimeUnit.SECONDS);
-//		    new Thread(run).start();
 		}
 	}
 	

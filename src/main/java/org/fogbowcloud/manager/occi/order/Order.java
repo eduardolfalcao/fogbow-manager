@@ -25,7 +25,7 @@ public class Order {
 	private String providingMemberId;
 	private final String requestingMemberId;
 	private long fulfilledTime = 0;
-	private long elapsedTime, runtime;	
+	private long previousElapsedTime, currentElapsedTime, runtime;	
 	private final boolean isLocal;
 	private OrderState state;
 	private List<Category> categories;
@@ -56,7 +56,8 @@ public class Order {
 		} else {
 			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
 			this.runtime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.RUNTIME.getValue()));
-			this.elapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.ELAPSED_TIME.getValue()));
+			this.previousElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue()));
+			this.currentElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.CURRENT_ELAPSED_TIME.getValue()));			
 		}		
 	}
 	
@@ -85,7 +86,8 @@ public class Order {
 		} else {
 			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
 			this.runtime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.RUNTIME.getValue()));
-			this.elapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.ELAPSED_TIME.getValue()));
+			this.previousElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue()));
+			this.currentElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.CURRENT_ELAPSED_TIME.getValue()));	
 		}
 	}
 	
@@ -105,7 +107,8 @@ public class Order {
 		} else {
 			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
 			this.runtime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.RUNTIME.getValue()));
-			this.elapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.ELAPSED_TIME.getValue()));
+			this.previousElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue()));
+			this.currentElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.CURRENT_ELAPSED_TIME.getValue()));	
 		}
 	}
 	
@@ -192,11 +195,16 @@ public class Order {
 	
 	public void updateElapsedTime(boolean isRemoving){
 		long now = dateUtils.currentTimeMillis();
-		if(fulfilledTime!=0)
-			this.elapsedTime += (now - fulfilledTime);
-		if(isRemoving)
+		if(fulfilledTime!=0){
+			currentElapsedTime = (now - fulfilledTime);		
+		}
+		if(isRemoving){
 			fulfilledTime = 0;
-		this.xOCCIAtt.put(OrderAttribute.ELAPSED_TIME.getValue(), String.valueOf(elapsedTime));
+			previousElapsedTime += currentElapsedTime;
+			currentElapsedTime = 0;
+		}
+		this.xOCCIAtt.put(OrderAttribute.CURRENT_ELAPSED_TIME.getValue(), String.valueOf(currentElapsedTime));
+		this.xOCCIAtt.put(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue(), String.valueOf(previousElapsedTime));
 	}
 
 	public String getId() {
@@ -233,9 +241,13 @@ public class Order {
 		return runtime;
 	}
 	
-	public long getElapsedTime() {
-		return elapsedTime;
+	public long getPreviousElapsedTime() {
+		return previousElapsedTime;
 	}
+	
+	public long getCurrentElapsedTime() {
+		return currentElapsedTime;
+	}	
 
 	public Map<String, String> getxOCCIAtt() {
 		if (xOCCIAtt == null) {
@@ -274,7 +286,8 @@ public class Order {
 				+ requestingMemberId + ", state: " + state + ", isLocal " + isLocal
 				+ ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt 
 				+ ", runtime: " + runtime + ", fulfilledTime: "+fulfilledTime
-				+ ", elapsedTime: "+elapsedTime+"\n";
+				+ ", previousElpasedTime: "+previousElapsedTime+""
+				+ ", currentElapsedTime: "+currentElapsedTime+"\n";
 	}
 
 
