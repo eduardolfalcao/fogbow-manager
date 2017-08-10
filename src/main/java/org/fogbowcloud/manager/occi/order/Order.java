@@ -187,6 +187,7 @@ public class Order {
 	public void setState(OrderState state) {
 		if (state.in(OrderState.FULFILLED)) {
 			fulfilledTime = dateUtils.currentTimeMillis();
+			LOGGER.info("Order("+getId()+") just got fulfilled: "+this);
 		} else if (state.in(OrderState.OPEN)) {
 			fulfilledTime = 0;
 		}

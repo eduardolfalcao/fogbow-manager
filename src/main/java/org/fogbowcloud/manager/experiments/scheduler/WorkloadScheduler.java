@@ -18,6 +18,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.model.DateUtils;
+import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitor;
 import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorAssync;
 import org.fogbowcloud.manager.experiments.scheduler.model.DataReader;
 import org.fogbowcloud.manager.experiments.scheduler.model.Job;
@@ -39,6 +40,7 @@ public class WorkloadScheduler {
 	private long time = 0;
 	private List<Peer> peers;
 	private Map<String, ManagerController> relations;
+	private Map<ManagerController, WorkloadMonitor> monitors;
 	
 	private final int POOL_SIZE = 200;
 	private ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(POOL_SIZE);
@@ -52,7 +54,6 @@ public class WorkloadScheduler {
 		LOGGER.setLevel(Level.INFO);
 		this.props = props;
 		this.peers = new ArrayList<Peer>();
-		executor.setMaximumPoolSize(POOL_SIZE);
 		
 		readWorkloads();
 		sortJobsAndTasks();
@@ -66,6 +67,10 @@ public class WorkloadScheduler {
 				}				
 			}			
 		}	
+		
+		monitors = new HashMap<ManagerController, WorkloadMonitor>();
+		for(ManagerController mc : fms)
+			monitors.put(mc, new WorkloadMonitor(mc));
 		
 		initOrderParams();		
 	}
@@ -100,8 +105,8 @@ public class WorkloadScheduler {
 		Map<ManagerController, List<Job>> peersAndJobs = getJobs(jobTime);
 		    	
 		for(final Entry<ManagerController, List<Job>> e : peersAndJobs.entrySet()){
-//			Runnable run = new Runnable() {
-//			    public void run() {
+			Runnable run = new Runnable() {
+			    public void run() {
 			    	List<Job> jobsToBeSubmitted = e.getValue();
 			    	ManagerController mc = e.getKey();
 			    	for(Job j : jobsToBeSubmitted){			    										
@@ -109,17 +114,17 @@ public class WorkloadScheduler {
 						xOCCIAttClone.putAll(xOCCIAtt);
 						List<Category> categoriesClone = new ArrayList<Category>();
 						categoriesClone.addAll(categories);
-						//TODO how to make this faster
 						for(int i = 0; i < j.getTasks().size(); i++){
 							xOCCIAttClone.put(OrderAttribute.RUNTIME.getValue(), String.valueOf(j.getTasks().get(i).getRuntime()*1000));
 							List<Order> orders = mc.createOrders(WorkloadScheduler.FAKE_TOKEN, categoriesClone, xOCCIAttClone);
 							j.getTasks().get(i).setOrderId(orders.get(0).getId());
+							monitors.get(mc).addOrder(orders.get(0));
 						}					
 						LOGGER.info("Time: "+jobTime+", Peer "+j.getPeerId()+" creating "+j);
 			    	}
-//			    } 		    		    
-//		    };
-//		    executor.schedule(run, 0, TimeUnit.SECONDS);
+			    } 		    		    
+		    };
+		    executor.schedule(run, 0, TimeUnit.SECONDS);
 		}
 	}
 	
