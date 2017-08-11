@@ -116,7 +116,8 @@ public class MonitorPeerStateSingleton{
 				}				
 					
 				LOGGER.info("<"+fm.getManagerId()+">: orderid("+o.getId()+") changed state to "+o.getState()+" - requesting("+o.getRequestingMemberId()+") and providing("+o.getProvidingMemberId()+"); "
-						+ "other attrs: instanceid("+o.getInstanceId()+"), previous+currentElapsedTime("+(o.getPreviousElapsedTime()+o.getCurrentElapsedTime())+"), runtime("+o.getRuntime()+")");
+						+ "other attrs: instanceid("+o.getInstanceId()+"), elapsedTime("+(o.getPreviousElapsedTime()+o.getCurrentElapsedTime())+"), runtime("+o.getRuntime()+"), "
+								+ "delay("+((o.getPreviousElapsedTime()+o.getCurrentElapsedTime())-o.getRuntime())+") ");
 				if(o.getState().equals(OrderState.CLOSED) ||
 						o.getState().equals(OrderState.FAILED) ||
 						o.getState().equals(OrderState.DELETED)){					

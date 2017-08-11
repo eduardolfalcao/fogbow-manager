@@ -1246,7 +1246,7 @@ public class ManagerController {
 				OrderConstants.MIXIN_CLASS));
 	}
 
-	protected void preemption(final Order orderToBePreempted) {
+	public void preemption(final Order orderToBePreempted) {
 		LOGGER.info("<"+managerId+">: preempting "+orderToBePreempted.getId()+" from "+orderToBePreempted.getRequestingMemberId());
 		removeInstance(orderToBePreempted.getInstanceId(), orderToBePreempted, OrderConstants.COMPUTE_TERM);
 		
@@ -1254,7 +1254,7 @@ public class ManagerController {
 		ManagerPacketHelper.preemptOrder(orderToBePreempted.getRequestingMemberId(), orderToBePreempted, packetSender,new AsynchronousOrderCallback() {			
 			@Override
 			public void success(String instanceId) {
-				LOGGER.info("<"+managerId+">: "+"Servered order id " + orderToBePreempted.getId() + " from " + orderToBePreempted.getRequestingMemberId() + "preempted!");
+				LOGGER.info("<"+managerId+">: "+"Servered order id " + orderToBePreempted.getId() + " from " + orderToBePreempted.getRequestingMemberId() + " preempted!");
 			}
 			
 			@Override

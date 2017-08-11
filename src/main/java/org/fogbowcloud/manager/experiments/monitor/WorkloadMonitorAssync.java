@@ -1,11 +1,7 @@
 package org.fogbowcloud.manager.experiments.monitor;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -21,20 +17,20 @@ public class WorkloadMonitorAssync {
 	private static final Logger LOGGER = Logger.getLogger(WorkloadMonitorAssync.class);
 	private ManagerController fm;
 	private String managerId;
-	private ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(10);
-	private Map<Order, List<ScheduledFuture<?>>> orders;	
+	private ScheduledThreadPoolExecutor executorMonitor;
+	private Map<Order, ScheduledFuture<?>> orders;	
 	
 	public WorkloadMonitorAssync(ManagerController fm) {
 		this.fm = fm;
 		this.managerId = fm.getManagerId();
-		this.orders = new HashMap<Order, List<ScheduledFuture<?>>>();
-		executor.setRemoveOnCancelPolicy(true);
-		executor.setMaximumPoolSize(10);
+		this.orders = new HashMap<Order, ScheduledFuture<?>>();
+		this.executorMonitor = new ScheduledThreadPoolExecutor(50);
+		this.executorMonitor.setRemoveOnCancelPolicy(true);
 	}
 	
 	public void monitorOrder(final Order order){
 		long time = order.getRuntime() - order.getPreviousElapsedTime() - order.getCurrentElapsedTime();
-		ScheduledFuture<?> schedule = executor.schedule(
+		ScheduledFuture<?> schedule = executorMonitor.schedule(
 			new Runnable() {					
 				@Override
 				public void run() {
@@ -55,38 +51,32 @@ public class WorkloadMonitorAssync {
 					}
 				}
 			}, time, TimeUnit.MILLISECONDS);
-		if(!orders.containsKey(order))
-			orders.put(order, new ArrayList<ScheduledFuture<?>>());
-		orders.get(order).add(schedule);		
+		orders.put(order, schedule);
 	}
 	
-	public synchronized void stopMonitoring(Order o){
-		LOGGER.info("<"+managerId+">: 1 - number of threads executing on executor "+executor.getActiveCount()+", and total: "+java.lang.Thread.activeCount());
-		List<ScheduledFuture<?>> threads = orders.get(o); 
-		for(ScheduledFuture<?> thread : threads)
-			thread.cancel(true);
+	public void stopMonitoring(Order o){
+		orders.get(o).cancel(true);
 	}
 	
 	private void removeOrder(final ManagerController fm, final Order order){
-			Runnable run = new Runnable() {
-				public void run() {
-				    try{
-				    	if(order.isLocal()){
-				    		LOGGER.info("<"+fm.getManagerId()+">: "+"removing local instance ("+order.getInstanceId()+"), orderId("+order.getId()+"), requested by "+order.getRequestingMemberId());
-				    		fm.removeInstance(WorkloadScheduler.FAKE_TOKEN, order.getGlobalInstanceId(), order.getResourceKind());
-				    	} else{
-				    		LOGGER.info("<"+fm.getManagerId()+">: "+"removing local instance ("+order.getInstanceId()+"), orderId("+order.getId()+"), for remote member, requested by "+order.getRequestingMemberId());
-				    		fm.removeInstanceForRemoteMember(order.getGlobalInstanceId());
-				    	} 
-				    } catch(OCCIException ex){
-				    	LOGGER.error("<"+fm.getManagerId()+">: Exception while removing instance " + order.getGlobalInstanceId(),ex);
-				    }
-				}
-		   	};
-		   	new Thread(run).start();
-	}	
-		    						
-}
+		Runnable run = new Runnable() {
+			public void run() {
+			    try{
+			    	if(order.isLocal()){
+			    		LOGGER.info("<"+fm.getManagerId()+">: "+"removing local instance ("+order.getInstanceId()+"), orderId("+order.getId()+"), requested by "+order.getRequestingMemberId());
+			    		fm.removeInstance(WorkloadScheduler.FAKE_TOKEN, order.getGlobalInstanceId(), order.getResourceKind());
+			    	} else{
+			    		LOGGER.info("<"+fm.getManagerId()+">: "+"removing local instance ("+order.getInstanceId()+"), orderId("+order.getId()+"), for remote member, requested by "+order.getRequestingMemberId());
+			    		fm.removeInstanceForRemoteMember(order.getGlobalInstanceId());
+			    	} 
+			    } catch(OCCIException ex){
+			    	LOGGER.error("<"+fm.getManagerId()+">: Exception while removing instance " + order.getGlobalInstanceId(),ex);
+			    }
+			}
+	   	};
+	   	new Thread(run).start();
+	}
+}						
 	
 
 	

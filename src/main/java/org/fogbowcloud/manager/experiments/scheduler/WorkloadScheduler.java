@@ -40,10 +40,8 @@ public class WorkloadScheduler {
 	private long time = 0;
 	private List<Peer> peers;
 	private Map<String, ManagerController> relations;
-	private Map<ManagerController, WorkloadMonitor> monitors;
 	
-	private final int POOL_SIZE = 200;
-	private ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(POOL_SIZE);
+	private ScheduledThreadPoolExecutor executor;
 	
 	private Map<String, String> xOCCIAtt;
 	private List<Category> categories;
@@ -54,6 +52,7 @@ public class WorkloadScheduler {
 		LOGGER.setLevel(Level.INFO);
 		this.props = props;
 		this.peers = new ArrayList<Peer>();
+		this.executor = new ScheduledThreadPoolExecutor(fms.size());
 		
 		readWorkloads();
 		sortJobsAndTasks();
@@ -67,10 +66,6 @@ public class WorkloadScheduler {
 				}				
 			}			
 		}	
-		
-		monitors = new HashMap<ManagerController, WorkloadMonitor>();
-		for(ManagerController mc : fms)
-			monitors.put(mc, new WorkloadMonitor(mc));
 		
 		initOrderParams();		
 	}
@@ -101,30 +96,22 @@ public class WorkloadScheduler {
 	}		
 	
 	private void runJobs(){
-		final long jobTime = time;
-		Map<ManagerController, List<Job>> peersAndJobs = getJobs(jobTime);
-		    	
-		for(final Entry<ManagerController, List<Job>> e : peersAndJobs.entrySet()){
-			Runnable run = new Runnable() {
-			    public void run() {
-			    	List<Job> jobsToBeSubmitted = e.getValue();
-			    	ManagerController mc = e.getKey();
-			    	for(Job j : jobsToBeSubmitted){			    										
-						Map<String, String> xOCCIAttClone = new HashMap<String, String>();
-						xOCCIAttClone.putAll(xOCCIAtt);
-						List<Category> categoriesClone = new ArrayList<Category>();
-						categoriesClone.addAll(categories);
-						for(int i = 0; i < j.getTasks().size(); i++){
-							xOCCIAttClone.put(OrderAttribute.RUNTIME.getValue(), String.valueOf(j.getTasks().get(i).getRuntime()*1000));
-							List<Order> orders = mc.createOrders(WorkloadScheduler.FAKE_TOKEN, categoriesClone, xOCCIAttClone);
-							j.getTasks().get(i).setOrderId(orders.get(0).getId());
-							monitors.get(mc).addOrder(orders.get(0));
-						}					
-						LOGGER.info("Time: "+jobTime+", Peer "+j.getPeerId()+" creating "+j);
-			    	}
-			    } 		    		    
-		    };
-		    executor.schedule(run, 0, TimeUnit.SECONDS);
+		Map<ManagerController, List<Job>> peersAndJobs = getJobs(time);		    	
+		for(Entry<ManagerController, List<Job>> e : peersAndJobs.entrySet()){
+		   	List<Job> jobsToBeSubmitted = e.getValue();
+		   	ManagerController mc = e.getKey();
+		   	for(Job j : jobsToBeSubmitted){			    										
+				Map<String, String> xOCCIAttClone = new HashMap<String, String>();
+				xOCCIAttClone.putAll(xOCCIAtt);
+				List<Category> categoriesClone = new ArrayList<Category>();
+				categoriesClone.addAll(categories);
+				for(int i = 0; i < j.getTasks().size(); i++){
+					xOCCIAttClone.put(OrderAttribute.RUNTIME.getValue(), String.valueOf(j.getTasks().get(i).getRuntime()*1000));
+					List<Order> orders = mc.createOrders(WorkloadScheduler.FAKE_TOKEN, categoriesClone, xOCCIAttClone);
+					j.getTasks().get(i).setOrderId(orders.get(0).getId());
+				}					
+				LOGGER.info("Time: "+time+", Peer "+j.getPeerId()+" creating "+j);
+		   	}
 		}
 	}
 	
