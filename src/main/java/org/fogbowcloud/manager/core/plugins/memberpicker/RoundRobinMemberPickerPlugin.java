@@ -22,7 +22,8 @@ public class RoundRobinMemberPickerPlugin implements FederationMemberPickerPlugi
 	private String lastMember = null;	
 
 	public RoundRobinMemberPickerPlugin(Properties properties, AccountingPlugin accountingPlugin) {
-		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
+		if(properties!=null)
+			managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 
 	@Override

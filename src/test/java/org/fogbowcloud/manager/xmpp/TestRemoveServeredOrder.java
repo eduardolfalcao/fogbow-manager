@@ -95,7 +95,7 @@ public class TestRemoveServeredOrder {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testRemoveServeredOrderResourceKingStorage() throws Exception {
+	public void testRemoveServeredOrderResourceKindStorage() throws Exception {
 		ManagerXmppComponent initializeXMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
 		Order order = createOrder(OrderConstants.STORAGE_TERM);
 		ManagerController managerFacade = initializeXMPPManagerComponent.getManagerFacade();

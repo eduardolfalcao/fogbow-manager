@@ -3,8 +3,11 @@ package org.fogbowcloud.manager.core.plugins.benchmarking;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
+import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.instance.Instance.Link;
 import org.fogbowcloud.manager.occi.instance.InstanceState;
@@ -24,7 +27,9 @@ public class TestVanillaBenchmarking {
 		instanceAttributes = new HashMap<String, String>();
 		instanceAttributes.put("occi.compute.memory", "2");
 		instanceAttributes.put("occi.compute.cores", "2");
-		benchmarking = new VanillaBenchmarkingPlugin(null);
+		Properties properties = new Properties();
+		properties.put(ConfigurationConstants.XMPP_JID_KEY, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
+		benchmarking = new VanillaBenchmarkingPlugin(properties);
 	}
 
 	@Test

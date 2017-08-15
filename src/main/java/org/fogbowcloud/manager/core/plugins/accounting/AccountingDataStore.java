@@ -401,10 +401,10 @@ public class AccountingDataStore {
 	}
 	
 	private void close(List<Statement> statements, Connection conn) {
-		if (statements != null) {
+		if (statements != null  && !statements.isEmpty()) {
 			for(Statement s : statements){
 				try {
-					if (!s.isClosed())
+					if (s!= null && !s.isClosed())
 						s.close();
 				} catch (SQLException e) {
 					LOGGER.error("<"+managerId+">: "+"Couldn't close statement"+s, e);

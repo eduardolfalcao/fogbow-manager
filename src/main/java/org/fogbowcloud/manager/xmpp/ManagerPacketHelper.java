@@ -290,11 +290,12 @@ public class ManagerPacketHelper {
 		Element queryEl = iq.getElement().addElement("query", ManagerXmppComponent.REMOVEINSTANCE_NAMESPACE);
 		Element instanceEl = queryEl.addElement("instance");
 		instanceEl.addElement(ID_EL).setText(order.getInstanceId());
-
+		
 		IQ response = (IQ) packetSender.syncSendPacket(iq);
 		if (response == null) {
 			throw new OCCIException(ErrorType.BAD_REQUEST, ResponseConstants.XMPP_RESPONSE_NULL);
 		}
+		
 		if (response.getError() != null) {
 			raiseException(response.getError());
 		}

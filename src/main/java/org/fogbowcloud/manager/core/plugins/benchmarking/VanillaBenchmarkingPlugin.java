@@ -19,7 +19,8 @@ public class VanillaBenchmarkingPlugin implements BenchmarkingPlugin {
 	private String managerId;
 	
 	public VanillaBenchmarkingPlugin(Properties properties) {
-		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
+		if(properties!=null)
+			managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 
 	@Override

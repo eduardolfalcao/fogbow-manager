@@ -26,7 +26,8 @@ public class TwoFoldPrioritizationPlugin implements PrioritizationPlugin {
 	
 	public TwoFoldPrioritizationPlugin(Properties properties, AccountingPlugin accountingPlugin) {
 		
-		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
+		if(properties!=null)
+			managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		
 		try {
 			localPrioritizationPlugin = (PrioritizationPlugin) MainHelper.createInstanceWithAccountingPlugin(
