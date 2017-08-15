@@ -8,19 +8,21 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.ManagerControllerXP;
 import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.order.Order;
+import org.fogbowcloud.manager.occi.order.OrderXP;
 
 public class WorkloadMonitorAssync {
 	
 	private static final Logger LOGGER = Logger.getLogger(WorkloadMonitorAssync.class);
-	private ManagerController fm;
+	private ManagerControllerXP fm;
 	private String managerId;
 	private ScheduledThreadPoolExecutor executorMonitor;
 	private Map<Order, ScheduledFuture<?>> orders;	
 	
-	public WorkloadMonitorAssync(ManagerController fm) {
+	public WorkloadMonitorAssync(ManagerControllerXP fm) {
 		this.fm = fm;
 		this.managerId = fm.getManagerId();
 		this.orders = new HashMap<Order, ScheduledFuture<?>>();
@@ -28,7 +30,8 @@ public class WorkloadMonitorAssync {
 		this.executorMonitor.setRemoveOnCancelPolicy(true);
 	}
 	
-	public void monitorOrder(final Order order){
+	public void monitorOrder(Order o){
+		final OrderXP order = (OrderXP) o;
 		long time = order.getRuntime() - order.getPreviousElapsedTime() - order.getCurrentElapsedTime();
 		ScheduledFuture<?> schedule = executorMonitor.schedule(
 			new Runnable() {					
@@ -58,7 +61,7 @@ public class WorkloadMonitorAssync {
 		orders.get(o).cancel(true);
 	}
 	
-	private void removeOrder(final ManagerController fm, final Order order){
+	private void removeOrder(final ManagerControllerXP fm, final Order order){
 		Runnable run = new Runnable() {
 			public void run() {
 			    try{

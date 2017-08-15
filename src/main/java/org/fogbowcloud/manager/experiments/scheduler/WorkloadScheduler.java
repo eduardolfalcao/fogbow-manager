@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.ManagerControllerXP;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitor;
 import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorAssync;
@@ -48,7 +49,7 @@ public class WorkloadScheduler {
 	
 	private long initialTime;
 	
-	public WorkloadScheduler(List<ManagerController> fms, Properties props) {
+	public WorkloadScheduler(List<ManagerControllerXP> fms, Properties props) {
 		LOGGER.setLevel(Level.INFO);
 		this.props = props;
 		this.peers = new ArrayList<Peer>();
@@ -59,7 +60,7 @@ public class WorkloadScheduler {
 		
 		relations = new HashMap<String, ManagerController>();
 		for(Peer p : peers){
-			for(ManagerController mc : fms){
+			for(ManagerControllerXP mc : fms){
 				if(mc.getManagerId().equals(p.getPeerId())){
 					relations.put(p.getPeerId(), mc);
 					break;

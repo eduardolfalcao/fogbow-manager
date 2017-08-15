@@ -34,7 +34,7 @@ public class TestManagerDataStoreController {
 	@Before
 	public void setUp() {
 		// Create in default test path
-		managerDataStoreController = new ManagerDataStoreController(new Properties());
+		managerDataStoreController = new ManagerDataStoreController(new Properties(), false);
 		TestDataStorageHelper.clearManagerDataStore(managerDataStoreController.getManagerDatabase());
 		managerDataStoreController.addOrder(createOrder(ID1, USER_ID, true));
 		managerDataStoreController.addOrder(createOrder(ID2, USER_ID, true));

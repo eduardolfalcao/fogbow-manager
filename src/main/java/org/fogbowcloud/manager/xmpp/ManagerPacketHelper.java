@@ -60,7 +60,6 @@ public class ManagerPacketHelper {
 	
 	public static final String I_AM_ALIVE_PERIOD = "iamalive-period";
 	private final static Logger LOGGER = Logger.getLogger(ManagerPacketHelper.class.getName());
-	private static final Logger LOGGER_EXP = Logger.getLogger("EXPERIMENT_LOGGER");
 
 	public static String iAmAlive(String rendezvousAddress, Properties properties,
 			PacketSender packetSender) throws Exception {
@@ -184,7 +183,7 @@ public class ManagerPacketHelper {
 					userFederationToken.getUser().getName());			
 		}
 		
-//		LOGGER_EXP.info("<"+managerId+">(PacketHelper): Sending request with "+orderId+" to "+memberAddress);
+		LOGGER.info("<"+managerId+">(PacketHelper): Sending request with "+orderId+" to "+memberAddress);
 		
 		packetSender.addPacketCallback(iq, new PacketCallback() {
 

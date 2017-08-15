@@ -13,12 +13,14 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.ManagerControllerXP;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.experiments.data.CsvGenerator;
 import org.fogbowcloud.manager.experiments.data.PeerState;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderState;
+import org.fogbowcloud.manager.occi.order.OrderXP;
 
 public class MonitorPeerStateSingleton{
 	
@@ -37,11 +39,11 @@ public class MonitorPeerStateSingleton{
 		return instance;
 	}
 	
-	public void init(List<ManagerController> managers){
+	public void init(List<ManagerControllerXP> managers){
 		if(!usedInit){
 			usedInit = true;
 			monitors = new HashMap<String, MonitorPeerStateAssync>();
-			for(ManagerController mc : managers)
+			for(ManagerControllerXP mc : managers)
 				monitors.put(mc.getManagerId(), new MonitorPeerStateAssync(mc));			
 		}		
 	}
@@ -66,13 +68,13 @@ public class MonitorPeerStateSingleton{
 		private Map<String,Order> currentOrders;
 		private Map<String,OrderState> currentOrderStates;
 		
-		private ManagerController fm;
+		private ManagerControllerXP fm;
 		private String path;
 		
 		private boolean firstWrite = true;
 		private boolean finished = false;
 		
-		public MonitorPeerStateAssync(ManagerController fm) {
+		public MonitorPeerStateAssync(ManagerControllerXP fm) {
 			
 			this.fm = fm;
 			
@@ -108,7 +110,8 @@ public class MonitorPeerStateSingleton{
 			}	
 		}
 		
-		public void monitorOrder(Order o){			
+		public void monitorOrder(Order order){
+			OrderXP o = (OrderXP) order;
 			synchronized(currentOrders){
 				//do nothing if state hasnt changed
 				if(currentOrderStates.get(o.getId())!=null && currentOrderStates.get(o.getId()).equals(o.getState())){					

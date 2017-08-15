@@ -15,6 +15,7 @@ import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.occi.order.OrderType;
+import org.fogbowcloud.manager.occi.order.OrderXP;
 import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Before;
@@ -148,10 +149,8 @@ public class TestManagerDataStoreXP {
 				
 		long syncronousTime = 100;		
 		database.updateOrderAsyncronous(order.getId(), syncronousTime, true);
-		
-		Assert.assertEquals(syncronousTime, database.getOrder(order.getId(), true).getSyncronousTime());
-		//FIXME check if the test was wrong
-//		Assert.assertEquals(syncronousTime, database.getOrder(order.getId()).getSyncronousTime());
+
+		Assert.assertEquals(syncronousTime, database.getOrder(order.getId()).getSyncronousTime());
 	}
 	
 	@Test
@@ -214,9 +213,7 @@ public class TestManagerDataStoreXP {
 		
 		List<OrderState> orderStates = new ArrayList<OrderState>();
 		int count = database.countOrder(orderStates);
-		Assert.assertEquals(orderStates.size(), count);
-		//FIXME check if the test was wrong
-//		Assert.assertEquals(orders.size(), count);
+		Assert.assertEquals(orders.size(), count);
 		
 		orderStates.add(OrderState.FULFILLED);
 		
@@ -377,16 +374,16 @@ public class TestManagerDataStoreXP {
 		xOCCIAttributes.put(OrderAttribute.CURRENT_ELAPSED_TIME.getValue(), "0");
 		xOCCIAttributes.put(OrderAttribute.RUNTIME.getValue(), "1000");
 		Token token = new Token("accessIdToken", new Token.User("user", ""), new Date(), attributes);
-		orderOne =  new Order("requstIdOne", token , "instanceIdOne", "providerOne", "memberOne",
+		orderOne =  new OrderXP("requstIdOne", token , "instanceIdOne", "providerOne", "memberOne",
 				new Date().getTime(), true, OrderState.OPEN, categories, xOCCIAttributes);
-		orderTwo =  new Order("requstIdTwo", token , "instanceIdTwo", "providerTwo", "memberTwo",
+		orderTwo =  new OrderXP("requstIdTwo", token , "instanceIdTwo", "providerTwo", "memberTwo",
 				new Date().getTime(), true, OrderState.OPEN, categories, xOCCIAttributes);		
 		
 		Map<String, String> xOCCIAttributesAux = new HashMap<String, String>();
 		xOCCIAttributesAux.put(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue(), "0");
 		xOCCIAttributesAux.put(OrderAttribute.CURRENT_ELAPSED_TIME.getValue(), "0");
 		xOCCIAttributesAux.put(OrderAttribute.RUNTIME.getValue(), "1000");		
-		orderThree = new Order("requstIdThree", token, "instanceIdThree", "providerThree",
+		orderThree = new OrderXP("requstIdThree", token, "instanceIdThree", "providerThree",
 				"memberThree", new Date().getTime(), true, OrderState.FULFILLED,
 				new ArrayList<Category>(), xOCCIAttributesAux);
 		
@@ -395,7 +392,7 @@ public class TestManagerDataStoreXP {
 		xOCCIAttributesTwo.put(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue(), "0");
 		xOCCIAttributesTwo.put(OrderAttribute.CURRENT_ELAPSED_TIME.getValue(), "0");
 		xOCCIAttributesTwo.put(OrderAttribute.RUNTIME.getValue(), "1000");
-		orderFour = new Order("requstIdFour", token, "instanceIdThree", "providerThree",
+		orderFour = new OrderXP("requstIdFour", token, "instanceIdThree", "providerThree",
 				"memberThree", new Date().getTime(), true, OrderState.DELETED,
 				new ArrayList<Category>(), xOCCIAttributesTwo);		
 	}

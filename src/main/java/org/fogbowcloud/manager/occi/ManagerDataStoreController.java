@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -20,12 +19,12 @@ public class ManagerDataStoreController {
 	private static final Logger LOGGER = Logger.getLogger(ManagerDataStoreController.class);
 	
 	private ManagerDataStore managerDatabase;
-	
-	private String managerId;
-	
-	public ManagerDataStoreController(Properties properties) {		
-		this.managerDatabase = new ManagerDataStoreXP(properties);
-		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
+
+	public ManagerDataStoreController(Properties properties, boolean forExperiments) {
+		if(forExperiments)
+			this.managerDatabase = new ManagerDataStoreXP(properties);
+		else
+			this.managerDatabase = new ManagerDataStore(properties);
 	}
 	
 	public ManagerDataStore getManagerDatabase() {
@@ -43,7 +42,7 @@ public class ManagerDataStoreController {
 			this.managerDatabase.updateOrder(order);
 		} catch (Exception e) {
 			String errorMsg = "Error while try to update order.";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 		}
 	}
@@ -63,7 +62,7 @@ public class ManagerDataStoreController {
 			}
 		} catch (Exception e) {
 			String errorMsg = "Error while try to get orders by user.";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 		}
 		return userOrdersFound;
@@ -74,7 +73,7 @@ public class ManagerDataStoreController {
 			this.managerDatabase.addOrder(order);
 		} catch (Exception e) {
 			String errorMsg = "Error while try to add order.";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 		}		
 	}
@@ -97,8 +96,8 @@ public class ManagerDataStoreController {
 				}
 			}
 		} catch (Exception e) {
-			String errorMsg = "Error while try to get orders by states and resource kind.";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			String errorMsg = "Error while try to get orders by states and resource king.";
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 		}
 		return ordersInStateFound;
@@ -110,17 +109,18 @@ public class ManagerDataStoreController {
 	
 	public Order getOrder(String orderId, boolean lookingForLocalOrder) {
 		try {
-			Order order = this.managerDatabase.getOrder(orderId);			
+			Order order = this.managerDatabase.getOrder(orderId);
 			if (order != null && 
 					(lookingForLocalOrder && order.isLocal() || !lookingForLocalOrder && !order.isLocal())) {
-				LOGGER.debug("<"+managerId+">: "+"Getting order id " + order);
+				LOGGER.debug("Getting order id " + order);
 				return order;						
 			}
 		} catch (Exception e) {
 			String errorMsg = "Error while try to get order.";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 		}
+		LOGGER.debug("Order id " + orderId + " was not found.");
 		return null;
 	}
 
@@ -131,19 +131,19 @@ public class ManagerDataStoreController {
 	public Order getOrder(String userId, String orderId, boolean lookingForLocalOrder) {
 		List<Order> userOrders = getOrdersByUser(userId);
 		if (userOrders == null) {
-			LOGGER.debug("<"+managerId+">: "+"User id " + userId + " does not have orders.");
+			LOGGER.debug("User id " + userId + " does not have orders.");
 			return null;
 		}
 		for (Order order : userOrders) {
 			if (order.getId().equals(orderId)) {
 				if (lookingForLocalOrder && order.isLocal() 
 						|| !lookingForLocalOrder && !order.isLocal()) {
-					LOGGER.debug("<"+managerId+">: "+"Getting order " + order + " owner by user id " + userId);
+					LOGGER.debug("Getting order " + order + " owner by user id " + userId);
 					return order;					
 				}
 			}
 		}
-		LOGGER.debug("<"+managerId+">: "+"Order " + orderId + " owner by user id " + userId + " was not found.");
+		LOGGER.debug("Order " + orderId + " owner by user id " + userId + " was not found.");
 		return null;
 	}
 
@@ -152,7 +152,7 @@ public class ManagerDataStoreController {
 	}
 	
 	public List<Order> getOrdersByUserId(String userId, boolean lookingForLocalOrder) {
-		LOGGER.debug("<"+managerId+">: "+"Getting local orders by user id " + userId);
+		LOGGER.debug("Getting local orders by user id " + userId);
 		List<Order> userOrders = getOrdersByUser(userId);
 		if (userOrders == null) {
 			return new LinkedList<Order>();
@@ -178,13 +178,14 @@ public class ManagerDataStoreController {
 	}
 
 	public void removeOrder(String orderId) {
-		LOGGER.debug("<"+managerId+">: "+"Removing orderId " + orderId);
+		LOGGER.debug("Removing orderId " + orderId);
 		try {
 			List<Order> orders  = this.managerDatabase.getOrders();
 			for (Order order : orders) {					
 				if (order.getId().equals(orderId) && order.isLocal()) {
-					if (order.getState().equals(OrderState.CLOSED)) {						
-						LOGGER.debug("<"+managerId+">: "+"Order " + orderId + " does not have an instance. Excluding order.");
+					if (order.getState().equals(OrderState.CLOSED)) {
+						
+						LOGGER.debug("Order " + orderId + " does not have an instance. Excluding order.");
 						this.managerDatabase.removeOrder(order);
 					} else {
 						order.setState(OrderState.DELETED);
@@ -195,13 +196,13 @@ public class ManagerDataStoreController {
 			}
 		} catch (Exception e) {
 			String errorMsg = "Error while try to remove order (" + orderId + ").";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 		}
 	}
 
 	public void excludeOrder(String orderId) {
-		LOGGER.debug("<"+managerId+">: "+"Excluding orderId " + orderId);
+		LOGGER.debug("Excluding orderId " + orderId);
 		try {
 			List<Order> ordersDB = this.managerDatabase.getOrders();
 			for (Order order : ordersDB) {			
@@ -212,7 +213,7 @@ public class ManagerDataStoreController {
 			}
 		} catch (Exception e) {
 			String errorMsg = "Error while try to exclude order (" + orderId + ").";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 		}
 	}
@@ -222,7 +223,7 @@ public class ManagerDataStoreController {
 			return this.managerDatabase.getOrders();			
 		} catch (Exception e) {
 			String errorMsg = "Error while try to get all order.";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 		}
 	}
@@ -273,7 +274,7 @@ public class ManagerDataStoreController {
 			}
 		} catch (Exception e) {
 			String errorMsg = "Error while try to get all storage links by user.";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 		}
 		return userStorageLinkFound;
@@ -283,14 +284,14 @@ public class ManagerDataStoreController {
 		String userId = storageLink != null && storageLink.getFederationToken() != null 
 				&& storageLink.getFederationToken().getUser() != null 
 				? storageLink.getFederationToken().getUser().getId() : null;
-		LOGGER.debug("<"+managerId+">: "+"Adding storage link " + storageLink.getId() 
+		LOGGER.debug("Adding storage link " + storageLink.getId() 
 				+ " to user id " + userId);
 		try {
 			this.managerDatabase.addStorageLink(storageLink);
 			return true;			
 		} catch (Exception e) {
 			String errorMsg = "Error while try to add storage link.";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 		}
 	}
@@ -301,7 +302,7 @@ public class ManagerDataStoreController {
 			storageLinks = this.managerDatabase.getStorageLinks();			
 		} catch (Exception e) {
 			String errorMsg = "Error while try to get all storage links.";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 		}
 		return storageLinks;
@@ -320,7 +321,7 @@ public class ManagerDataStoreController {
 		}
 		for (StorageLink storageLink : userStorageLinks) {
 			if (storageLink.getId().equals(storageLinkId)) {
-				LOGGER.debug("<"+managerId+">: "+"Getting storage link id " + storageLink);
+				LOGGER.debug("Getting storage link id " + storageLink);
 				return storageLink;
 			}
 		}
@@ -333,11 +334,11 @@ public class ManagerDataStoreController {
 		for (StorageLink storageLink : allStorageLinks) {
 			if (type.equals(OrderConstants.COMPUTE_TERM) && instanceId.equals(storageLink.getSource()) 
 					|| type.equals(OrderConstants.STORAGE_TERM) && instanceId.equals(storageLink.getTarget())) {
-				LOGGER.debug("<"+managerId+">: "+"Getting storage link id " + storageLink);
+				LOGGER.debug("Getting storage link id " + storageLink);
 				storageLinksFound.add(storageLink);					
 			} 
 		}
-		LOGGER.debug("<"+managerId+">: "+"Storage link id, by instance id : (" + instanceId + "), was not found.");
+		LOGGER.debug("Storage link id, by instance id : (" + instanceId + "), was not found.");
 		return storageLinksFound;
 	}	
 	
@@ -351,17 +352,17 @@ public class ManagerDataStoreController {
 						this.managerDatabase.removeStorageLink(storageLink);
 					} catch (SQLException e) {
 						String errorMsg = "Error while try to remove storage link.";
-						LOGGER.error("<"+managerId+">: "+errorMsg, e);
+						LOGGER.error(errorMsg, e);
 						throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 					}
 				}
 			}
-		LOGGER.debug("<"+managerId+">: "+"Removing all storage link with id "
+		LOGGER.debug("Removing all storage link with id "
 				+ "(" + instanceId + ") and type (" + type + ").");
 	}
 	
 	public void removeStorageLink(String storageLinkId) {
-		LOGGER.debug("<"+managerId+">: "+"Removing storageLinkId " + storageLinkId);
+		LOGGER.debug("Removing storageLinkId " + storageLinkId);
 		
 		List<StorageLink> allStorageLinks = getAllStorageLinks();
 		for (StorageLink storageLink : allStorageLinks) {
@@ -371,7 +372,7 @@ public class ManagerDataStoreController {
 					return;
 				} catch (SQLException e) {
 					String errorMsg = "Error while try to remove storage link(" + storageLinkId + ").";
-					LOGGER.error("<"+managerId+">: "+errorMsg, e);
+					LOGGER.error(errorMsg, e);
 					throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 				}
 			}			
@@ -383,7 +384,7 @@ public class ManagerDataStoreController {
 			return this.managerDatabase.getOrders(OrderState.PENDING);
 		} catch (Exception e) {
 			String errorMsg = "Error while try to get orders by status(" + orderState + ").";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);			
 		}
 	}
@@ -393,7 +394,7 @@ public class ManagerDataStoreController {
 			return this.managerDatabase.getFederationMembersServeredBy(orderId);
 		} catch (Exception e) {
 			String errorMsg = "Error while try to get federation members of order id(" + orderId + ").";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);			
 		}
 	}
@@ -404,7 +405,7 @@ public class ManagerDataStoreController {
 			this.managerDatabase.addFederationMemberServered(orderId, federationMemberServered);
 		} catch (Exception e) {
 			String errorMsg = "Error while try to update order syncronous(" + orderId + ").";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);			
 		}
 	}
@@ -425,7 +426,7 @@ public class ManagerDataStoreController {
 			this.managerDatabase.updateOrderAsyncronous(orderId, currentTimeMillis, syncronousStatus);
 		} catch (Exception e) {
 			String errorMsg = "Error while try to remove/update order syncronous(" + orderId + ").";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);	
 		} 		
 	}
@@ -440,7 +441,7 @@ public class ManagerDataStoreController {
 			return false;
 		} catch (Exception e) {
 			String errorMsg = "Error while try to check order syncronous(" + orderId + ").";
-			LOGGER.error("<"+managerId+">: "+errorMsg, e);
+			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);	
 		} 	
 	}		

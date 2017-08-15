@@ -8,10 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.DateUtils;
-import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
 
@@ -19,28 +16,30 @@ public class Order {
 
 	public static String SEPARATOR_GLOBAL_ID = "@";
 	
-	private String id;
-	private Token federationToken;
-	private String instanceId;
-	private String providingMemberId;
-	private final String requestingMemberId;
-	private long fulfilledTime = 0;
-	private long previousElapsedTime, currentElapsedTime, runtime;	
-	private final boolean isLocal;
-	private OrderState state;
-	private List<Category> categories;
-	private Map<String, String> xOCCIAtt;	
-	private String resourceKind;
-	private long syncronousTime;
-	private boolean syncronousStatus;
+	protected String id;
+	protected Token federationToken;
+	protected String instanceId;
+	protected String providingMemberId;
+	protected final String requestingMemberId;
+	protected long fulfilledTime = 0;
+	protected final boolean isLocal;
+	protected OrderState state;
+	protected List<Category> categories;
+	protected Map<String, String> xOCCIAtt;	
+	protected String resourceKind;
+	protected long syncronousTime;
+	protected boolean syncronousStatus;
 	
-	private DateUtils dateUtils = new DateUtils();
-	private static final Logger LOGGER = Logger.getLogger(Order.class);	
+	protected DateUtils dateUtils = new DateUtils();
+	
+	protected Order(boolean isLocal, String requestingMemberId){
+		this.isLocal = isLocal;
+		this.requestingMemberId = requestingMemberId;
+	}
 		
 	public Order(String id, Token federationToken, String instanceId, String providingMemberId,
 			String requestingMemberId, long fulfilledTime, boolean isLocal, OrderState state,
 			List<Category> categories, Map<String, String> xOCCIAtt) {
-		LOGGER.setLevel(Level.INFO);
 		this.id = id;
 		this.federationToken = federationToken;
 		this.instanceId = instanceId;
@@ -54,16 +53,8 @@ public class Order {
 		if (this.xOCCIAtt == null) {
 			this.resourceKind = null;			
 		} else {
-			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
-			this.runtime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.RUNTIME.getValue()));
-			this.previousElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue()));
-			this.currentElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.CURRENT_ELAPSED_TIME.getValue()));			
+			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());					
 		}		
-	}
-	
-	public Order(String id, Token federationToken, 
-			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId, String providingMemberId) {
-		this(id, federationToken, categories, xOCCIAtt, isLocal, requestingMemberId, providingMemberId, new DateUtils());
 	}
 
 	public Order(String id, Token federationToken, 
@@ -84,31 +75,7 @@ public class Order {
 		if (this.xOCCIAtt == null) {
 			this.resourceKind = null;			
 		} else {
-			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
-			this.runtime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.RUNTIME.getValue()));
-			this.previousElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue()));
-			this.currentElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.CURRENT_ELAPSED_TIME.getValue()));	
-		}
-	}
-	
-	public Order(String id, Token federationToken, 
-			List<Category> categories, Map<String, String> xOCCIAtt, boolean isLocal, String requestingMemberId, String providingMemberId, DateUtils dateUtils) {
-		this.id = id;
-		this.federationToken = federationToken;
-		this.categories = categories;
-		this.xOCCIAtt = xOCCIAtt;
-		this.isLocal = isLocal;
-		this.requestingMemberId = requestingMemberId;
-		this.providingMemberId = providingMemberId;
-		this.dateUtils = dateUtils;
-		setState(OrderState.OPEN);		
-		if (this.xOCCIAtt == null) {
-			this.resourceKind = null;			
-		} else {
-			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());
-			this.runtime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.RUNTIME.getValue()));
-			this.previousElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue()));
-			this.currentElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.CURRENT_ELAPSED_TIME.getValue()));	
+			this.resourceKind = this.xOCCIAtt.get(OrderAttribute.RESOURCE_KIND.getValue());					
 		}
 	}
 	
@@ -190,21 +157,7 @@ public class Order {
 		} else if (state.in(OrderState.OPEN)) {
 			fulfilledTime = 0;
 		}
-		this.state = state;									
-	}
-	
-	public void updateElapsedTime(boolean isRemoving){
-		long now = dateUtils.currentTimeMillis();
-		if(fulfilledTime!=0){
-			currentElapsedTime = (now - fulfilledTime);		
-		}
-		if(isRemoving){
-			fulfilledTime = 0;
-			previousElapsedTime += currentElapsedTime;
-			currentElapsedTime = 0;
-		}
-		this.xOCCIAtt.put(OrderAttribute.CURRENT_ELAPSED_TIME.getValue(), String.valueOf(currentElapsedTime));
-		this.xOCCIAtt.put(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue(), String.valueOf(previousElapsedTime));
+		this.state = state;
 	}
 
 	public String getId() {
@@ -236,18 +189,6 @@ public class Order {
 	public long getFulfilledTime() {
 		return fulfilledTime;
 	}
-	
-	public long getRuntime() {
-		return runtime;
-	}
-	
-	public long getPreviousElapsedTime() {
-		return previousElapsedTime;
-	}
-	
-	public long getCurrentElapsedTime() {
-		return currentElapsedTime;
-	}	
 
 	public Map<String, String> getxOCCIAtt() {
 		if (xOCCIAtt == null) {
@@ -276,18 +217,15 @@ public class Order {
 		return resourceKind;
 	}
 	
-	public void setResourceKing(String resourceKing) {
-		this.resourceKind = resourceKing;
+	public void setResourceKind(String resourceKind) {
+		this.resourceKind = resourceKind;
 	}
 
 	public String toString() {
 		return "id: " + id + ", token: " + federationToken + ", instanceId: " + instanceId
 				+ ", providingMemberId: " + providingMemberId + ", requestingMemberId: "
 				+ requestingMemberId + ", state: " + state + ", isLocal " + isLocal
-				+ ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt 
-				+ ", runtime: " + runtime + ", fulfilledTime: "+fulfilledTime
-				+ ", previousElpasedTime: "+previousElapsedTime+""
-				+ ", currentElapsedTime: "+currentElapsedTime+"\n";
+				+ ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt;
 	}
 
 
@@ -317,21 +255,58 @@ public class Order {
 		return expirationDate.getTime() < now;
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public boolean equals(Object obj) {
-		if(obj == null)
+		if (this == obj)
+			return true;
+		if (obj == null)
 			return false;
-		else if(obj instanceof Order){
-			Order o = (Order) obj;
-			if(o.getId().equals(getId()))
-				return true;
-		}
-		return false;
-	}
-	
-	@Override
-	public int hashCode() {
-		return getId().hashCode();
+		if (getClass() != obj.getClass())
+			return false;
+		Order other = (Order) obj;
+		if (categories == null) {
+			if (other.categories != null)
+				return false;
+		} else if (!categories.equals(other.categories))
+			return false;
+		if (federationToken == null) {
+			if (other.federationToken != null)
+				return false;
+		} else if (!federationToken.equals(other.federationToken))
+			return false;
+		if (fulfilledTime != other.fulfilledTime)
+			return false;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		if (instanceId == null) {
+			if (other.instanceId != null)
+				return false;
+		} else if (!instanceId.equals(other.instanceId))
+			return false;
+		if (isLocal != other.isLocal)
+			return false;
+		if (providingMemberId == null) {
+			if (other.providingMemberId != null)
+				return false;
+		} else if (!providingMemberId.equals(other.providingMemberId))
+			return false;
+		if (requestingMemberId == null) {
+			if (other.requestingMemberId != null)
+				return false;
+		} else if (!requestingMemberId.equals(other.requestingMemberId))
+			return false;
+		if (state != other.state)
+			return false;
+		if (xOCCIAtt == null) {
+			if (other.xOCCIAtt != null)
+				return false;
+		} else if (xOCCIAtt != null && !new HashSet(xOCCIAtt.values()).equals(new HashSet(other.xOCCIAtt.values())))
+			return false;
+		return true;
 	}
 	
 }

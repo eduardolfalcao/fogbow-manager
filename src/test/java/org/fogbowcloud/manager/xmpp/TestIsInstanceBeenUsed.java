@@ -139,7 +139,7 @@ public class TestIsInstanceBeenUsed {
 		properties.put("max_whoisalive_manager_count",
 				ManagerTestHelper.MAX_WHOISALIVE_MANAGER_COUNT);
 		
-		ManagerController managerFacade = new ManagerController(properties, null);
+		ManagerController managerFacade = new ManagerController(properties, null, false);
 		return managerFacade;
 	}
 

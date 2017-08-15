@@ -11,20 +11,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-import java.util.TimerTask;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.MainHelper;
-import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.ManagerControllerHelper;
-import org.fogbowcloud.manager.core.ManagerTimer;
-import org.fogbowcloud.manager.core.model.DateUtils;
-import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
-import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton;
-import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorAssync;
-import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderState;
@@ -32,10 +20,6 @@ import org.fogbowcloud.manager.occi.storage.StorageLink;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.sqlite.SQLiteConfig;
-import org.sqlite.SQLiteConfig.JournalMode;
-import org.sqlite.SQLiteConfig.SynchronousMode;
-import org.sqlite.SQLiteConfig.TempStore;
-import org.sqlite.javax.SQLiteConnectionPoolDataSource;
 
 public class ManagerDataStore {
 
@@ -66,25 +50,16 @@ public class ManagerDataStore {
 	protected static final String DEVICE_ID = "device_id";
 	protected static final String SOURCE = "source";
 	protected static final String FEDERATION_MEMBER_SERVERED_TABLE_NAME = "t_federation_member_servered";
-	protected static final String FEDERATION_MEMBER_ID = "federation_member_id";
+	protected static final String FEDERTION_MEMBER_ID = "federation_member_id";
 	
 	private String dataStoreURL;
-	private String managerId;
-	private Properties properties;
-	private SQLiteConnectionPoolDataSource dataSource;
 	
-	public ManagerDataStore() {
-		// TODO Auto-generated constructor stub
-	}
+	public ManagerDataStore() {}
 
 	public ManagerDataStore(Properties properties) {
-		
-		this.properties = properties;
-		String dataStoreURLProperties = properties.getProperty(MANAGER_DATASTORE_URL);		
+		String dataStoreURLProperties = properties.getProperty(MANAGER_DATASTORE_URL);
 		this.dataStoreURL = DataStoreHelper.getDataStoreUrl(dataStoreURLProperties,
 				DEFAULT_DATASTORE_NAME);
-		
-		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		
 		Statement statement = null;
 		Connection connection = null;
@@ -93,8 +68,7 @@ public class ManagerDataStore {
 			LOGGER.debug("DatastoreDriver: " + MANAGER_DATASTORE_SQLITE_DRIVER);
 
 			Class.forName(MANAGER_DATASTORE_SQLITE_DRIVER);
-			
-			initDB();
+
 			connection = getConnection();
 			statement = connection.createStatement();		
 			statement.execute("CREATE TABLE IF NOT EXISTS " + ORDER_TABLE_NAME + "(" 
@@ -120,31 +94,17 @@ public class ManagerDataStore {
 							+ PROVIDING_MEMBER_ID + " VARCHAR(255), "
 							+ IS_LOCAL + " BOOLEAN)");			
 			statement.execute("CREATE TABLE IF NOT EXISTS " + FEDERATION_MEMBER_SERVERED_TABLE_NAME + "(" 
-							+ FEDERATION_MEMBER_ID + " VARCHAR(255) NOT NULL, "
+							+ FEDERTION_MEMBER_ID + " VARCHAR(255) NOT NULL, "
 							+ ORDER_ID + " VARCHAR(255) NOT NULL, "
 							+ "FOREIGN KEY (" + ORDER_ID + ") REFERENCES " 
-							+ ORDER_TABLE_NAME + "(" + ORDER_ID + ") ON DELETE CASCADE)");
+							+ ORDER_TABLE_NAME + "(" + ORDER_ID + ") ON DELETE CASCADE)");			
 			statement.close();
 		} catch (Exception e) {
-			LOGGER.error("<"+managerId+">: "+ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
-			throw new Error("<"+managerId+">: "+ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
+			LOGGER.error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
+			throw new Error(ERROR_WHILE_INITIALIZING_THE_DATA_STORE, e);
 		} finally {
 			close(statement, connection);
 		}
-	}
-	
-	
-
-	private void monitorOrderState(final Order order) {
-		if(!order.getState().equals(OrderState.SPAWNING)){	
-			Runnable r = new Runnable() {					
-				@Override
-				public void run() {						
-					MonitorPeerStateSingleton.getInstance().getMonitors().get(managerId).monitorOrder(order);
-				}
-			};
-			new Thread(r).start();
-		}							
 	}
 	
 	private static final String INSERT_ORDER_SQL = "INSERT INTO " + ORDER_TABLE_NAME
@@ -156,7 +116,7 @@ public class ManagerDataStore {
 	public boolean addOrder(Order order) throws SQLException, JSONException {
 		PreparedStatement orderStmt = null;
 		Connection connection = null;
-		try {			
+		try {
 			connection = getConnection();
 			connection.setAutoCommit(false);
 			
@@ -165,7 +125,7 @@ public class ManagerDataStore {
 			orderStmt.setString(2, order.getInstanceId());
 			orderStmt.setString(3, order.getProvidingMemberId());
 			orderStmt.setString(4, order.getRequestingMemberId());
-			orderStmt.setString(5, order.getFederationToken() != null ? order.getFederationToken().toJSON().toString() : null);
+			orderStmt.setString(5, order.getFederationToken().toJSON().toString());
 			orderStmt.setLong(6, order.getFulfilledTime());
 			orderStmt.setBoolean(7, order.isLocal());
 			orderStmt.setString(8, order.getState() != null ? 
@@ -174,37 +134,21 @@ public class ManagerDataStore {
 			orderStmt.setTimestamp(10, new Timestamp(new Date().getTime()));
 			JSONObject xOCCIAtt = JSONHelper.mountXOCCIAttrJSON(order.getxOCCIAtt());
 			orderStmt.setString(11, xOCCIAtt != null ? xOCCIAtt.toString() : null);
-			orderStmt.executeUpdate();			
+			orderStmt.executeUpdate();
 			
 			connection.commit();
-			
-			//added by Eduardo
-			try{
-				monitorOrderState(order);
-			}catch(Exception e){
-				LOGGER.error("<"+managerId+">: Exception while monitoring order with id "+order.getId(), e);
-			}
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't create order with id "+order.getId()+". "+e.getMessage());
+			LOGGER.error("Couldn't create order.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
+				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(orderStmt, connection);
-			
-			if (order.getState().equals(OrderState.FULFILLED)) {
-				// New thread
-				this.workloadMonitorAssync.monitorOrder(order);
-				threads.add(order.getId());
-			} else if (threads.contains(order.getId())) {
-				threads.remove(order.getId());
-				this.workloadMonitorAssync.stopMonitoring(order);
-			}
 		}
 		return false;
 	}
@@ -223,16 +167,8 @@ public class ManagerDataStore {
 		Connection connection = null;
 		List<Order> orders = new ArrayList<Order>();
 		try {
-			DateUtils d = new DateUtils();
-			long t1 = d.currentTimeMillis();
-					
 			connection = getConnection();
 			connection.setAutoCommit(false);
-			
-			long t2 = d.currentTimeMillis();
-			long now = t2-t1;
-			if(now > 1000)
-				LOGGER.debug("<"+managerId+">: "+" Time to get connection: "+now);
 			
 			String ordersStmtStr = GET_ORDERS_SQL;
 			if (orderState != null) {
@@ -262,13 +198,13 @@ public class ManagerDataStore {
 			
 			return orders;
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't retrieve orders.", e);
+			LOGGER.error("Couldn't retrieve orders.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
+				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(ordersStmt, connection);
@@ -318,13 +254,13 @@ public class ManagerDataStore {
 			
 			return order;
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't retrieve order.", e);
+			LOGGER.error("Couldn't retrieve order.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
+				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(ordersStmt, connection);
@@ -348,30 +284,18 @@ public class ManagerDataStore {
 			removeOrderStmt.executeUpdate();
 			
 			connection.commit();
-			
-			//added by Eduardo
-			try{
-				monitorOrderState(order);
-			}catch(Exception e){
-				LOGGER.error("<"+managerId+">: Exception while monitoring order with id "+order.getId(), e);
-			}
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't remove order.", e);
+			LOGGER.error("Couldn't remove order.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
+				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(removeOrderStmt, connection);
-			
-			if (threads.contains(order.getId())) {
-				threads.remove(order.getId());
-				this.workloadMonitorAssync.stopMonitoring(order);
-			}
 		}
 		return false;
 	}	
@@ -392,7 +316,7 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't remove all order.", e);
+			LOGGER.error("Couldn't remove all order.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
@@ -435,48 +359,20 @@ public class ManagerDataStore {
 			updateOrderStmt.executeUpdate();
 			
 			connection.commit();
-			
-			//added by Eduardo
-			try{
-				monitorOrderState(order);
-			}catch(Exception e){
-				LOGGER.error("<"+managerId+">: Exception while monitoring order with id "+order.getId(), e);
-			}
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't update order.", e);
+			LOGGER.error("Couldn't update order.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
+				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(updateOrderStmt, connection);
-			
-			if (order.getState().equals(OrderState.FULFILLED)) {
-				// New thread
-				this.workloadMonitorAssync.monitorOrder(order);
-				if(!threads.contains(order.getId())){
-					LOGGER.info("<"+managerId+">: "+"Added order id "+order.getId()+" on threads list ");
-					threads.add(order.getId());
-				}
-			} else if (threads.contains(order.getId())) {
-				LOGGER.info("<"+managerId+">: "+"Removed order id"+order.getId()+" from threads list");
-				threads.remove(order.getId());
-				this.workloadMonitorAssync.stopMonitoring(order);
-			}
 		}
 		return false;
-	}
-	
-	private List<String> threads = new ArrayList<String>();
-	private WorkloadMonitorAssync workloadMonitorAssync;
-	
-	public void setWorkloadMonitorAssync(
-			WorkloadMonitorAssync workloadMonitorAssync) {
-		this.workloadMonitorAssync = workloadMonitorAssync;
 	}
 	
 	private static final String UPDATE_ORDER_ASYNCRONOUS_SQL = "UPDATE " + ORDER_TABLE_NAME + " SET "
@@ -498,13 +394,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't update order asyncronous.", e);
+			LOGGER.error("Couldn't update order asyncronous.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
+				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} catch (Exception e) {
 			
@@ -542,13 +438,13 @@ public class ManagerDataStore {
 			
 			connection.commit();
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't count order.", e);
+			LOGGER.error("Couldn't count order.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
+				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(countOrderStmt, connection);
@@ -587,13 +483,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't create storage link.", e);
+			LOGGER.error("Couldn't create storage link.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
+				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(storageLinkStmt, connection);
@@ -650,7 +546,7 @@ public class ManagerDataStore {
 	public boolean removeStorageLink(StorageLink storageLink) throws SQLException {
 		PreparedStatement removeStorageLinkStmt = null;
 		Connection connection = null;
-		try {
+		try {	
 			connection = getConnection();
 			connection.setAutoCommit(false);
 			
@@ -701,13 +597,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't update storage link.", e);
+			LOGGER.error("Couldn't update storage link.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
+				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(updateStorageLinkStmt, connection);
@@ -720,7 +616,7 @@ public class ManagerDataStore {
 	 */	
 	
 	private static final String INSERT_FEDERATION_MEMBER_SERVERED_SQL = "INSERT INTO " + 
-			FEDERATION_MEMBER_SERVERED_TABLE_NAME + " (" + FEDERATION_MEMBER_ID + "," + ORDER_ID + ")"			
+			FEDERATION_MEMBER_SERVERED_TABLE_NAME + " (" + FEDERTION_MEMBER_ID + "," + ORDER_ID + ")"			
 			+ " VALUES (?,?)";
 	
 	public boolean addFederationMemberServered(String orderId, String federationMemberServerd) throws SQLException, JSONException {
@@ -738,13 +634,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't create federation member.", e);
+			LOGGER.error("Couldn't create federation member.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
+				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(federationMemberStmt, connection);
@@ -752,7 +648,7 @@ public class ManagerDataStore {
 		return false;
 	}
 	
-	private static final String GET_FEDERATION_MEMBERS_SQL = "SELECT " + FEDERATION_MEMBER_ID
+	private static final String GET_FEDERATION_MEMBERS_SQL = "SELECT " + FEDERTION_MEMBER_ID
 			+ " FROM " + FEDERATION_MEMBER_SERVERED_TABLE_NAME 
 			+ " WHERE " + ORDER_ID + "=?";
 	
@@ -782,13 +678,13 @@ public class ManagerDataStore {
 			
 			return federationMembersServered;
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't retrieve federation members serverd.", e);
+			LOGGER.error("Couldn't retrieve federation members serverd.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
+				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(federationMemStmt, connection);
@@ -798,7 +694,7 @@ public class ManagerDataStore {
 	
 	private static final String REMOVE_FEDERATION_MEMBER_SERVERED_SQL = "DELETE"
 			+ " FROM " + FEDERATION_MEMBER_SERVERED_TABLE_NAME 
-			+ " WHERE " + FEDERATION_MEMBER_ID + " = ?";
+			+ " WHERE " + FEDERTION_MEMBER_ID + " = ?";
 	
 	public boolean removeFederationMemberServed(String federationMemberServered) throws SQLException {
 		PreparedStatement removeFederationMemberServeredStmt = null;
@@ -815,13 +711,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't remove federation member servered.", e);
+			LOGGER.error("Couldn't remove federation member servered.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
+				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(removeFederationMemberServeredStmt, connection);
@@ -856,13 +752,13 @@ public class ManagerDataStore {
 			connection.commit();
 			return true;
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Couldn't remove all values in all table servered.", e);
+			LOGGER.error("Couldn't remove all values in all table servered.", e);
 			try {
 				if (connection != null) {
 					connection.rollback();
 				}
 			} catch (SQLException e1) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't rollback transaction.", e1);
+				LOGGER.error("Couldn't rollback transaction.", e1);
 			}
 		} finally {
 			close(removeAllValueInAllTableStmt, connection);
@@ -870,20 +766,14 @@ public class ManagerDataStore {
 		return false;		
 	}
 	
-	private void initDB(){
-		this.dataSource = new SQLiteConnectionPoolDataSource();
-		this.dataSource.setUrl(this.dataStoreURL);
-		this.dataSource.setEnforceForeinKeys(true);
-		String busyTimeout = String.valueOf(ManagerControllerHelper.getBusyTimeoutPeriod(this.properties));
-		this.dataSource.getConfig().setBusyTimeout(busyTimeout);
-		this.dataSource.setJournalMode("WAL");
-	}
-	
 	public Connection getConnection() throws SQLException {
 		try {
-			return this.dataSource.getConnection();
+			SQLiteConfig config = new SQLiteConfig();
+			config.enforceForeignKeys(true);  
+			config.setBusyTimeout("30000");
+			return DriverManager.getConnection(this.dataStoreURL, config.toProperties());				
 		} catch (SQLException e) {
-			LOGGER.error("<"+managerId+">: "+"Error while getting a new connection from the connection pool.", e);
+			LOGGER.error("Error while getting a new connection from the connection pool.", e);
 			throw e;
 		}
 	}
@@ -895,7 +785,7 @@ public class ManagerDataStore {
 					statement.close();
 				}
 			} catch (SQLException e) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't close statement");
+				LOGGER.error("Couldn't close statement");
 			}
 		}
 
@@ -905,7 +795,7 @@ public class ManagerDataStore {
 					conn.close();
 				}
 			} catch (SQLException e) {
-				LOGGER.error("<"+managerId+">: "+"Couldn't close connection");
+				LOGGER.error("Couldn't close connection");
 			}
 		}
 	}

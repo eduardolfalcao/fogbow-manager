@@ -95,10 +95,15 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 	}
 	
 	public synchronized Order getOrder(String orderId, boolean isOrderSyncronous) {
-		Order order = null;
-		
-		if(orders.containsKey(orderId) && orders.get(orderId).isSyncronousStatus()==isOrderSyncronous){
-			order = orders.get(orderId);
+		Order order = null;		
+		if(isOrderSyncronous){
+			if(orders.containsKey(orderId) && orders.get(orderId).isSyncronousStatus()==isOrderSyncronous){
+				order = orders.get(orderId);
+			}
+		} else{
+			if(orders.containsKey(orderId)){
+				order = orders.get(orderId);
+			}
 		}
 		return order;		
 	}	
@@ -181,6 +186,10 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 	}
 		
 	public synchronized int countOrder(List<OrderState> orderStates) {
+		
+		if(orderStates.size()==0)
+			return orders.size();
+		
 		int size = 0;
 		for(OrderState state : orderStates){
 			List<Order> ordersInSpecificState = getOrders(state);

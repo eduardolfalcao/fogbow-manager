@@ -20,12 +20,14 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.ManagerControllerHelper;
+import org.fogbowcloud.manager.core.ManagerControllerXP;
 import org.fogbowcloud.manager.core.ManagerTimer;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton;
 import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton.MonitorPeerStateAssync;
 import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorAssync;
 import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
+import org.fogbowcloud.manager.occi.ManagerDataStoreXP;
 
 public class MainExperiments {
 
@@ -103,16 +105,16 @@ public class MainExperiments {
 		for(; id <= numberOfPeers; id++)
 			propertiesList.add(SimpleManagerFactory.adjustPropertiesManager(id, fdnof, properties));
 		
-		List<ManagerController> fms = new ArrayList<ManagerController>();
+		List<ManagerControllerXP> fms = new ArrayList<ManagerControllerXP>();
 		for(Properties prop : propertiesList) {
-			ManagerController manager = SimpleManagerFactory.createFM(prop);
-			manager.getManagerDataStoreController().getManagerDatabase().setWorkloadMonitorAssync(new WorkloadMonitorAssync(manager));
+			ManagerControllerXP manager = SimpleManagerFactory.createFM(prop);
+			((ManagerDataStoreXP)manager.getManagerDataStoreController().getManagerDatabase()).setWorkloadMonitorAssync(new WorkloadMonitorAssync(manager));
 			fms.add(manager);
 		}	
 			
 		MonitorPeerStateSingleton.getInstance().init(fms); 		//starting peer state monitoring
-		for(ManagerController fm : fms)
-			fm.triggerWorkloadMonitor(MonitorPeerStateSingleton.getInstance().getMonitors().get(fm.getManagerId()));
+		for(ManagerController fm : fms)			
+			((ManagerControllerXP)fm).triggerWorkloadMonitor(MonitorPeerStateSingleton.getInstance().getMonitors().get(((ManagerControllerXP)fm).getManagerId()));
 		
 		WorkloadScheduler scheduler = new WorkloadScheduler(fms, properties);
 		triggerWorkloadScheduler(scheduler, properties);		

@@ -6,6 +6,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerController;
+import org.fogbowcloud.manager.core.ManagerControllerXP;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
@@ -90,7 +91,7 @@ public class SimpleManagerFactory {
 		return prop;
 	}
 	
-	public static ManagerController createFM(Properties properties){
+	public static ManagerControllerXP createFM(Properties properties){
 		
 		ComputePlugin computePlugin = null;
 		try {
@@ -246,7 +247,7 @@ public class SimpleManagerFactory {
 			LOGGER.warn("Capacity Controller plugin not specified in properties. Using the default one.", e);
 		}
 
-		ManagerController fm = new ManagerController(properties);
+		ManagerControllerXP fm = new ManagerControllerXP(properties);
 		fm.setComputePlugin(computePlugin);
 		fm.setAuthorizationPlugin(authorizationPlugin);
 		fm.setLocalIdentityPlugin(localIdentityPlugin);

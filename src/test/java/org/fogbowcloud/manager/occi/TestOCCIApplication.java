@@ -72,7 +72,7 @@ public class TestOCCIApplication {
 			}
 		});
 		
-		managerFacade = new ManagerController(properties, executor);
+		managerFacade = new ManagerController(properties, executor, false);
 		TestDataStorageHelper.clearManagerDataStore(
 				managerFacade.getManagerDataStoreController().getManagerDatabase());
 		occiApplication = new OCCIApplication(managerFacade);

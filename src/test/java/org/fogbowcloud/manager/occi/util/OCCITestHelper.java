@@ -107,7 +107,7 @@ public class OCCITestHelper {
 
 		ExecutorService benchmarkExecutor = new CurrentThreadExecutorService();
 
-		ManagerController facade = new ManagerController(properties, executor);
+		ManagerController facade = new ManagerController(properties, executor, false);
 		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		ResourceRepository.init(properties);
 		facade.setComputePlugin(computePlugin);
@@ -137,7 +137,7 @@ public class OCCITestHelper {
 
 		ResourceRepository.init(properties);
 
-		ManagerController facade = new ManagerController(properties, Mockito.mock(ScheduledExecutorService.class));
+		ManagerController facade = new ManagerController(properties, Mockito.mock(ScheduledExecutorService.class), false);
 		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
@@ -206,7 +206,7 @@ public class OCCITestHelper {
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-medium", "Glue2vCPU >= 2 && Glue2RAM >= 8096");
 		}
 
-		ManagerController facade = new ManagerController(properties, null);
+		ManagerController facade = new ManagerController(properties, null, false);
 		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		facade.setComputePlugin(computePlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
@@ -260,7 +260,7 @@ public class OCCITestHelper {
 			properties.put(ConfigurationConstants.OCCI_EXTRA_RESOURCES_PREFIX + "m1-medium", "Glue2vCPU >= 2 && Glue2RAM >= 8096");
 		}
 
-		ManagerController facade = new ManagerController(properties, null);
+		ManagerController facade = new ManagerController(properties, null, false);
 		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		facade.setNetworkPlugin(networkPlugin);
 		facade.setAuthorizationPlugin(authorizationPlugin);
@@ -296,7 +296,7 @@ public class OCCITestHelper {
 
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY, DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		ManagerController facade = new ManagerController(properties, null);
+		ManagerController facade = new ManagerController(properties, null, false);
 		TestDataStorageHelper.clearManagerDataStore(facade.getManagerDataStoreController().getManagerDatabase());
 		facade.setComputePlugin(computePlugin);
 		facade.setLocalIdentityPlugin(identityPlugin);
