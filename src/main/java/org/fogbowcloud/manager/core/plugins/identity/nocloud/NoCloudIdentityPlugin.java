@@ -49,8 +49,7 @@ public class NoCloudIdentityPlugin implements IdentityPlugin {
 
 	@Override
 	public Token getForwardableToken(Token originalToken) {
-		return new Token(String.valueOf(UUID.randomUUID()), new Token.User(FAKE_USERNAME, FAKE_USERNAME), 
-				null, new HashMap<String, String>());
+		return null;
 	}
 
 }

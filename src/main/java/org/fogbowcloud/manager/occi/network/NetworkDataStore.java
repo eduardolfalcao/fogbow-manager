@@ -53,7 +53,7 @@ public class NetworkDataStore {
 			+ INSTANCE_ID + " = ? AND " + USER_ID + " = ?";
 
 	private static final Logger LOGGER = Logger.getLogger(NetworkDataStore.class);
-	private static final String DEFAULT_DATASTORE_NAME = "datastore_network.slite";
+	private static final String DEFAULT_DATASTORE_NAME = "datastore_network.sqlite3";
 	public static final String ERROR_WHILE_INITIALIZING_THE_DATA_STORE = "Error while initializing the Network DataStore.";
 
 	private String networkDataStoreURL;

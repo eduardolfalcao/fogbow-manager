@@ -1,5 +1,6 @@
 package org.fogbowcloud.manager.occi;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -20,13 +21,14 @@ import org.fogbowcloud.manager.occi.storage.StorageLink;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteConfig.JournalMode;
 
 public class ManagerDataStore {
 
 	public static final String ERROR_WHILE_INITIALIZING_THE_DATA_STORE = "Error while initializing the Manager DataStore.";
 	private static final Logger LOGGER = Logger.getLogger(ManagerDataStore.class);
 	public static final String MANAGER_DATASTORE_URL = "manager_datastore_url";
-	private static final String DEFAULT_DATASTORE_NAME = "datastore_manager.slite";
+	private static final String DEFAULT_DATASTORE_NAME = "datastore_manager.sqlite3";
 	protected static final String MANAGER_DATASTORE_SQLITE_DRIVER = "org.sqlite.JDBC";
 	protected static final String ORDER_TABLE_NAME = "t_order";
 	protected static final String ORDER_ID = "order_id";
@@ -55,6 +57,16 @@ public class ManagerDataStore {
 	private String dataStoreURL;
 	
 	public ManagerDataStore() {}
+	
+	public void listFilesForFolder(final File folder) {
+	    for (final File fileEntry : folder.listFiles()) {
+	        if (fileEntry.isDirectory()) {
+	            listFilesForFolder(fileEntry);
+	        } else {
+	            System.out.println(fileEntry.getName());
+	        }
+	    }
+	}
 
 	public ManagerDataStore(Properties properties) {
 		String dataStoreURLProperties = properties.getProperty(MANAGER_DATASTORE_URL);
@@ -64,10 +76,20 @@ public class ManagerDataStore {
 		Statement statement = null;
 		Connection connection = null;
 		try {
-			LOGGER.debug("DatastoreURL: " + dataStoreURLProperties);
-			LOGGER.debug("DatastoreDriver: " + MANAGER_DATASTORE_SQLITE_DRIVER);
+//			LOGGER.debug("DatastoreURL: " + dataStoreURLProperties);
+//			LOGGER.debug("DatastoreDriver: " + MANAGER_DATASTORE_SQLITE_DRIVER);
+			
+			System.out.println("DatastoreURL: " + this.dataStoreURL);
+			System.out.println("DatastoreDriver: " + MANAGER_DATASTORE_SQLITE_DRIVER);
 
 			Class.forName(MANAGER_DATASTORE_SQLITE_DRIVER);
+			
+			
+			
+			if(dataStoreURLProperties==null){
+				String dir = "/home/eduardolfalcao/workspace3/fogbow-manager/datastores_test/";
+				listFilesForFolder(new File(dir));
+			} 
 
 			connection = getConnection();
 			statement = connection.createStatement();		
@@ -771,6 +793,7 @@ public class ManagerDataStore {
 			SQLiteConfig config = new SQLiteConfig();
 			config.enforceForeignKeys(true);  
 			config.setBusyTimeout("30000");
+			config.setJournalMode(JournalMode.WAL);
 			return DriverManager.getConnection(this.dataStoreURL, config.toProperties());				
 		} catch (SQLException e) {
 			LOGGER.error("Error while getting a new connection from the connection pool.", e);

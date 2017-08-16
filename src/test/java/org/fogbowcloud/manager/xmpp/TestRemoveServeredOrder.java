@@ -12,6 +12,8 @@ import org.fogbowcloud.manager.core.AsynchronousOrderCallback;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.ManagerTestHelper;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
+import org.fogbowcloud.manager.occi.DataStoreHelper;
+import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -46,7 +48,7 @@ public class TestRemoveServeredOrder {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testRemoveServeredOrderResourceKingCompute() throws Exception {
+	public void testRemoveServeredOrderResourceKindCompute() throws Exception {
 		ManagerXmppComponent initializeXMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
 		Order order = createOrder(OrderConstants.COMPUTE_TERM);
 		ManagerController managerFacade = initializeXMPPManagerComponent.getManagerFacade();
@@ -64,8 +66,10 @@ public class TestRemoveServeredOrder {
 				Mockito.anyMap())).thenReturn(token);		
 		Mockito.when(managerTestHelper.getAuthorizationPlugin().isAuthorized(token)).thenReturn(true);			
 
-		Assert.assertEquals(1, initializeXMPPManagerComponent.getManagerFacade()
-				.getOrdersFromUser(token.getAccessId(), false).size());
+		List<Order> orders = initializeXMPPManagerComponent.getManagerFacade()
+				.getOrdersFromUser(token.getAccessId(), false);
+		System.out.println("** "+orders);
+		Assert.assertEquals(1, orders.size());
 		
 		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
 
@@ -111,8 +115,10 @@ public class TestRemoveServeredOrder {
 				Mockito.anyMap())).thenReturn(token);
 		Mockito.when(managerTestHelper.getAuthorizationPlugin().isAuthorized(token)).thenReturn(true);			
 
-		Assert.assertEquals(1, initializeXMPPManagerComponent.getManagerFacade()
-				.getOrdersFromUser(token.getAccessId(), false).size());
+		List<Order> orders = initializeXMPPManagerComponent.getManagerFacade()
+				.getOrdersFromUser(token.getAccessId(), false);
+		System.out.println("## "+orders);
+		Assert.assertEquals(1, orders.size());
 		
 		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
 
@@ -140,13 +146,13 @@ public class TestRemoveServeredOrder {
 		Assert.assertEquals("", instanceId);
 	}	
 
-	private Order createOrder(String resourceKing) {
+	private Order createOrder(String resourceKind) {
 		List<Category> categories = new ArrayList<Category>();
 		categories.add(new Category("term1", "scheme1", "class1"));
 		Map<String, String> attributes = new HashMap<String, String>();
 		attributes.put("key1", "value1");
 		attributes.put("key2", "value2");
-		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), resourceKing);
+		attributes.put(OrderAttribute.RESOURCE_KIND.getValue(), resourceKind);
 		Order order = new Order(ORDER_ID, new Token(ACCESS_ID,
 				new Token.User(OCCITestHelper.USER_MOCK, ""),
 				DefaultDataTestHelper.TOKEN_FUTURE_EXPIRATION,

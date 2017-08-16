@@ -1264,6 +1264,8 @@ public class ManagerController {
 		Order order = managerDataStoreController.getOrderByInstance(instanceId);
 		String resourceKind = order != null ? order.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()) : null;
 		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;
+		
+		if(order!=null)
 		LOGGER.info("<"+managerId+">: "+"Removing instance(" + resourceKind + ") with instanceId(" + instanceId + ") "
 				+ "and orderId("+order.getId()+") for remote member.");
 

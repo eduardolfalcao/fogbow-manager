@@ -50,7 +50,7 @@ public class StorageDataStore {
 
 	private static final Logger LOGGER = Logger.getLogger(StorageDataStore.class);
 	private static final String ERROR_WHILE_INITIALIZING_THE_DATA_STORE = "Error while initializing the DataStore";
-	private static final String DEFAULT_DATASTORE_NAME = "datastore_storage.slite";
+	private static final String DEFAULT_DATASTORE_NAME = "datastore_storage.sqlite3";
 
 	private String storageDataStoreURL;
 
