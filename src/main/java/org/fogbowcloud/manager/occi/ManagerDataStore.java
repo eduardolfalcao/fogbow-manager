@@ -57,16 +57,6 @@ public class ManagerDataStore {
 	private String dataStoreURL;
 	
 	public ManagerDataStore() {}
-	
-	public void listFilesForFolder(final File folder) {
-	    for (final File fileEntry : folder.listFiles()) {
-	        if (fileEntry.isDirectory()) {
-	            listFilesForFolder(fileEntry);
-	        } else {
-	            System.out.println(fileEntry.getName());
-	        }
-	    }
-	}
 
 	public ManagerDataStore(Properties properties) {
 		String dataStoreURLProperties = properties.getProperty(MANAGER_DATASTORE_URL);
@@ -76,21 +66,11 @@ public class ManagerDataStore {
 		Statement statement = null;
 		Connection connection = null;
 		try {
-//			LOGGER.debug("DatastoreURL: " + dataStoreURLProperties);
-//			LOGGER.debug("DatastoreDriver: " + MANAGER_DATASTORE_SQLITE_DRIVER);
-			
-			System.out.println("DatastoreURL: " + this.dataStoreURL);
-			System.out.println("DatastoreDriver: " + MANAGER_DATASTORE_SQLITE_DRIVER);
+			LOGGER.debug("DatastoreURL: " + dataStoreURLProperties);
+			LOGGER.debug("DatastoreDriver: " + MANAGER_DATASTORE_SQLITE_DRIVER);
 
 			Class.forName(MANAGER_DATASTORE_SQLITE_DRIVER);
 			
-			
-			
-			if(dataStoreURLProperties==null){
-				String dir = "/home/eduardolfalcao/workspace3/fogbow-manager/datastores_test/";
-				listFilesForFolder(new File(dir));
-			} 
-
 			connection = getConnection();
 			statement = connection.createStatement();		
 			statement.execute("CREATE TABLE IF NOT EXISTS " + ORDER_TABLE_NAME + "(" 

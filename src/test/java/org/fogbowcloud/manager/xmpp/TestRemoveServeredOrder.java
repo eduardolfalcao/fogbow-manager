@@ -50,25 +50,28 @@ public class TestRemoveServeredOrder {
 	@Test
 	public void testRemoveServeredOrderResourceKindCompute() throws Exception {
 		ManagerXmppComponent initializeXMPPManagerComponent = managerTestHelper.initializeXMPPManagerComponent(false);
+		
+		Token token = new Token(ACCESS_ID, new Token.User(OCCITestHelper.USER_MOCK, ""), null, new HashMap<String, String>());
+		Mockito.when(managerTestHelper.getFederationIdentityPlugin().getToken(ACCESS_ID)).thenReturn(token);
+		Mockito.when(managerTestHelper.getMapperPlugin().getLocalCredentials(Mockito.anyString())).thenReturn(new HashMap<String, String>());		
+		Mockito.when(managerTestHelper.getMapperPlugin().getLocalCredentials(Mockito.anyString())).thenReturn(new HashMap<String, String>());
+		Mockito.when(managerTestHelper.getIdentityPlugin().createToken(Mockito.anyMap())).thenReturn(token);		
+		Mockito.when(managerTestHelper.getAuthorizationPlugin().isAuthorized(token)).thenReturn(true);	
+		
+		List<Order> orders = initializeXMPPManagerComponent.getManagerFacade()
+				.getOrdersFromUser(token.getAccessId(), false);		
+		//cleaning trash in database if there are orders on it
+		if(!orders.isEmpty()){
+			for(Order o : orders)
+				initializeXMPPManagerComponent.getManagerFacade().getManagerDataStoreController().excludeOrder(o.getId());
+		}
+				
 		Order order = createOrder(OrderConstants.COMPUTE_TERM);
 		ManagerController managerFacade = initializeXMPPManagerComponent.getManagerFacade();
 		managerFacade.getManagerDataStoreController().addOrder(order);
-
-		Token token = new Token(ACCESS_ID, new Token.User(OCCITestHelper.USER_MOCK, ""), null, new HashMap<String, String>());
 		
-		Mockito.when(managerTestHelper.getFederationIdentityPlugin().getToken(ACCESS_ID))
-				.thenReturn(token);
-		Mockito.when(managerTestHelper.getMapperPlugin().getLocalCredentials(Mockito.anyString()))
-				.thenReturn(new HashMap<String, String>());		
-		Mockito.when(managerTestHelper.getMapperPlugin().getLocalCredentials(
-				Mockito.anyString())).thenReturn(new HashMap<String, String>());
-		Mockito.when(managerTestHelper.getIdentityPlugin().createToken(
-				Mockito.anyMap())).thenReturn(token);		
-		Mockito.when(managerTestHelper.getAuthorizationPlugin().isAuthorized(token)).thenReturn(true);			
-
-		List<Order> orders = initializeXMPPManagerComponent.getManagerFacade()
+		orders = initializeXMPPManagerComponent.getManagerFacade()
 				.getOrdersFromUser(token.getAccessId(), false);
-		System.out.println("** "+orders);
 		Assert.assertEquals(1, orders.size());
 		
 		final BlockingQueue<String> bq = new LinkedBlockingQueue<String>();
