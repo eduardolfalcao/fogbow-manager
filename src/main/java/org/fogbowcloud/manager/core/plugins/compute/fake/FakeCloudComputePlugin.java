@@ -72,24 +72,29 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	}	
 	
 	public synchronized void removeInstance(Token token, String instanceId, Order order) {
-		order.setState(OrderState.CLOSED);
+		if(order!=null)
+			order.setState(OrderState.CLOSED);
 		
+		if(instanceId!=null){
 		boolean success = instances.remove(instanceId);
-		if(success)
-			LOGGER.info("<"+managerId+">: FakeCloudComputePlugin removing instance (" + instanceId + ").");
-		else
-			LOGGER.info("<"+managerId+">: FakeCloudComputePlugin tried to remove instance (" + instanceId + ") "
-					+ "but it doesn't exist.");
+			if(success)
+				LOGGER.info("<"+managerId+">: FakeCloudComputePlugin removing instance (" + instanceId + ").");
+			else
+				LOGGER.info("<"+managerId+">: FakeCloudComputePlugin tried to remove instance (" + instanceId + ") "
+						+ "but it doesn't exist.");
+		}
 	}
 
 	@Override
-	public synchronized void removeInstance(Token token, String instanceId) {		
-		boolean success = instances.remove(instanceId);
-		if(success)
-			LOGGER.info("<"+managerId+">: FakeCloudComputePlugin removing instance (" + instanceId + ").");
-		else
-			LOGGER.info("<"+managerId+">: FakeCloudComputePlugin tried to remove instance (" + instanceId + ") "
-					+ "but it doesn't exist.");
+	public synchronized void removeInstance(Token token, String instanceId) {	
+		if(instanceId!=null){
+			boolean success = instances.remove(instanceId);
+			if(success)
+				LOGGER.info("<"+managerId+">: FakeCloudComputePlugin removing instance (" + instanceId + ").");
+			else
+				LOGGER.info("<"+managerId+">: FakeCloudComputePlugin tried to remove instance (" + instanceId + ") "
+						+ "but it doesn't exist.");
+		}
 	}
 	
 	public int getQuota(){
