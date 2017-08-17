@@ -21,7 +21,7 @@ import org.mockito.Mockito;
 public class TestDeleteRemoteStorageLink {
 
 	private ManagerTestHelper managerTestHelper;
-
+	
 	@Before
 	public void setUp() throws XMPPException {
 		this.managerTestHelper = new ManagerTestHelper();

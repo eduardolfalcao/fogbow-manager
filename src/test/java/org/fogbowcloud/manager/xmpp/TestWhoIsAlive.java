@@ -26,7 +26,7 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 
 public class TestWhoIsAlive {
-
+	
 	private ManagerTestHelper managerTestHelper;
 	private ManagerXmppComponent managerXmppComponent;
 

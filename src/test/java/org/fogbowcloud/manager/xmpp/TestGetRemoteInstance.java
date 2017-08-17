@@ -32,7 +32,7 @@ public class TestGetRemoteInstance {
 
 	private static final String WRONG_TOKEN = "wrong";
 	private static final String INSTANCE_OTHER_USER = "otherUser";
-
+	
 	private ManagerTestHelper managerTestHelper;
 
 	@Before

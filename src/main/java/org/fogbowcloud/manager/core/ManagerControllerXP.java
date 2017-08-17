@@ -157,7 +157,7 @@ public class ManagerControllerXP extends ManagerController{
 		if (order.getState().equals(OrderState.DELETED)  || !order.isLocal()) {			
 			managerDataStoreController.excludeOrder(order.getId());
 		} else if (isPersistent(order)) {
-			boolean finished = (order.getPreviousElapsedTime() + order.getCurrentElapsedTime()) >= order.getRuntime();			
+			boolean finished = (order.getPreviousElapsedTime() + order.getCurrentElapsedTime()) >= order.getRuntime();
 			if(!finished){	//and is local
 				LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.OPEN);
 				order.setState(OrderState.OPEN);
@@ -218,7 +218,7 @@ public class ManagerControllerXP extends ManagerController{
 	}
 	
 	public void remoteMemberPreemptedOrder(String orderId){
-		LOGGER.info("<"+managerId+">: "+"Removing local order (id="+orderId+") preempted by remote member");
+		LOGGER.info("<"+managerId+">: "+"Removing local order (id="+orderId+") preempted by remote member");		
 		Order o = managerDataStoreController.getOrder(orderId);
 		instanceRemoved(o);		
 	}

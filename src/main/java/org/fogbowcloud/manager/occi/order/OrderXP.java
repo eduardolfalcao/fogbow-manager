@@ -52,6 +52,7 @@ public class OrderXP extends Order{
 		this.runtime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.RUNTIME.getValue()));
 		this.previousElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue()));
 		this.currentElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.CURRENT_ELAPSED_TIME.getValue()));
+		this.xOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderType.PERSISTENT.getValue());
 	}
 	
 	public OrderXP(OrderXP order) {
@@ -62,7 +63,7 @@ public class OrderXP extends Order{
 	public void updateElapsedTime(boolean isRemoving){
 		long now = dateUtils.currentTimeMillis();
 		if(fulfilledTime!=0){
-			currentElapsedTime = (now - fulfilledTime);		
+			currentElapsedTime = (now - fulfilledTime);
 		}
 		if(isRemoving){
 			fulfilledTime = 0;

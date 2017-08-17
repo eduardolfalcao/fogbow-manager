@@ -20,7 +20,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class TestRemoteStorageLink {
-
+ 
 	private ManagerTestHelper managerTestHelper;
 
 	@Before

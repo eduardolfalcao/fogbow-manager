@@ -24,6 +24,7 @@ public class TestGetRemoteUserQuota {
 
 	@Rule
 	public final ExpectedException exception = ExpectedException.none();
+	
 	private ManagerTestHelper managerTestHelper;
 	
 	@Before
