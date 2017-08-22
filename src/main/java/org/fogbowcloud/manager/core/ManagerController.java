@@ -1339,6 +1339,7 @@ public class ManagerController {
 		this.monitoringHelper.checkFailedMonitoring(monitorPeriod);
 		
 		for (Order order : this.managerDataStoreController.getAllLocalOrders()) {
+			
 			if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
 				turnOffTimer = false;
 			}
@@ -1364,6 +1365,7 @@ public class ManagerController {
 				
 				if (isNotFoundException || this.monitoringHelper.isMaximumFailedMonitoringAttempts(order) 
 						|| (order.getState().equals(OrderState.DELETED) && order.getInstanceId() == null)) {
+					System.out.println("instanceRemoved");
 					instanceRemoved(this.managerDataStoreController.getOrder(order.getId()));
 					this.monitoringHelper.eraseFailedMonitoringAttempts(order);
 				}
@@ -1650,6 +1652,7 @@ public class ManagerController {
 
 						if (!isFulfilled
 								&& !failedBatch.batchExists(order.getBatchId(), FailedBatchType.FEDERATION_USER)) {
+							System.out.println("createLocalInstanceWithFederationUser");
 							isFulfilled = createLocalInstanceWithFederationUser(order);
 							if (!isFulfilled) {
 								failedBatch.failBatch(order.getBatchId(), FailedBatchType.FEDERATION_USER);
@@ -1815,6 +1818,9 @@ public class ManagerController {
 		Token federationUserToken = getFederationUserToken(order);
 		
 		if (isComputeOrder) {
+			
+			System.out.println("compute");
+			
 			try {
 				try {
 					String command = createUserDataUtilsCommand(order);

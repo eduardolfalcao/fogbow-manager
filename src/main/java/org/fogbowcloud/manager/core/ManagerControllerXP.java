@@ -456,7 +456,7 @@ public class ManagerControllerXP extends ManagerController{
 				instance.addAttribute("occi.compute.memory", "16");
 				
 				//no need to wait for ssh service
-
+				
 				try {
 					benchmarkingPlugin.run(order.getGlobalInstanceId(), instance);
 				} catch (Exception e) {
@@ -511,7 +511,7 @@ public class ManagerControllerXP extends ManagerController{
 	@Override
 	protected boolean createLocalInstanceWithFederationUser(Order o) {
 		
-		OrderXP order = (OrderXP) o;		
+		OrderXP order = (OrderXP) o;
 		
 		LOGGER.info("<"+managerId+">: "+"Submitting order " + order.getId() + " requested by "+order.getRequestingMemberId()+","
 				+ "with runtime "+order.getRuntime()+" with federation user locally.");
@@ -523,12 +523,13 @@ public class ManagerControllerXP extends ManagerController{
 			member = getFederationMember(order.getRequestingMemberId());
 		} catch (Exception e) {
 		}
-
+		
 		if (isRemoteDonation && !validator.canDonateTo(member, order.getFederationToken())) {
 			return false;
 		}
-
+	
 		try {
+			System.out.println("createInstance");
 			return createInstance(order);
 		} catch (Exception e) {
 			LOGGER.warn("<"+managerId+">: "+"Could not create instance for order("+order.getId()+") with federation user locally");
@@ -570,10 +571,14 @@ public class ManagerControllerXP extends ManagerController{
 				
 				String instanceId = computePlugin.requestInstance(federationUserToken, categories, xOCCIAttCopy,
 						localImageId);
+				
+				System.out.println("instanceId: "+instanceId);
+				
 				order.setState(OrderState.SPAWNING);
 				order.setInstanceId(instanceId);
 				order.setProvidingMemberId(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY));
 				this.managerDataStoreController.updateOrder(order);
+				
 				execBenchmark(order);
 				return instanceId != null;
 			} catch (OCCIException e) {

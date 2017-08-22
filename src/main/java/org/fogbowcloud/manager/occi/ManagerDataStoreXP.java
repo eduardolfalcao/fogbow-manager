@@ -48,7 +48,8 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 			WorkloadMonitorAssync workloadMonitorAssync) {
 		this.workloadMonitorAssync = workloadMonitorAssync;
 	}
-		
+	
+	@Override
 	public synchronized boolean addOrder(Order order){
 		
 		try{
@@ -66,20 +67,30 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 		}
 		
 		if (order.getState().equals(OrderState.FULFILLED)) {
-			this.workloadMonitorAssync.monitorOrder(order);
-			threads.add(order.getId());		
+			try{
+				this.workloadMonitorAssync.monitorOrder(order);
+				threads.add(order.getId());		
+			} catch(Exception e){
+				LOGGER.error("<"+managerId+">: Exception while tried to schedule the monitoring of order with id "+order.getId(), e);
+			}	
 		} else if (threads.contains(order.getId())) {
-			threads.remove(order.getId());
-			this.workloadMonitorAssync.stopMonitoring(order);
+			try{
+				threads.remove(order.getId());
+				this.workloadMonitorAssync.stopMonitoring(order);
+			}catch(Exception e){
+				LOGGER.error("<"+managerId+">: Exception while tried to schedule remotion of order with id "+order.getId(), e);
+			}	
 		}
 		
 		return true;
 	}
 	
+	@Override
 	public synchronized List<Order> getOrders(){
 		return new ArrayList<Order>(orders.values());
 	}
 	
+	@Override
 	public synchronized List<Order> getOrders(OrderState orderState) {		
 		List<Order> ordersInSpecificState = new ArrayList<Order>();
 		for (Map.Entry<String, Order> entry : orders.entrySet()){
@@ -89,11 +100,12 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 		return ordersInSpecificState;
 	}		
 	
-			
+	@Override		
 	public synchronized Order getOrder(String orderId) {
 		return getOrder(orderId,false);
 	}
 	
+	@Override
 	public synchronized Order getOrder(String orderId, boolean isOrderSyncronous) {
 		Order order = null;		
 		if(isOrderSyncronous){
@@ -108,11 +120,12 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 		return order;		
 	}	
 	
+	@Override
 	public synchronized boolean removeOrder(Order order) {
 		
 		try{
 			orders.remove(order.getId());
-			servedMembers.remove(order.getId());			
+			servedMembers.remove(order.getId());
 		} catch(Exception e){
 			LOGGER.error("<"+managerId+">: Exception while removing order("+order.getId()+") from map: "+orders, e);
 			return false;
@@ -124,16 +137,20 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 			LOGGER.error("<"+managerId+">: Exception while monitoring order with id "+order.getId(), e);
 		}		
 		
-		if (threads.contains(order.getId())) {
-			threads.remove(order.getId());
-			this.workloadMonitorAssync.stopMonitoring(order);
-		}
+		try{
+			if (threads.contains(order.getId())) {		
+				threads.remove(order.getId());
+				this.workloadMonitorAssync.stopMonitoring(order);		
+			}
+		} catch(Exception e){
+			LOGGER.error("<"+managerId+">: Exception while tried to schedule remotion of order with id "+order.getId(), e);
+		}	
 		
 		return true;
 	}	
 	
-	
-	public synchronized boolean removeAllOrder() throws SQLException {
+	@Override
+	public synchronized boolean removeAllOrder() {
 		try{
 			orders.clear();
 		} catch(Exception e){
@@ -144,7 +161,12 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 		return true;
 	}		
 		
-	public synchronized boolean updateOrder(Order order) throws SQLException, JSONException {
+	@Override
+	public synchronized boolean updateOrder(Order order) {		
+		if(!orders.containsKey(order.getId())){
+			return false;
+		}
+			
 		try{
 			orders.put(order.getId(), order);
 		} catch(Exception e){
@@ -156,18 +178,26 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 			monitorOrderState(order);
 		}catch(Exception e){
 			LOGGER.error("<"+managerId+">: Exception while monitoring order with id "+order.getId(), e);
-		}		
+		}
 		
 		if (order.getState().equals(OrderState.FULFILLED)) {
-			this.workloadMonitorAssync.monitorOrder(order);
-			if(!threads.contains(order.getId())){
-				LOGGER.info("<"+managerId+">: "+"Added order id "+order.getId()+" on threads list");
-				threads.add(order.getId());
-			}
+			try{
+				this.workloadMonitorAssync.monitorOrder(order);
+				if(!threads.contains(order.getId())){
+					LOGGER.info("<"+managerId+">: "+"Added order id "+order.getId()+" on threads list");
+					threads.add(order.getId());
+				}
+			} catch(Exception e){
+				LOGGER.error("<"+managerId+">: Exception while tried to schedule the monitoring of order with id "+order.getId(), e);
+			}			
 		} else if (threads.contains(order.getId())) {
-			LOGGER.info("<"+managerId+">: "+"Removed order id "+order.getId()+" from threads list");
-			threads.remove(order.getId());
-			this.workloadMonitorAssync.stopMonitoring(order);
+			try{
+				LOGGER.info("<"+managerId+">: "+"Removed order id "+order.getId()+" from threads list");
+				threads.remove(order.getId());
+				this.workloadMonitorAssync.stopMonitoring(order);
+			} catch(Exception e){
+				LOGGER.error("<"+managerId+">: Exception while tried to schedule remotion of order with id "+order.getId(), e);
+			}	
 		}
 		
 		return true;
@@ -221,7 +251,7 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 	/**
 	 * Federation member servered
 	 */		
-	
+	@Override
 	public boolean addFederationMemberServered(String orderId, String federationMemberServerd){
 		if(!orders.containsKey(orderId)){
 			return false;
@@ -234,6 +264,7 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 		}
 	}
 	
+	@Override
 	public List<String> getFederationMembersServeredBy(String orderId){
 		List<String> federationMembersServered = new ArrayList<String>();
 		if(servedMembers.get(orderId)!=null)
@@ -242,6 +273,7 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 	}	
 		
 	/* used only in tests */
+	@Override
 	public boolean removeFederationMemberServed(String federationMemberServered) throws SQLException {
 		
 		boolean removed = false;

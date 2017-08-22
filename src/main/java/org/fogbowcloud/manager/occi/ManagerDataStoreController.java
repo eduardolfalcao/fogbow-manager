@@ -203,9 +203,10 @@ public class ManagerDataStoreController {
 
 	public void excludeOrder(String orderId) {
 		LOGGER.debug("Excluding orderId " + orderId);
+		
 		try {
 			List<Order> ordersDB = this.managerDatabase.getOrders();
-			for (Order order : ordersDB) {			
+			for (Order order : ordersDB) {		
 				if (order.getId().equals(orderId)) {
 					this.managerDatabase.removeOrder(order);
 					return;

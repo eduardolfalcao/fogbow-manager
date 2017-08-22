@@ -31,12 +31,16 @@ public class WorkloadMonitorAssync {
 	}
 	
 	public void monitorOrder(Order o){
+		System.out.println("m1");
 		final OrderXP order = (OrderXP) o;
+		System.out.println("m2");
 		long time = order.getRuntime() - order.getPreviousElapsedTime() - order.getCurrentElapsedTime();
+		System.out.println("m3");
 		ScheduledFuture<?> schedule = executorMonitor.schedule(
 			new Runnable() {					
 				@Override
 				public void run() {
+					System.out.println("m4");
 					boolean isRemoving = false;
 					order.updateElapsedTime(isRemoving);
 					LOGGER.info("<"+managerId+">: "+"checking if the order("+order.getId()+"), with instance("+order.getInstanceId()+"), requested by "+order.getRequestingMemberId()+
@@ -54,6 +58,8 @@ public class WorkloadMonitorAssync {
 					}
 				}
 			}, time, TimeUnit.MILLISECONDS);
+		
+		System.out.println("m5");
 		orders.put(order, schedule);
 	}
 	

@@ -362,9 +362,8 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 	public ManagerController createDefaultManagerController() {
 		return createDefaultManagerController(null);
 	}
-
-	@SuppressWarnings("unchecked")
-	public ManagerController createDefaultManagerController(Map<String, String> extraProperties) {
+	
+	protected Properties getProperties(Map<String, String> extraProperties){
 		Properties properties = new Properties();
 		properties.put(ConfigurationConstants.XMPP_JID_KEY,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
@@ -391,9 +390,11 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 			}
 		}
 		
-		this.executorService = Mockito.mock(ScheduledExecutorService.class);
-		ManagerController managerController = Mockito.spy(new ManagerController(properties, this.executorService,false));		
-
+		return properties;
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected void setupManager(ManagerController managerController){
 		Mockito.doNothing().when(managerController).triggerOrderScheduler();
 		
 		// mocking compute
@@ -453,7 +454,14 @@ public class ManagerTestHelper extends DefaultDataTestHelper {
 		managerController.setMemberPickerPlugin(memberPickerPlugin);
 		managerController.setBenchmarkExecutor(benchmarkExecutor);
 		managerController.setForTest(true);
-		
+	}
+
+	
+	public ManagerController createDefaultManagerController(Map<String, String> extraProperties) {
+		Properties properties = getProperties(extraProperties);		
+		this.executorService = Mockito.mock(ScheduledExecutorService.class);
+		ManagerController managerController = Mockito.spy(new ManagerController(properties, this.executorService,false));
+		setupManager(managerController);		
 		return managerController;
 	}
 
