@@ -1089,7 +1089,7 @@ public class ManagerController {
 		
 		//TODO different instances sizes should be considered?
 		double virtualQuota = capacityControllerPlugin.getMaxCapacityToSupply(requestingMember);
-		int virtualQuotaFloor = (int)Math.floor(virtualQuota);
+		int virtualQuotaFloor = (int)Math.floor(virtualQuota);		
 		boolean res = instancesFulfilled < virtualQuotaFloor;		
 		
 		LOGGER.debug("<"+managerId+">: The quota of "+managerId+" for "+requestingMemberId+" is "+virtualQuota);
@@ -1348,7 +1348,10 @@ public class ManagerController {
 				boolean isNotFoundException = false;
 				try {
 					LOGGER.debug("<"+managerId+">: "+"Monitoring instance of order: " + order);
-					removeFailedInstance(order, getInstance(order, order.getResourceKind()));
+					
+					Instance i = getInstance(order, order.getResourceKind());
+					System.out.println("Instance: "+i);					
+					removeFailedInstance(order, i);
 					this.monitoringHelper.eraseFailedMonitoringAttempts(order);
 				} catch (OCCIException e) {
 					LOGGER.debug("<"+managerId+">: "+"Error while getInstance of " + order.getInstanceId(), e);
@@ -1365,7 +1368,6 @@ public class ManagerController {
 				
 				if (isNotFoundException || this.monitoringHelper.isMaximumFailedMonitoringAttempts(order) 
 						|| (order.getState().equals(OrderState.DELETED) && order.getInstanceId() == null)) {
-					System.out.println("instanceRemoved");
 					instanceRemoved(this.managerDataStoreController.getOrder(order.getId()));
 					this.monitoringHelper.eraseFailedMonitoringAttempts(order);
 				}
@@ -1384,7 +1386,7 @@ public class ManagerController {
 		}
 		if (InstanceState.FAILED.equals(instance.getState())) {
 			try {
-				LOGGER.info("<"+managerId+">: "+"Removing failed instance with order "+order+", and instance "+instance);
+				LOGGER.info("<"+managerId+">: "+"Removing failed instance with order "+order+", and instance "+instance);				
 				removeInstance(instance.getId(), order, order.getResourceKind());
 			} catch (Throwable t) {
 				// Best effort

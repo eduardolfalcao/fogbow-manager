@@ -52,7 +52,8 @@ public class OrderXP extends Order{
 		this.runtime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.RUNTIME.getValue()));
 		this.previousElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue()));
 		this.currentElapsedTime = Long.parseLong(this.xOCCIAtt.get(OrderAttribute.CURRENT_ELAPSED_TIME.getValue()));
-		this.xOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderType.PERSISTENT.getValue());
+		if(!this.xOCCIAtt.containsKey(OrderAttribute.TYPE.getValue()))
+			this.xOCCIAtt.put(OrderAttribute.TYPE.getValue(), OrderType.PERSISTENT.getValue());
 	}
 	
 	public OrderXP(OrderXP order) {
@@ -94,8 +95,8 @@ public class OrderXP extends Order{
 				+ requestingMemberId + ", state: " + state + ", isLocal " + isLocal
 				+ ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt 
 				+ ", runtime: " + runtime + ", fulfilledTime: "+fulfilledTime
-				+ ", previousElpasedTime: "+previousElapsedTime+""
-				+ ", currentElapsedTime: "+currentElapsedTime+"\n";
+				+ ", previousElapsedTime: "+previousElapsedTime+""
+				+ ", currentElapsedTime: "+currentElapsedTime;
 	}
 
 	@Override

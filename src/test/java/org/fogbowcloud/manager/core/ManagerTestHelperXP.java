@@ -1,20 +1,13 @@
 package org.fogbowcloud.manager.core;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.fogbowcloud.manager.core.model.FederationMember;
-import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.AuthorizationPlugin;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
-import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
@@ -22,12 +15,7 @@ import org.fogbowcloud.manager.core.plugins.capacitycontroller.satisfactiondrive
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
-import org.fogbowcloud.manager.occi.instance.Instance;
-import org.fogbowcloud.manager.occi.model.ErrorType;
-import org.fogbowcloud.manager.occi.model.OCCIException;
-import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.xmpp.ManagerXmppComponent;
 import org.mockito.Mockito;
 

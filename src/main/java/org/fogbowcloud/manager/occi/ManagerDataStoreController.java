@@ -183,12 +183,11 @@ public class ManagerDataStoreController {
 			List<Order> orders  = this.managerDatabase.getOrders();
 			for (Order order : orders) {					
 				if (order.getId().equals(orderId) && order.isLocal()) {
-					if (order.getState().equals(OrderState.CLOSED)) {
-						
+					if (order.getState().equals(OrderState.CLOSED)) {						
 						LOGGER.debug("Order " + orderId + " does not have an instance. Excluding order.");
 						this.managerDatabase.removeOrder(order);
-					} else {
-						order.setState(OrderState.DELETED);
+					} else {						
+						order.setState(OrderState.DELETED);					
 						this.managerDatabase.updateOrder(order);
 					}
 					return;

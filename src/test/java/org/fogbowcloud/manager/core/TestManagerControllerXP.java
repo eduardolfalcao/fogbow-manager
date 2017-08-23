@@ -35,6 +35,7 @@ import org.fogbowcloud.manager.core.plugins.IdentityPlugin;
 import org.fogbowcloud.manager.core.plugins.MapperPlugin;
 import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
+import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.core.plugins.compute.openstack.OpenStackOCCIComputePlugin;
 import org.fogbowcloud.manager.core.util.DefaultDataTestHelper;
 import org.fogbowcloud.manager.occi.ManagerDataStore;
@@ -172,12 +173,25 @@ public class TestManagerControllerXP {
 		}
 	}
 	
-	private OrderXP createOrder(String id, Token token, List<Category> categories, Map<String, String> xOCCIAttributes, boolean isLocal, String requestingMemberId) {
+	private void addOrderXPAttributes(Map<String, String> xOCCIAttributes){
 		xOCCIAttributes.put(OrderAttribute.TYPE.getValue(), OrderType.PERSISTENT.getValue());
 		xOCCIAttributes.put(OrderAttribute.PREVIOUS_ELAPSED_TIME.getValue(), "0");
 		xOCCIAttributes.put(OrderAttribute.CURRENT_ELAPSED_TIME.getValue(), "0");
 		xOCCIAttributes.put(OrderAttribute.RUNTIME.getValue(), "1000");
+	}
+	
+	private OrderXP createOrder(String id, Token token, List<Category> categories, Map<String, String> xOCCIAttributes, boolean isLocal, String requestingMemberId) {
+		if(xOCCIAttributes==null)
+			xOCCIAttributes = new HashMap<String, String>();
+		addOrderXPAttributes(xOCCIAttributes);
 		return new OrderXP(id, token , categories, xOCCIAttributes,isLocal, requestingMemberId);				
+	}
+	
+	private OrderXP createOrder(String id, Token token, String instanceId, String providingMemberId,
+			String requestingMemberId, long fulfilledTime, boolean isLocal, OrderState state,
+			List<Category> categories, Map<String, String> xOCCIAttributes) {
+		addOrderXPAttributes(xOCCIAttributes);
+		return new OrderXP(id, token, instanceId, providingMemberId, requestingMemberId, fulfilledTime, isLocal, state, categories, xOCCIAttributes);				
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1021,7 +1035,7 @@ public class TestManagerControllerXP {
 	}
 	
 	@Test
-	public void testMonitorOrderWithMaximumAttemps() throws InterruptedException {
+	public void testMonitorOrderWithMaximumAttempts() throws InterruptedException {
 		ComputePlugin computePlugin = managerTestHelper.getComputePlugin();
 		
 		// setting order repository
@@ -1084,8 +1098,8 @@ public class TestManagerControllerXP {
 		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class),
 				Mockito.anyString())).thenThrow(new NullPointerException());		
 		
-		int moreThenMaximumOrderAttemps = ManagerTestHelper.MAXIMUM_ORDER_ATTEMPTS + 1;
-		for (int i = 0; i < moreThenMaximumOrderAttemps; i++) {
+		int moreThanMaximumOrderAttemps = ManagerTestHelper.MAXIMUM_ORDER_ATTEMPTS + 1;
+		for (int i = 0; i < moreThanMaximumOrderAttemps; i++) {
 			managerController.monitorInstancesForLocalOrders();
 		}
 				
@@ -1302,7 +1316,6 @@ public class TestManagerControllerXP {
 		managerController.monitorInstancesForLocalOrders();
 	}
 	
-	/* FIXME */
 	@Test
 	public void testMonitorWillRemoveLocalFailedInstance() throws InterruptedException {
 		// setting order repository
@@ -1425,8 +1438,11 @@ public class TestManagerControllerXP {
 		mockOrderInstance();
 
 		// creating order
+		Map<String, String> xocci = new HashMap<String, String>();
+		addOrderXPAttributes(xocci);
+		xocci.putAll(xOCCIAtt);
 		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				new ArrayList<Category>(), xOCCIAtt);
+				new ArrayList<Category>(), xocci);
 		managerController.checkAndSubmitOpenOrders();		
 
 		List<Order> orders = managerController
@@ -1447,8 +1463,12 @@ public class TestManagerControllerXP {
 		mockOrderInstance();
 
 		// creating order
+		Map<String, String> xocci = new HashMap<String, String>();
+		addOrderXPAttributes(xocci);
+		xocci.putAll(xOCCIAtt);
+		xocci.put(OrderAttribute.TYPE.getValue(), OrderType.ONE_TIME.getValue());
 		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				new ArrayList<Category>(), xOCCIAtt);
+				new ArrayList<Category>(), xocci);
 		managerController.checkAndSubmitOpenOrders();
 		
 		// checking if order was properly created
@@ -1480,12 +1500,13 @@ public class TestManagerControllerXP {
 	@Test
 	public void testPersistentOrderSetFulfilledAndOpen() throws InterruptedException {
 		mockOrderInstance();
-		xOCCIAtt.put(OrderAttribute.TYPE.getValue(),
-				String.valueOf(OrderType.PERSISTENT.getValue()));
 
 		// creating order
+		Map<String, String> xocci = new HashMap<String, String>();
+		addOrderXPAttributes(xocci);
+		xocci.putAll(xOCCIAtt);
 		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				new ArrayList<Category>(), xOCCIAtt);
+				new ArrayList<Category>(), xocci);
 		managerController.checkAndSubmitOpenOrders();
 
 		// checking if order was properly created
@@ -1527,15 +1548,16 @@ public class TestManagerControllerXP {
 	@Test
 	public void testPersistentOrderSetFulfilledAndOpenAndFulfilled() throws InterruptedException {
 		final String SECOND_INSTANCE_ID = "rt22e67-5fgt-457a-3rt6-gt78124fhj9p";
-		xOCCIAtt.put(OrderAttribute.TYPE.getValue(),
-				String.valueOf(OrderType.PERSISTENT.getValue()));
 
 		// mocking compute
 		mockOrderInstance();
 
 		// creating orders
+		Map<String, String> xocci = new HashMap<String, String>();
+		addOrderXPAttributes(xocci);
+		xocci.putAll(xOCCIAtt);
 		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				new ArrayList<Category>(), xOCCIAtt);
+				new ArrayList<Category>(), xocci);
  		managerController.checkAndSubmitOpenOrders();
 
 		// checking if order was fulfilled with instanceID
@@ -1602,10 +1624,12 @@ public class TestManagerControllerXP {
 				String.valueOf(OrderType.PERSISTENT.getValue()));
 		xOCCIAtt.put(OrderAttribute.VALID_UNTIL.getValue(),
 				String.valueOf(DateUtils.getDateISO8601Format(expirationOrderTime)));
-
-		// creating order
+		
+		Map<String, String> xocci = new HashMap<String, String>();
+		addOrderXPAttributes(xocci);
+		xocci.putAll(xOCCIAtt);
 		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				new ArrayList<Category>(), xOCCIAtt);
+				new ArrayList<Category>(), xocci);
 
 		// checking if order is OPEN
 		List<Order> orders = managerController
@@ -1647,8 +1671,11 @@ public class TestManagerControllerXP {
 		mockOrderInstance();
 
 		// creating order
+		Map<String, String> xocci = new HashMap<String, String>();
+		addOrderXPAttributes(xocci);
+		xocci.putAll(xOCCIAtt);
 		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				new ArrayList<Category>(), xOCCIAtt);
+				new ArrayList<Category>(), xocci);
 
 		Thread.sleep(DefaultDataTestHelper.SCHEDULER_PERIOD);
 		managerController.checkAndSubmitOpenOrders();
@@ -1716,8 +1743,11 @@ public class TestManagerControllerXP {
 				DateUtils.getDateISO8601Format(expirationOrderTime));
 
 		// creating order
+		Map<String, String> xocci = new HashMap<String, String>();
+		addOrderXPAttributes(xocci);
+		xocci.putAll(xOCCIAtt);
 		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				new ArrayList<Category>(), xOCCIAtt);
+				new ArrayList<Category>(), xocci);
 
 		// checking if order was properly created
 		List<Order> orders = managerController
@@ -1761,8 +1791,11 @@ public class TestManagerControllerXP {
 		mockOrderInstance();
 
 		// creating order
+		Map<String, String> xocci = new HashMap<String, String>();
+		addOrderXPAttributes(xocci);
+		xocci.putAll(xOCCIAtt);
 		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				new ArrayList<Category>(), xOCCIAtt);
+				new ArrayList<Category>(), xocci);
 
 		// checking if order was properly created
 		List<Order> orders = managerController
@@ -1819,8 +1852,11 @@ public class TestManagerControllerXP {
 		mockOrderInstance();
 
 		// creating order
+		Map<String, String> xocci = new HashMap<String, String>();
+		addOrderXPAttributes(xocci);
+		xocci.putAll(xOCCIAtt);
 		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				new ArrayList<Category>(), xOCCIAtt);
+				new ArrayList<Category>(), xocci);
 
 		// checking if order was rightly created
 		List<Order> orders = managerController
@@ -1875,8 +1911,11 @@ public class TestManagerControllerXP {
 		mockOrderInstance();
 
 		// creating order
+		Map<String, String> xocci = new HashMap<String, String>();
+		addOrderXPAttributes(xocci);
+		xocci.putAll(xOCCIAtt);
 		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				new ArrayList<Category>(), xOCCIAtt);
+				new ArrayList<Category>(), xocci);
 
 		// order is not in valid period yet
 		List<Order> orders = managerController
@@ -1946,8 +1985,11 @@ public class TestManagerControllerXP {
 		mockOrderInstance();
 
 		// creating order
+		Map<String, String> xocci = new HashMap<String, String>();
+		addOrderXPAttributes(xocci);
+		xocci.putAll(xOCCIAtt);
 		managerController.createOrders(DefaultDataTestHelper.FED_ACCESS_TOKEN_ID,
-				new ArrayList<Category>(), xOCCIAtt);
+				new ArrayList<Category>(), xocci);
 
 		// order is not in valid period yet
 		List<Order> orders = managerController
@@ -2192,7 +2234,7 @@ public class TestManagerControllerXP {
 		// checking open orders
 		List<Order> ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
-		Assert.assertEquals(3, ordersFromUser.size());
+		Assert.assertEquals(3, ordersFromUser.size());		
 		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(0).getState());
 		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(1).getState());
 		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(2).getState());
@@ -2206,10 +2248,16 @@ public class TestManagerControllerXP {
 
 		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
 				.getDefaultFederationToken().getAccessId());
+		
 		Assert.assertEquals(3, ordersFromUser.size());
-		Assert.assertEquals(OrderState.DELETED, ordersFromUser.get(0).getState());
-		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(1).getState());
-		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(2).getState());
+		for(Order o : ordersFromUser){
+			OrderState expectedState = null;
+			if(o.getId().equals("id1"))
+				expectedState = OrderState.DELETED;
+			else
+				expectedState = OrderState.OPEN;
+			Assert.assertEquals(expectedState, o.getState());
+		}		
 	
 		// removing the rest of orders
 		managerController.removeOrder(managerTestHelper.getDefaultFederationToken().getAccessId(), id2);
@@ -2416,6 +2464,7 @@ public class TestManagerControllerXP {
 		managerControllerSpy.setPacketSender(packetSender);
 				
 		Mockito.doReturn(true).when(managerControllerSpy).isThereEnoughQuota("manager1-test.com");
+		addOrderXPAttributes(xOCCIAtt);
 		managerControllerSpy.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());
 		managerControllerSpy.checkAndSubmitOpenOrders();
@@ -2471,6 +2520,7 @@ public class TestManagerControllerXP {
 				
 		managerControllerSpy.setPacketSender(packetSenderWithError);
 		Mockito.doReturn(true).when(managerControllerSpy).isThereEnoughQuota("manager1-test.com");
+		addOrderXPAttributes(xOCCIAtt);
 		managerControllerSpy.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());
 		managerControllerSpy.checkAndSubmitOpenOrders();
@@ -2548,6 +2598,7 @@ public class TestManagerControllerXP {
 		managerControllerSpy.setPacketSender(packetSender);
 		
 		Mockito.doReturn(true).when(managerControllerSpy).isThereEnoughQuota("manager1-test.com");
+		addOrderXPAttributes(xOCCIAtt);
 		managerControllerSpy.queueServedOrder("manager1-test.com", new ArrayList<Category>(),
 				xOCCIAtt, "id1", managerTestHelper.getDefaultFederationToken());		
 		managerControllerSpy.checkAndSubmitOpenOrders();
@@ -2701,77 +2752,6 @@ public class TestManagerControllerXP {
 	
 	@Test
 	@SuppressWarnings("unchecked")
-	public void testSSHKeyReplacementWhenOriginalOrderHasPublicKey() 
-			throws FileNotFoundException, IOException, MessagingException {
-		Map<String, String> extraProperties = new HashMap<String, String>();
-		extraProperties.put(ConfigurationConstants.SSH_PUBLIC_KEY_PATH, 
-				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
-		ManagerController localManagerController = 
-				managerTestHelper.createDefaultManagerController(extraProperties);
-		ManagerController spiedManageController = this.managerController;		
-		
-		String remoteOrderId = "id1";
-		
-		Map<String,String> newXOCCIAttr = new HashMap<String,String>(this.xOCCIAtt);
-		ArrayList<Category> categories = new ArrayList<Category>();
-		final Category publicKeyCategory = new Category(OrderConstants.PUBLIC_KEY_TERM, 
-				OrderConstants.CREDENTIALS_RESOURCE_SCHEME, OrderConstants.MIXIN_CLASS);
-		categories.add(publicKeyCategory);
-		newXOCCIAttr.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), "public-key");
-		
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		String newInstanceId = "newinstanceid";
-		Mockito.when(
-				computePlugin.requestInstance(Mockito.any(Token.class), 
-						Mockito.anyList(), Mockito.anyMap(), Mockito.anyString())).thenReturn(newInstanceId);
-		spiedManageController.setComputePlugin(computePlugin);
-		
-		Order servedOrder = createOrder(remoteOrderId, managerTestHelper.getDefaultFederationToken(), categories,
-				newXOCCIAttr, true,
-				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
-		servedOrder.setState(OrderState.FULFILLED);
-		servedOrder.setInstanceId(newInstanceId);
-		servedOrder.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		
-		Instance instance = new Instance(newInstanceId);
-		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
-		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
-		
-		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Order.class))).thenReturn(instance);
-		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
-		
-		spiedManageController.createLocalInstanceWithFederationUser(servedOrder);
-		
-		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
-				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
-		
-		Mockito.verify(computePlugin).requestInstance(Mockito.any(Token.class),
-				Mockito.argThat(new ArgumentMatcher<List<Category>>() {
-
-					@Override
-					public boolean matches(Object argument) {
-						List<Category> categories = (List<Category>) argument;
-						return !categories.contains(publicKeyCategory);
-					}
-				}), Mockito.argThat(new ArgumentMatcher<Map<String, String>>() {
-
-					@Override
-					public boolean matches(Object argument) {
-						Map<String, String> xOCCIAttr = (Map<String, String>) argument;
-						String publicKeyValue = xOCCIAttr
-								.get(OrderAttribute.DATA_PUBLIC_KEY
-										.getValue());
-						return publicKeyValue == null;
-					}
-				}), Mockito.anyString());
-		
-		String base64UserDataCmd = new String(Base64.decodeBase64(localManagerController
-				.createUserDataUtilsCommand(servedOrder)), "UTF-8");
-		Assert.assertTrue(base64UserDataCmd.contains(localManagerPublicKeyData));
-	}
-	
-	@Test
-	@SuppressWarnings("unchecked")
 	public void testSSHKeyReplacementWhenOriginalOrderHasNoPublicKey() 
 			throws FileNotFoundException, IOException, MessagingException {
 		Map<String, String> extraProperties = new HashMap<String, String>();
@@ -2867,77 +2847,6 @@ public class TestManagerControllerXP {
 		String base64UserDataCmd = new String(Base64.decodeBase64(managerController
 				.createUserDataUtilsCommand(servedOrder)), "UTF-8");
 		Assert.assertFalse(base64UserDataCmd.contains(localManagerPublicKeyData));
-	}
-	
-	@Test
-	@SuppressWarnings("unchecked")
-	public void testSSHKeyReplacementLocallyWhenOriginalOrderHasPublicKey() throws FileNotFoundException, IOException, MessagingException {
-		Map<String, String> extraProperties = new HashMap<String, String>();
-		extraProperties.put(ConfigurationConstants.SSH_PUBLIC_KEY_PATH, 
-				DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH);
-		ManagerController localManagerController = 
-				managerTestHelper.createDefaultManagerController(extraProperties);
-		ManagerController spiedManageController = localManagerController;		
-		
-		String localOrderId = "id1";
-		
-		Map<String,String> newXOCCIAttr = new HashMap<String,String>(this.xOCCIAtt);
-		ArrayList<Category> categories = new ArrayList<Category>();
-		final Category publicKeyCategory = new Category(OrderConstants.PUBLIC_KEY_TERM, 
-				OrderConstants.CREDENTIALS_RESOURCE_SCHEME, OrderConstants.MIXIN_CLASS);
-		categories.add(publicKeyCategory);
-		newXOCCIAttr.put(OrderAttribute.DATA_PUBLIC_KEY.getValue(), "public-key");
-		newXOCCIAttr.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.COMPUTE_TERM);
-		
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		String newInstanceId = "newinstanceid";
-		Mockito.when(
-				computePlugin.requestInstance(Mockito.any(Token.class), 
-						Mockito.anyList(), Mockito.anyMap(), Mockito.anyString())).thenReturn(newInstanceId);
-		spiedManageController.setComputePlugin(computePlugin);
-		
-		Order localOrder = createOrder(localOrderId, managerTestHelper.getDefaultFederationToken(), categories,
-				newXOCCIAttr, true,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		localOrder.setState(OrderState.FULFILLED);
-		localOrder.setInstanceId(newInstanceId);
-		localOrder.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		
-		Instance instance = new Instance(newInstanceId);
-		instance.addAttribute(Instance.SSH_PUBLIC_ADDRESS_ATT, "127.0.0.1:5555");
-		instance.addAttribute(Instance.SSH_USERNAME_ATT, "fogbow");
-		
-		Mockito.when(spiedManageController.waitForSSHPublicAddress(Mockito.any(Order.class))).thenReturn(instance);
-		Mockito.doNothing().when(spiedManageController).waitForSSHConnectivity(instance);
-		
-		spiedManageController.createLocalInstanceWithFederationUser(localOrder);
-		
-		final String localManagerPublicKeyData = IOUtils.toString(new FileInputStream(
-				new File(DefaultDataTestHelper.LOCAL_MANAGER_SSH_PUBLIC_KEY_PATH)));
-		
-		Mockito.verify(computePlugin).requestInstance(Mockito.any(Token.class),
-				Mockito.argThat(new ArgumentMatcher<List<Category>>() {
-
-					@Override
-					public boolean matches(Object argument) {
-						List<Category> categories = (List<Category>) argument;
-						return !categories.contains(publicKeyCategory);
-					}
-				}), Mockito.argThat(new ArgumentMatcher<Map<String, String>>() {
-
-					@Override
-					public boolean matches(Object argument) {
-						Map<String, String> xOCCIAttr = (Map<String, String>) argument;
-						String publicKeyValue = xOCCIAttr
-								.get(OrderAttribute.DATA_PUBLIC_KEY
-										.getValue());
-						return publicKeyValue == null;
-					}
-				}), Mockito.anyString());
-		
-		String base64UserDataCmd = new String(Base64.decodeBase64(localManagerController
-				.createUserDataUtilsCommand(localOrder)), "UTF-8");
-		Assert.assertTrue(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 
 	@Test
@@ -3114,6 +3023,7 @@ public class TestManagerControllerXP {
 				new OCCIException(ErrorType.UNAUTHORIZED, ""));
 		managerController.setLocalIdentityPlugin(localIdentityPlugin);
 		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
+		addOrderXPAttributes(xOCCIAtt);
 		managerController.createOrders(ACCESS_TOKEN_ID_2, new ArrayList<Category>(), xOCCIAtt);
 
 		for (Order order : managerController.getOrdersFromUser(federationToken.getAccessId())) {
@@ -3447,153 +3357,7 @@ public class TestManagerControllerXP {
 		Assert.assertEquals("30", resourcesInfo.getMemIdle());
 		Assert.assertEquals("40", resourcesInfo.getInstancesInUse());
 		Assert.assertEquals("30", resourcesInfo.getInstancesIdle());
-	}	
-	
-	@Test
-	public void testInitializeManager() throws SQLException, JSONException {
-		String userOne = "userOne";
-		String accessIdOne = "One";
-		Token federationTokenOne = new Token(accessIdOne, new Token.User(userOne, userOne), new Date(), null);
-		String userTwo = "userTwo";
-		String accessIdTwo = "Two";
-		Token federationTokenTwo = new Token(accessIdTwo, new Token.User(userTwo, userTwo), new Date(), null);
-		String instanceIdOne = "instOne";
-		String instanceIdTwo = "instTwo";
-		String instanceIdThree = "instThree";
-		String instanceIdFive = "instFive";
-		Order orderOneUserOne = createOrder("One", federationTokenOne, instanceIdOne,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.FULFILLED, null, xOCCIAtt);
-		Order orderTwoUserOne = createOrder("Two", federationTokenOne, instanceIdTwo,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.FULFILLED, null, xOCCIAtt);
-		Order orderThreeUserTwo = createOrder("Three", federationTokenTwo, instanceIdThree,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.FULFILLED, null, xOCCIAtt);
-		Order orderOPENFour = createOrder("Four", federationTokenTwo, "444",
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.OPEN, null, xOCCIAtt);
-		Order orderFiveDELETEDUserTwo = createOrder("Five", federationTokenTwo, instanceIdFive,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.DELETED, null, xOCCIAtt);		
-		managerController.getManagerDataStoreController().addOrder(orderOneUserOne);
-		managerController.getManagerDataStoreController().addOrder(orderTwoUserOne);
-		managerController.getManagerDataStoreController().addOrder(orderThreeUserTwo);
-		managerController.getManagerDataStoreController().addOrder(orderOPENFour);
-		managerController.getManagerDataStoreController().addOrder(orderFiveDELETEDUserTwo);
-		
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
-				.thenReturn(new Instance(""))
-				.thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""))
-				.thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""))
-				.thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""))
-				.thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""));
-		managerController.setComputePlugin(computePlugin);
-		
-		IdentityPlugin federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(federationIdentityPlugin.getToken(accessIdOne)).thenReturn(federationTokenOne);
-		Mockito.when(federationIdentityPlugin.getToken(accessIdTwo)).thenReturn(federationTokenTwo);
-		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
-
-		managerController.initializeManager();
-		
-		List<Order> ordersFromUser = managerController.getOrdersFromUser(federationTokenOne.getAccessId());
-		Assert.assertEquals(2, ordersFromUser.size());
-		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(0).getState());
-		Assert.assertEquals(OrderState.CLOSED, ordersFromUser.get(1).getState());
-		
-		ordersFromUser = managerController.getOrdersFromUser(federationTokenTwo.getAccessId());
-		Assert.assertEquals(2, ordersFromUser.size());
-		Assert.assertEquals(OrderState.CLOSED, ordersFromUser.get(0).getState());
-		Assert.assertEquals(null, ordersFromUser.get(0).getInstanceId());
-		Assert.assertEquals(OrderState.OPEN, ordersFromUser.get(1).getState());
-	}
-	
-	@Test
-	public void testInitializeManagerWithAttachmentAndOrderClosed() throws SQLException, JSONException {
-		String userOne = "userOne";
-		String accessIdOne = "One";
-		Token federationTokenOne = new Token(accessIdOne, new Token.User(userOne, userOne) , new Date(), null);
-		String userTwo = "userTwo";
-		String accessIdTwo = "Two";
-		Token federationTokenTwo = new Token(accessIdTwo, new Token.User(userTwo, userTwo), new Date(), null);
-		String instanceIdOne = "instOne";
-		String instanceIdTwo = "instTwo";
-		String instanceIdThree = "instThree";
-		Order orderOneUserOne = createOrder("One", federationTokenOne, instanceIdOne,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.FULFILLED, null, xOCCIAtt);
-		Order orderTwoUserOne = createOrder("Two", federationTokenOne, instanceIdTwo,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.FULFILLED, null, xOCCIAtt);
-		Order orderThreeUserTwo = createOrder("Three", federationTokenTwo, instanceIdThree,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL, new Date().getTime(), true,
-				OrderState.FULFILLED, null, xOCCIAtt);	
-		managerController.getManagerDataStoreController().addOrder(orderOneUserOne);
-		managerController.getManagerDataStoreController().addOrder(orderTwoUserOne);
-		managerController.getManagerDataStoreController().addOrder(orderThreeUserTwo);
-			
-		StorageLink storageLinkOne = new StorageLink("idOne", instanceIdThree,
-				"targetOne", "deviceIdOne", "providerMemberIdOne", federationTokenOne, true);
-		StorageLink storageLinkTwo = new StorageLink("idTwo", instanceIdThree,
-				"targetTwo", "deviceIdTwo", "providerMemberIdTwo", federationTokenOne, true);
-		StorageLink storageLinkThree = new StorageLink("idThree", "sourceThree",
-				"targetThree", "deviceIdThree", "providerMemberIdThree", federationTokenOne, true);
-		managerController.getManagerDataStoreController().addStorageLink(storageLinkOne);
-		managerController.getManagerDataStoreController().addStorageLink(storageLinkTwo);
-		managerController.getManagerDataStoreController().addStorageLink(storageLinkThree);
-		
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class), Mockito.anyString()))
-				.thenReturn(new Instance("")).thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""))
-				.thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""));
-		managerController.setComputePlugin(computePlugin);
-		
-		IdentityPlugin federationIdentityPlugin = Mockito.mock(IdentityPlugin.class);
-		Mockito.when(federationIdentityPlugin.getToken(accessIdOne)).thenReturn(federationTokenOne);
-		Mockito.when(federationIdentityPlugin.getToken(accessIdTwo)).thenReturn(federationTokenTwo);
-		managerController.setFederationIdentityPlugin(federationIdentityPlugin);
-
-		managerController.initializeManager();
-		
-		Assert.assertEquals(1, managerController.getManagerDataStoreController().getAllStorageLinks().size());
-		
-		List<Order> ordersFromUser = managerController.getOrdersFromUser(federationTokenOne.getAccessId());
-		Assert.assertEquals(2, ordersFromUser.size());
-		Assert.assertEquals(OrderState.FULFILLED, ordersFromUser.get(0).getState());
-		Assert.assertEquals(OrderState.CLOSED, ordersFromUser.get(1).getState());
-		
-		ordersFromUser = managerController.getOrdersFromUser(federationTokenTwo.getAccessId());
-		Assert.assertEquals(1, ordersFromUser.size());
-		Assert.assertEquals(OrderState.CLOSED, ordersFromUser.get(0).getState());
-	}	
-	
-	@Test
-	public void testInitializeStorageLinks() throws SQLException, JSONException {
-		Token federationTokenOne = new Token("accessId", new Token.User("user", "user"), new Date(), null);
-		StorageLink storageLinkOne = new StorageLink("idOne", "instanceIdThree",
-				"targetOne", "deviceIdOne", "providerMemberIdOne", federationTokenOne, true);
-		StorageLink storageLinkTwo = new StorageLink("idTwo", "instanceIdThree",
-				"targetTwo", "deviceIdTwo", "providerMemberIdTwo", federationTokenOne, true);
-		StorageLink storageLinkThree = new StorageLink("idThree", "sourceThree",
-				"targetThree", "deviceIdThree", "providerMemberIdThree", federationTokenOne, true);
-		managerController.getManagerDataStoreController().addStorageLink(storageLinkOne);
-		managerController.getManagerDataStoreController().addStorageLink(storageLinkTwo);
-		managerController.getManagerDataStoreController().addStorageLink(storageLinkThree);	
-		
-		managerController.initializeStorageLinks();
-		
-		Assert.assertEquals(3, managerController.getManagerDataStoreController().getAllStorageLinks().size());
-	}
+	}		
 	
 	@Test
 	public void testGetFederationMemberQuota() {
@@ -4001,411 +3765,7 @@ public class TestManagerControllerXP {
 		Assert.assertEquals(String.valueOf(0.0), resourceInfoExtra.getMemInUseByUser());
 		Assert.assertEquals(String.valueOf(0), resourceInfoExtra.getInstancesInUseByUser());
 		Assert.assertEquals(String.valueOf(0.0), resourceInfoExtra.getCpuInUseByUser());
-	}
-	
-	@Test
-	public void testInstanceRemovedWithAttachment() {
-		Token federationToken = new Token("accessId", new Token.User("user", "user"), new Date(), null);
-		String instanceId = "instanceId";
-		Order order = createOrder("id", federationToken, instanceId, "providingMemberId", "requestingMemberId",
-				new Date().getTime(), true, OrderState.OPEN, null, xOCCIAtt);
-		
-		StorageLink storageLinkOne = new StorageLink("idOne", instanceId,
-				"targetOne", "deviceIdOne", "provadingMemberIdOne", federationToken, true);
-		StorageLink storageLinkTwo = new StorageLink("idTwo", instanceId,
-				"targetTwo", "deviceIdTwo", "provadingMemberIdTwo", federationToken, true);	
-		StorageLink storageLinkThree = new StorageLink("idTree", "instanceIdThree",
-				"targetThree", "deviceIdThree", "provadingMemberIdThree", federationToken, true);			
-		managerController.getManagerDataStoreController().addStorageLink(storageLinkOne);
-		managerController.getManagerDataStoreController().addStorageLink(storageLinkTwo);
-		managerController.getManagerDataStoreController().addStorageLink(storageLinkThree);
-		
-		Assert.assertEquals(3, managerController.getManagerDataStoreController().getAllStorageLinks().size());
-		
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
-		Mockito.when(computePlugin.getInstance(Mockito.any(Token.class),
-						Mockito.anyString())).thenThrow(new OCCIException(ErrorType.NOT_FOUND, ""));
-		managerController.instanceRemoved(order);
-		
-		Assert.assertEquals(1, managerController.getManagerDataStoreController().getAllStorageLinks().size());		
 	}	
-	
-	@SuppressWarnings("unchecked")
-	@Test
-	public void testSubmitNetworkOrders() throws InterruptedException {
-		
-		String newResourceId = "networkid-01";
-		Token token = managerTestHelper.getDefaultFederationToken();
-		
-		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", "", "");
-		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		
-		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
-		
-		Mockito.when(
-				networkPlugin.requestInstance(Mockito.any(Token.class),
-						Mockito.anyList(), Mockito.anyMap()))
-				.thenReturn(newResourceId);
-		managerController.setNetworkPlugin(networkPlugin);
-
-		List<FederationMember> listMembers = new ArrayList<FederationMember>();
-		FederationMember federationMember = new FederationMember(resourcesInfo);
-		listMembers.add(federationMember);
-		managerController.updateMembers(listMembers);
-
-		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
-		Order orderOne = createOrder("idA", token, new ArrayList<Category>(), xOCCIAtt, true, "");
-		orderOne.setState(OrderState.OPEN);
-		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
-		managerDataStoreController.addOrder(orderOne);
-
-		managerController.checkAndSubmitOpenOrders();
-		
-		List<Order> ordersFromUser = managerController.getOrdersFromUser(token.getAccessId());
-		Assert.assertEquals(1,ordersFromUser.size());
-		for (Order order : ordersFromUser) {
-			Assert.assertEquals(OrderState.FULFILLED, order.getState());
-			Assert.assertEquals(newResourceId, order.getInstanceId());
-		}
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Test
-	public void testSubmitFederatedNetworkOrders() throws InterruptedException {
-		
-		String newResourceId = "networkid-01";
-		Token token = managerTestHelper.getDefaultFederationToken();
-		
-		ResourcesInfo resourcesInfo = new ResourcesInfo("", "", "", "", "", "");
-		resourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		
-		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
-		
-		Mockito.when(
-				networkPlugin.requestInstance(Mockito.any(Token.class),
-						Mockito.anyList(), Mockito.anyMap()))
-				.thenReturn(newResourceId);
-		managerController.setNetworkPlugin(networkPlugin);
-
-		List<FederationMember> listMembers = new ArrayList<FederationMember>();
-		FederationMember federationMember = new FederationMember(resourcesInfo);
-		listMembers.add(federationMember);
-		managerController.updateMembers(listMembers);
-
-		HashMap<String, String> xOCCIAtt = new HashMap<String, String>();
-		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
-		Order orderOne = createOrder("idA", token, new ArrayList<Category>(), xOCCIAtt, false, "");
-		orderOne.setState(OrderState.OPEN);
-		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
-		managerDataStoreController.addOrder(orderOne);
-		managerController.checkAndSubmitOpenOrders();
-		
-		List<Order> ordersFromUser = managerController.getOrdersFromUser(token.getAccessId(), false);
-		Assert.assertEquals(1,ordersFromUser.size());
-		for (Order order : ordersFromUser) {
-			Assert.assertEquals(OrderState.FULFILLED, order.getState());
-			Assert.assertEquals(newResourceId, order.getInstanceId());
-		}
-	}
-	
-	@Test
-	public void testRemoveNetworkOrderForRemoteMember() throws InterruptedException {
-		
-		String newResourceId = "networkid-01";
-		Token token = managerTestHelper.getDefaultFederationToken();
-		String orderId = "idA";
-
-		Order orderOne = createOrder(orderId, token, new ArrayList<Category>(), xOCCIAtt, false, "");
-		orderOne.setState(OrderState.FULFILLED);
-		orderOne.setInstanceId(newResourceId);
-		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
-		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
-		managerDataStoreController.addOrder(orderOne);
-		
-		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
-		managerController.setNetworkPlugin(networkPlugin);
-		
-		managerController.removeOrderForRemoteMember(token.getAccessId(), orderId);
-		
-		Mockito.verify(networkPlugin, Mockito.times(1)).removeInstance(token, newResourceId);
-	}
-	
-	@Test
-	public void testGetNetworkInstance() throws InterruptedException {
-		
-		String newResourceId = "networkid-01";
-		Token token = managerTestHelper.getDefaultFederationToken();
-		String orderId = "idA";
-		String providingMemberId = "manager.test.com";
-
-		Order orderOne = createOrder(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
-		orderOne.setState(OrderState.FULFILLED);
-		orderOne.setInstanceId(newResourceId);
-		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
-		orderOne.setFederationToken(token);
-		orderOne.setProvidingMemberId(providingMemberId);
-		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
-		managerDataStoreController.addOrder(orderOne);
-
-		String completeId = orderOne.getInstanceId() + Order.SEPARATOR_GLOBAL_ID + orderOne.getProvidingMemberId();
-		
-		Instance instance = new Instance(completeId);
-		
-		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
-		Mockito.when(
-				networkPlugin.getInstance(token, newResourceId)).thenReturn(instance);
-		
-		managerController.setNetworkPlugin(networkPlugin);
-		
-		Instance returned = managerController.getInstance(token.getAccessId(), completeId, OrderConstants.NETWORK_TERM);
-		
-		Mockito.verify(networkPlugin, Mockito.times(1)).getInstance(token, newResourceId);
-		Assert.assertNotNull(returned);
-		Assert.assertEquals(completeId, returned.getId());
-	}
-	
-	@Test
-	public void testRemoveNetworkInstance() {
-		
-		//Constants
-		String newResourceId = "networkid-01";
-		Token token = managerTestHelper.getDefaultFederationToken();
-		String orderId = "idA";
-		String providingMemberId = "manager.test.com";
-		String completeId = newResourceId + Order.SEPARATOR_GLOBAL_ID + providingMemberId;
-		
-		//Returns
-		List<StorageLink> storageLinksReturn = new ArrayList<StorageLink>();
-		
-		ManagerDataStoreController managerDataStoreControllerMock = Mockito.mock(ManagerDataStoreController.class);
-		Mockito.when(
-				managerDataStoreControllerMock.getAllStorageLinkByInstance(newResourceId, 
-				OrderConstants.NETWORK_INTERFACE_TERM)).thenReturn(storageLinksReturn);
-		
-		Order orderOne = createOrder(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
-		orderOne.setState(OrderState.FULFILLED);
-		orderOne.setInstanceId(newResourceId);
-		orderOne.setResourceKind(OrderConstants.NETWORK_TERM);
-		orderOne.setFederationToken(token);
-		orderOne.setProvidingMemberId(providingMemberId);
-		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
-		managerDataStoreController.addOrder(orderOne);
-
-		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
-		
-		managerController.setNetworkPlugin(networkPlugin);
-		
-		managerController.removeInstance(token.getAccessId(), completeId, OrderConstants.NETWORK_TERM);
-		
-		Mockito.verify(networkPlugin, Mockito.times(1)).removeInstance(token, newResourceId);
-		
-	}
-	
-	@Test
-	public void testRemoveRemoteNetworkInstance() {
-		
-		//Constants
-		String newResourceId = "networkid-01";
-		Token token = managerTestHelper.getDefaultFederationToken();
-		String orderId = "idA";
-		String providingMemberId = "manager.remote.test.com";
-		String completeId = newResourceId + Order.SEPARATOR_GLOBAL_ID + providingMemberId;
-		
-		//Returns & Mocks
-		List<StorageLink> storageLinksReturn = new ArrayList<StorageLink>();
-		
-		ManagerDataStoreController managerDataStoreControllerMock = Mockito.mock(ManagerDataStoreController.class);
-		Mockito.when(
-				managerDataStoreControllerMock.getAllStorageLinkByInstance(newResourceId, 
-				OrderConstants.NETWORK_INTERFACE_TERM)).thenReturn(storageLinksReturn);
-		
-		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
-		AsyncPacketSender asyncPacketSender = Mockito.mock(AsyncPacketSender.class);
-		IQ response = new IQ();
-		Mockito.when(
-				asyncPacketSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
-		
-		Order orderOne = createOrder(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
-		orderOne.setState(OrderState.FULFILLED);
-		orderOne.setInstanceId(newResourceId);
-		orderOne.setResourceKind(OrderConstants.NETWORK_TERM);
-		orderOne.setFederationToken(token);
-		orderOne.setProvidingMemberId(providingMemberId);
-		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
-		managerDataStoreController.addOrder(orderOne);
-
-		managerController.setNetworkPlugin(networkPlugin);
-		managerController.setPacketSender(asyncPacketSender);
-		
-		managerController.removeInstance(token.getAccessId(), completeId, OrderConstants.NETWORK_TERM);
-		
-		Mockito.verify(asyncPacketSender, Mockito.times(1)).syncSendPacket(Mockito.any(IQ.class));
-		
-	}
-	
-	@Test
-	public void testRemoveNetworkInstanceForRemoteMember() {
-		
-		//Constants
-		String instanceId = "networkid-01";
-		Token token = managerTestHelper.getDefaultFederationToken();
-		String orderId = "idA";
-		String providingMemberId = "manager.test.com";
-		
-		//Returns
-		List<StorageLink> storageLinksReturn = new ArrayList<StorageLink>();
-		
-		ManagerDataStoreController managerDataStoreControllerMock = Mockito.mock(ManagerDataStoreController.class);
-		Mockito.when(
-				managerDataStoreControllerMock.getAllStorageLinkByInstance(instanceId, 
-				OrderConstants.NETWORK_INTERFACE_TERM)).thenReturn(storageLinksReturn);
-		
-		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
-		
-		Order orderOne = createOrder(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
-		orderOne.setState(OrderState.FULFILLED);
-		orderOne.setInstanceId(instanceId);
-		orderOne.setResourceKind(OrderConstants.NETWORK_TERM);
-		orderOne.setFederationToken(token);
-		orderOne.setProvidingMemberId(providingMemberId);
-		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
-		managerDataStoreController.addOrder(orderOne);
-
-		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
-		
-		managerController.setNetworkPlugin(networkPlugin);
-		
-		managerController.removeInstanceForRemoteMember(instanceId);
-		
-		Mockito.verify(networkPlugin, Mockito.times(1)).removeInstance(token, instanceId);
-		
-	}
-	
-	
-	@SuppressWarnings("unchecked")
-	@Test
-	public void testCheckAndSubmitOpenNetworkOrdersToRemoteMember() {
-		
-		String INSTANCE_ID = "newinstanceid";
-		
-		AsyncPacketSender packetSender = Mockito.mock(AsyncPacketSender.class);
-		managerController.setPacketSender(packetSender);
-		
-		// mocking getRemoteInstance for running benchmarking
-		IQ response = new IQ(); 
-		response.setType(Type.result);
-		Element queryEl = response.getElement().addElement("query", 
-				ManagerXmppComponent.GETINSTANCE_NAMESPACE);
-		Element instanceEl = queryEl.addElement("instance");
-		instanceEl.addElement("id").setText(INSTANCE_ID);
-		
-		Mockito.when(packetSender.syncSendPacket(Mockito.any(IQ.class))).thenReturn(response);
-
-		final List<PacketCallback> callbacks = new LinkedList<PacketCallback>();
-		
-		Mockito.doAnswer(new Answer<Void>() {
-			@Override
-			public Void answer(InvocationOnMock invocation) throws Throwable {
-				callbacks.add((PacketCallback) invocation.getArguments()[1]);
-				return null;
-			}
-		}).when(packetSender).addPacketCallback(Mockito.any(Packet.class), Mockito.any(PacketCallback.class));
-		
-		ResourcesInfo localResourcesInfo = new ResourcesInfo("", "", "", "", "", "");
-		localResourcesInfo.setId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		
-		ResourcesInfo remoteResourcesInfoOne = new ResourcesInfo("", "", "", "", "", "");
-		remoteResourcesInfoOne.setId(DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
-		
-		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
-
-		managerController.setNetworkPlugin(networkPlugin);
-
-		final List<FederationMember> listMembers = new ArrayList<FederationMember>();
-		listMembers.add(new FederationMember(localResourcesInfo));
-		listMembers.add(new FederationMember(remoteResourcesInfoOne));
-		managerController.updateMembers(listMembers);
-		
-		FederationMemberPickerPlugin memberPicker = Mockito.mock(FederationMemberPickerPlugin.class);
-		Mockito.when(memberPicker.pick(Mockito.anyList())).thenReturn(
-				new FederationMember(remoteResourcesInfoOne));
-		managerController.setMemberPickerPlugin(memberPicker );
-
-		final String orderId = "orderId";
-		Order orderOne = createOrder(orderId, managerTestHelper.getDefaultFederationToken(),
-				new ArrayList<Category>(),
-				new HashMap<String, String>(), true,
-				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
-		orderOne.setState(OrderState.OPEN);
-		orderOne.setResourceKind(OrderConstants.NETWORK_TERM);
-		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
-		managerDataStoreController.addOrder(orderOne);
-		
-		// Send to first member
-		managerController.checkAndSubmitOpenOrders();
-
-		List<Order> ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
-				.getDefaultFederationToken().getAccessId());
-		for (Order order : ordersFromUser) {
-			Assert.assertEquals(OrderState.PENDING, order.getState());
-		}
-		Assert.assertTrue(managerController.isOrderForwardedtoRemoteMember(orderOne.getId()));			
-		
-		AsyncPacketSender packetSenderTwo = Mockito.mock(AsyncPacketSender.class);
-		managerController.setPacketSender(packetSenderTwo);
-		
-		IQ iq = new IQ();
-		queryEl = iq.getElement().addElement("query",
-				ManagerXmppComponent.ORDER_NAMESPACE);
-		instanceEl = queryEl.addElement("instance");
-		instanceEl.addElement("id").setText(INSTANCE_ID);
-		callbacks.get(0).handle(iq);
-		
-		ordersFromUser = managerController.getOrdersFromUser(managerTestHelper
-				.getDefaultFederationToken().getAccessId());
-		for (Order order : ordersFromUser) {
-			Assert.assertEquals(OrderState.FULFILLED, order.getState());
-			Assert.assertFalse(managerController.isOrderForwardedtoRemoteMember(order.getId()));
-		}
-	}
-
-	@Test
-	public void getInstanceForRemoteMember() {
-
-		//Constants
-		String instanceId = "networkid-01";
-		Token token = managerTestHelper.getDefaultFederationToken();
-		String orderId = "idA";
-		String providingMemberId = "manager.test.com";
-
-		//Returns
-		List<StorageLink> storageLinksReturn = new ArrayList<StorageLink>();
-
-		ManagerDataStoreController managerDataStoreControllerMock = Mockito.mock(ManagerDataStoreController.class);
-		Mockito.when(
-				managerDataStoreControllerMock.getAllStorageLinkByInstance(instanceId, 
-				OrderConstants.NETWORK_INTERFACE_TERM)).thenReturn(storageLinksReturn);
-
-		xOCCIAtt.put(OrderAttribute.RESOURCE_KIND.getValue(), OrderConstants.NETWORK_TERM);
-
-		Order orderOne = createOrder(orderId, token, new ArrayList<Category>(), xOCCIAtt, true, "");
-		orderOne.setState(OrderState.FULFILLED);
-		orderOne.setInstanceId(instanceId);
-		orderOne.setResourceKind(OrderConstants.NETWORK_TERM);
-		orderOne.setFederationToken(token);
-		orderOne.setProvidingMemberId(providingMemberId);
-		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();
-		managerDataStoreController.addOrder(orderOne);
-
-		NetworkPlugin networkPlugin = Mockito.mock(NetworkPlugin.class);
-
-		managerController.setNetworkPlugin(networkPlugin);
-
-		managerController.getInstanceForRemoteMember(instanceId);
-
-		Mockito.verify(networkPlugin, Mockito.times(1)).getInstance(token, instanceId);
-	}
 	
 	@Test
 	public void testCheckInstancePreempted() {
@@ -4473,7 +3833,7 @@ public class TestManagerControllerXP {
 		Order orderServeredComputeOpen = createOrder("id_four", token, "instance_id_four", null, requestingMemberId, 
 				0, false, OrderState.OPEN, null, xOCCIAtt);
 		orderServeredComputeOpen.setResourceKind(OrderConstants.COMPUTE_TERM);
-		managerDataStoreController.addOrder(orderServeredComputeOpen);				
+		managerDataStoreController.addOrder(orderServeredComputeOpen);
 		
 		CapacityControllerPlugin capacityControllerPlugin = Mockito.mock(CapacityControllerPlugin.class);
 		// max instances
@@ -4485,13 +3845,13 @@ public class TestManagerControllerXP {
 		// One instance
 		Assert.assertTrue(this.managerController.isThereEnoughQuota(requestingMemberId));
 		
-		Order orderServeredComputeFullfieldOther = createOrder("id_five", token, "instance_id_five", null, requestingMemberId, 
-				0, false, OrderState.FULFILLED, null, xOCCIAtt);
+		Order orderServeredComputeFullfieldOther = createOrder("id_five", token, "instance_id_five", null, requestingMemberId, 0, false, OrderState.FULFILLED, null, xOCCIAtt);
+		
 		orderServeredComputeFullfieldOther.setResourceKind(OrderConstants.COMPUTE_TERM);
 		managerDataStoreController.addOrder(orderServeredComputeFullfieldOther);
 		
 		// Two instance
-		Assert.assertFalse(this.managerController.isThereEnoughQuota(requestingMemberId));
+		Assert.assertTrue(this.managerController.isThereEnoughQuota(requestingMemberId));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -4502,7 +3862,9 @@ public class TestManagerControllerXP {
 		Mockito.when(identityPlugin.createToken(Mockito.anyMap())).thenReturn(token);
 		this.managerController.setLocalIdentityPlugin(identityPlugin);
 		
-		ComputePlugin computePlugin = Mockito.mock(ComputePlugin.class);
+		Properties prop = new Properties();
+		prop.put(FakeCloudComputePlugin.COMPUTE_FAKE_QUOTA, "10");
+		ComputePlugin computePlugin = Mockito.spy(new FakeCloudComputePlugin(prop));
 		int instancesIdle = 3;
 		int instancesInUse = 7;
 		ResourcesInfo resourceInfo = new ResourcesInfo("0", "0", "0", "0", 

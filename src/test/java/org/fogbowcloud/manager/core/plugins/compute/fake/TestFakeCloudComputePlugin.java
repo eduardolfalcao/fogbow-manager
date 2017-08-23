@@ -114,11 +114,10 @@ public class TestFakeCloudComputePlugin {
 		Assert.assertEquals(1, fakeCloudComputePlugin.getFreeQuota());
 		Assert.assertEquals(2, fakeCloudComputePlugin.getQuota());
 		Order o = new Order("", null, id, "", "", 0, false, OrderState.OPEN, new ArrayList(), new HashMap());
-		fakeCloudComputePlugin.removeInstance(null, id, o);
+		fakeCloudComputePlugin.removeInstance(null, id);
 		Assert.assertEquals(0, fakeCloudComputePlugin.getInstances().size());
 		Assert.assertEquals(2, fakeCloudComputePlugin.getFreeQuota());
 		Assert.assertEquals(2, fakeCloudComputePlugin.getQuota());
-		Assert.assertEquals(OrderState.CLOSED, o.getState());
 	}
 	
 	@Test
@@ -127,7 +126,7 @@ public class TestFakeCloudComputePlugin {
 		Assert.assertEquals(1, fakeCloudComputePlugin.getInstances().size());
 		Assert.assertEquals(1, fakeCloudComputePlugin.getFreeQuota());
 		Assert.assertEquals(2, fakeCloudComputePlugin.getQuota());
-		fakeCloudComputePlugin.removeInstance(null, null, null);
+		fakeCloudComputePlugin.removeInstance(null, null);
 		Assert.assertEquals(1, fakeCloudComputePlugin.getInstances().size());
 		Assert.assertEquals(1, fakeCloudComputePlugin.getFreeQuota());
 		Assert.assertEquals(2, fakeCloudComputePlugin.getQuota());

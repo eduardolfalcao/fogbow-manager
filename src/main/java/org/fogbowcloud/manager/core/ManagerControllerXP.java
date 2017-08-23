@@ -21,6 +21,7 @@ import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton.MonitorPeerStateAssync;
 import org.fogbowcloud.manager.occi.instance.Instance;
+import org.fogbowcloud.manager.occi.instance.InstanceState;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
@@ -81,58 +82,11 @@ public class ManagerControllerXP extends ManagerController{
 			return ((FakeCloudComputePlugin)computePlugin).getQuota();
 		else return CapacityControllerPlugin.MAXIMUM_CAPACITY_VALUE_ERROR;
 	}
-	
-	@Override
-	public void removeOrderForRemoteMember(String accessId, String orderId) {
-		LOGGER.info("<"+managerId+">: "+"Removing order for remote member: " + orderId);
-		Order order = managerDataStoreController.getOrder(orderId, false);
-		if (order != null && order.getInstanceId() != null) {
-			try {
-				Token token = localIdentityPlugin.createToken(mapperPlugin.getLocalCredentials(accessId));
-				String instanceId = order.getInstanceId();
-				if (order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
-					((FakeCloudComputePlugin)computePlugin).removeInstance(token, instanceId, order);					
-				} else if (order.getResourceKind().equals(OrderConstants.STORAGE_TERM)) {
-					storagePlugin.removeInstance(token, instanceId);
-				} else if (order.getResourceKind().equals(OrderConstants.NETWORK_TERM)) {
-					networkPlugin.removeInstance(token, instanceId);
-				}
-			} catch (Exception e) { 
-			}
-		}
-		managerDataStoreController.excludeOrder(order.getId());
-	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	protected Map<String, String> getExternalServiceAddresses(String tokenId) {
 		return null;
-	}	
-		
-	@Override
-	protected void removeInstance(String instanceId, Order order, String resourceKind) {				
-		List<StorageLink> storageLinks = this.managerDataStoreController.getAllStorageLinkByInstance(instanceId, resourceKind);
-		if (!storageLinks.isEmpty()) {
-			throw new OCCIException(ErrorType.BAD_REQUEST,
-					ResponseConstants.EXISTING_ATTACHMENT + " Attachment IDs : " 
-					+ StorageLink.Util.storageLinksToString(storageLinks));			
-		}
-				
-		Token localToken = getFederationUserToken(order);
-		if (isFulfilledByLocalMember(order)) {	
-			if (resourceKind.equals(OrderConstants.COMPUTE_TERM)) {
-				((FakeCloudComputePlugin)this.computePlugin).removeInstance(localToken, instanceId, order);
-			} else if (resourceKind.equals(OrderConstants.STORAGE_TERM)) {
-				this.storagePlugin.removeInstance(localToken, instanceId);
-			} else if (resourceKind.equals(OrderConstants.NETWORK_TERM)) {
-				this.networkPlugin.removeInstance(localToken, instanceId);
-			}
-		} else {
-			LOGGER.info("<"+managerId+">: Trying to remove remote instance with orderId("+order.getId()+"), and instanceId("+order.getInstanceId()+").");
-			removeRemoteInstance(order);
-		}		
-		
-		instanceRemoved(order);
 	}
 
 	protected void instanceRemoved(Order o) {
@@ -151,11 +105,24 @@ public class ManagerControllerXP extends ManagerController{
 		}
 		
 		String instanceId = order.getInstanceId();
+		Token t = order.getFederationToken();
+		Instance instance = null;
+		try{
+			instance = computePlugin.getInstance(t, instanceId);
+		}catch(Exception e){
+			LOGGER.error("<"+managerId+">: "+"Couldn't get instance with id "+instanceId+"! Order: " + order.getId(), e);
+		}
 		order.setInstanceId(null);
 		order.setProvidingMemberId(null);
-
-		if (order.getState().equals(OrderState.DELETED)  || !order.isLocal()) {			
+		
+		if (order.getState().equals(OrderState.DELETED)  || !order.isLocal()) {
 			managerDataStoreController.excludeOrder(order.getId());
+		} else if(instance != null && instance.getState().equals(InstanceState.FAILED)){
+			LOGGER.info("<"+managerId+">: "+"The instance is failed! Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);
+			order.setState(OrderState.CLOSED);
+		} else if (!isPersistent(order)) {
+			LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);
+			order.setState(OrderState.CLOSED);
 		} else if (isPersistent(order)) {
 			boolean finished = (order.getPreviousElapsedTime() + order.getCurrentElapsedTime()) >= order.getRuntime();
 			if(!finished){	//and is local
@@ -168,7 +135,7 @@ public class ManagerControllerXP extends ManagerController{
 				LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);
 				order.setState(OrderState.CLOSED);
 			}
-		} 
+		}		
 		
 		this.managerDataStoreController.updateOrder(order);
 		if (instanceId != null) {
@@ -274,24 +241,9 @@ public class ManagerControllerXP extends ManagerController{
 	}
 	
 	@Override
-	public void removeInstanceForRemoteMember(String instanceId) {
+	public void removeInstanceForRemoteMember(String instanceId) {		
+		super.removeInstanceForRemoteMember(instanceId);
 		Order order = managerDataStoreController.getOrderByInstance(instanceId);
-		String resourceKind = order != null ? order.getAttValue(OrderAttribute.RESOURCE_KIND.getValue()) : null;
-		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;
-		LOGGER.info("<"+managerId+">: "+"Removing instance(" + resourceKind + ") with instanceId(" + instanceId + ") "
-				+ "and orderId("+order.getId()+") for remote member.");
-
-		Token federationUserToken = getFederationUserToken(order);
-		if (OrderConstants.COMPUTE_TERM.equals(resourceKind)) {
-			updateAccounting();
-			benchmarkingPlugin.remove(instanceId);
-			((FakeCloudComputePlugin)computePlugin).removeInstance(federationUserToken, instanceId, order);
-		} else if (OrderConstants.STORAGE_TERM.equals(resourceKind)) {
-			storagePlugin.removeInstance(federationUserToken, instanceId);
-		} else if (OrderConstants.NETWORK_TERM.equals(resourceKind)) {
-			networkPlugin.removeInstance(federationUserToken, instanceId);			
-		}
-		
 		instanceRemoved(order);		
 	}	
 	
@@ -340,7 +292,7 @@ public class ManagerControllerXP extends ManagerController{
 		List<Order> currentOrders = new ArrayList<Order>();
 		for (int i = 0; i < instanceCount; i++) {
 			String orderId = String.valueOf(UUID.randomUUID());
-			Order order = new Order(orderId, federationToken, new LinkedList<Category>(categories),
+			Order order = new OrderXP(orderId, federationToken, new LinkedList<Category>(categories),
 					new HashMap<String, String>(xOCCIAtt), true, properties.getProperty("xmpp_jid"));
 			currentOrders.add(order);
 		}

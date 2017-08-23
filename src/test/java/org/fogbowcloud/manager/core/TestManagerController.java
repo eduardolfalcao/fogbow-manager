@@ -4466,7 +4466,9 @@ public class TestManagerController {
 		managerDataStoreController.addOrder(orderServeredOtherMemberComputeFullfield);		
 		Order orderServeredStorageFullfield = new Order("id_three", token, "instance_id_three", null, requestingMemberId, 
 				0, false, OrderState.FULFILLED, null, xOCCIAtt);
-		orderServeredStorageFullfield.setResourceKind(OrderConstants.STORAGE_LINK_TERM);
+		//FIXME when iserting on databse this kind isnot considered since its not in the map
+		//perhaps the setResourceKind should automatically update the map
+		orderServeredStorageFullfield.setResourceKind(OrderConstants.STORAGE_LINK_TERM);	
 		managerDataStoreController.addOrder(orderServeredStorageFullfield);
 		Order orderServeredComputeOpen = new Order("id_four", token, "instance_id_four", null, requestingMemberId, 
 				0, false, OrderState.OPEN, null, xOCCIAtt);

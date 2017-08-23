@@ -70,20 +70,6 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 		LOGGER.info("<"+managerId+">: Existing instances: "+instances+". Requested instance: "+instanceId);//debug-EDUARDO
 		return null;
 	}	
-	
-	public synchronized void removeInstance(Token token, String instanceId, Order order) {
-		if(order!=null)
-			order.setState(OrderState.CLOSED);
-		
-		if(instanceId!=null){
-		boolean success = instances.remove(instanceId);
-			if(success)
-				LOGGER.info("<"+managerId+">: FakeCloudComputePlugin removing instance (" + instanceId + ").");
-			else
-				LOGGER.info("<"+managerId+">: FakeCloudComputePlugin tried to remove instance (" + instanceId + ") "
-						+ "but it doesn't exist.");
-		}
-	}
 
 	@Override
 	public synchronized void removeInstance(Token token, String instanceId) {	
