@@ -481,7 +481,6 @@ public class ManagerControllerXP extends ManagerController{
 		}
 	
 		try {
-			System.out.println("createInstance");
 			return createInstance(order);
 		} catch (Exception e) {
 			LOGGER.warn("<"+managerId+">: "+"Could not create instance for order("+order.getId()+") with federation user locally");
@@ -523,8 +522,6 @@ public class ManagerControllerXP extends ManagerController{
 				
 				String instanceId = computePlugin.requestInstance(federationUserToken, categories, xOCCIAttCopy,
 						localImageId);
-				
-				System.out.println("instanceId: "+instanceId);
 				
 				order.setState(OrderState.SPAWNING);
 				order.setInstanceId(instanceId);

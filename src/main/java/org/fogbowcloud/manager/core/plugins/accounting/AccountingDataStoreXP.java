@@ -170,8 +170,6 @@ public class AccountingDataStoreXP extends AccountingDataStore{
 			return false;
 		}
 		
-		System.out.println("<"+managerId+">: "+"Member=" + member+", quota="+capacity);
-		
 		PreparedStatement updateQuotaStatement = null;		
 		Connection connection = null;
 
@@ -186,8 +184,6 @@ public class AccountingDataStoreXP extends AccountingDataStore{
 			updateQuotaStatement.execute();
 		
 			connection.commit();
-			
-			System.out.println("OK");
 			
 			return true;
 		} catch (SQLException e) {
@@ -250,7 +246,7 @@ public class AccountingDataStoreXP extends AccountingDataStore{
 				insertMemberStatement.setString(3, accountingEntry.getProvidingMember());
 				insertMemberStatement.setDouble(4, accountingEntry.getUsage());
 				insertMemberStatement.setInt(5, accountingEntry.getCurrentInstances());
-				insertMemberStatement.setDouble(6, -1.0);
+				insertMemberStatement.setDouble(6, Double.MAX_VALUE);
 				insertMemberStatement.addBatch();
 				
 			} else { // updating an existing entry
@@ -268,8 +264,6 @@ public class AccountingDataStoreXP extends AccountingDataStore{
 	@Override
 	protected AccountingInfo getAccountingInfo(AccountingEntryKey key) {
 		LOGGER.debug("<"+managerId+">: "+"Getting accountingInfo to " + key);
-		
-		System.out.println("<"+managerId+">: "+"Getting accountingInfo to " + key);
 
 		AccountingEntryKey entryKey = (AccountingEntryKey) key;
 
@@ -357,8 +351,6 @@ public class AccountingDataStoreXP extends AccountingDataStore{
 	@Override
 	protected List<AccountingInfo> createAccounting(ResultSet rs) {
 		
-		System.out.println("aaa");
-		
 		List<AccountingInfo> accounting = new ArrayList<AccountingInfo>();
 		try {
 			while (rs.next()) {
@@ -373,8 +365,6 @@ public class AccountingDataStoreXP extends AccountingDataStore{
 				userAccounting.addConsumption(rs.getDouble(USAGE_COL));
 				userAccounting.setCurrentInstances(rs.getInt(INSTANCES_COL));
 				userAccounting.setQuota(rs.getDouble(VIRTUAL_QUOTA_COL));
-				
-				System.out.println(userAccounting);
 				
 				accounting.add(userAccounting);				
 			}

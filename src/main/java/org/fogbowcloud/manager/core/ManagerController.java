@@ -1349,8 +1349,7 @@ public class ManagerController {
 				try {
 					LOGGER.debug("<"+managerId+">: "+"Monitoring instance of order: " + order);
 					
-					Instance i = getInstance(order, order.getResourceKind());
-					System.out.println("Instance: "+i);					
+					Instance i = getInstance(order, order.getResourceKind());				
 					removeFailedInstance(order, i);
 					this.monitoringHelper.eraseFailedMonitoringAttempts(order);
 				} catch (OCCIException e) {
@@ -1654,7 +1653,6 @@ public class ManagerController {
 
 						if (!isFulfilled
 								&& !failedBatch.batchExists(order.getBatchId(), FailedBatchType.FEDERATION_USER)) {
-							System.out.println("createLocalInstanceWithFederationUser");
 							isFulfilled = createLocalInstanceWithFederationUser(order);
 							if (!isFulfilled) {
 								failedBatch.failBatch(order.getBatchId(), FailedBatchType.FEDERATION_USER);
@@ -1820,8 +1818,6 @@ public class ManagerController {
 		Token federationUserToken = getFederationUserToken(order);
 		
 		if (isComputeOrder) {
-			
-			System.out.println("compute");
 			
 			try {
 				try {
