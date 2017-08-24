@@ -9,22 +9,24 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.occi.TestDataStorageHelper;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestAccountingDataStore {
+public class TestAccountingDataStoreXP {
 
-	private static final Logger LOGGER = Logger.getLogger(TestAccountingDataStore.class);
+	private static final Logger LOGGER = Logger.getLogger(TestAccountingDataStoreXP.class);
 
 	private final double ACCEPTABLE_ERROR = 0.000001;
 	private final String DATASTORE_PATH = "src/test/resources/testUserBasedAccountingDataStoreDb.sqlite";
 	private final String DATASTORE_URL = "jdbc:sqlite:" + DATASTORE_PATH;
 
 	Properties properties = null;
-	AccountingDataStore db = null;
+	AccountingDataStoreXP db = null;
 
 	@Before
 	public void initialize() {
@@ -32,8 +34,9 @@ public class TestAccountingDataStore {
 		LOGGER.debug("Creating data store.");
 		properties = new Properties();
 		properties.put("accounting_datastore_url", DATASTORE_URL);
+		properties.put(ConfigurationConstants.XMPP_JID_KEY, "managerId");
 
-		db = new AccountingDataStore(properties, "test");
+		db = new AccountingDataStoreXP(properties);
 	}	
 
 	@After
@@ -49,7 +52,7 @@ public class TestAccountingDataStore {
 		try {
 			Properties properties = new Properties();
 			properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, "/dev/null");
-			new AccountingDataStore(properties, "");
+			new AccountingDataStoreXP(properties);
 			Assert.fail();
 		} catch (Error e) {
 			Assert.assertEquals(AccountingDataStore.ERROR_WHILE_INITIALIZING_THE_DATA_STORE, 
@@ -115,6 +118,7 @@ public class TestAccountingDataStore {
 		Assert.assertEquals("requestingMember", accounting.get(0).getRequestingMember());
 		Assert.assertEquals("providingMember", accounting.get(0).getProvidingMember());
 		Assert.assertEquals(0, accounting.get(0).getUsage(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(0, accounting.get(0).getCurrentInstances(), ACCEPTABLE_ERROR);
 	}
 
 	@Test
@@ -134,6 +138,7 @@ public class TestAccountingDataStore {
 		Assert.assertEquals("requestingMember", accounting.get(0).getRequestingMember());
 		Assert.assertEquals("providingMember", accounting.get(0).getProvidingMember());
 		Assert.assertEquals(0, accounting.get(0).getUsage(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(0, accounting.get(0).getCurrentInstances(), ACCEPTABLE_ERROR);
 
 		// adding consuption
 		usage.get(0).addConsumption(20);
@@ -150,6 +155,22 @@ public class TestAccountingDataStore {
 		Assert.assertEquals("requestingMember", accounting.get(0).getRequestingMember());
 		Assert.assertEquals("providingMember", accounting.get(0).getProvidingMember());
 		Assert.assertEquals(20, accounting.get(0).getUsage(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(0, accounting.get(0).getCurrentInstances(), ACCEPTABLE_ERROR);
+		
+		// adding instance, and 20 of consumption
+		usage.get(0).incrementCurrentInstances();
+		
+		Assert.assertTrue(db.update(usage));
+		rs = db.getConnection().createStatement().executeQuery(sql);
+		accounting = db.createAccounting(rs);
+		
+		// checking accounting was updated
+		Assert.assertEquals(1, accounting.size());
+		Assert.assertEquals("user", accounting.get(0).getUser());
+		Assert.assertEquals("requestingMember", accounting.get(0).getRequestingMember());
+		Assert.assertEquals("providingMember", accounting.get(0).getProvidingMember());
+		Assert.assertEquals(40, accounting.get(0).getUsage(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(1, accounting.get(0).getCurrentInstances(), ACCEPTABLE_ERROR);
 	}
 
 	@Test
@@ -159,6 +180,7 @@ public class TestAccountingDataStore {
 				"providingMember1");
 		int initialUsage1 = 10;
 		accountingInfo1.addConsumption(initialUsage1);
+		accountingInfo1.incrementCurrentInstances();
 		usage.add(accountingInfo1);
 
 		Assert.assertTrue(db.update(usage));
@@ -173,17 +195,21 @@ public class TestAccountingDataStore {
 		Assert.assertEquals("requestingMember1", accounting.get(0).getRequestingMember());
 		Assert.assertEquals("providingMember1", accounting.get(0).getProvidingMember());
 		Assert.assertEquals(initialUsage1, accounting.get(0).getUsage(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(1, accounting.get(0).getCurrentInstances(), ACCEPTABLE_ERROR);
 
 		// new usage and consuption to existing user
 		usage = new ArrayList<AccountingInfo>();
 		accountingInfo1 = new AccountingInfo("user1", "requestingMember1", "providingMember1");
 		int finalUsage1 = 30;
 		accountingInfo1.addConsumption(finalUsage1);
+		accountingInfo1.incrementCurrentInstances();
+		accountingInfo1.incrementCurrentInstances();
 
 		AccountingInfo accountingInfo2 = new AccountingInfo("user2", "requestingMember2",
 				"providingMember2");
 		int usage2 = 20;
 		accountingInfo2.addConsumption(usage2);
+		accountingInfo2.incrementCurrentInstances();
 		usage.add(accountingInfo1);
 		usage.add(accountingInfo2);
 
@@ -209,11 +235,13 @@ public class TestAccountingDataStore {
 		Assert.assertEquals("providingMember1", accountingInfo1.getProvidingMember());
 		Assert.assertEquals(initialUsage1 + finalUsage1, accountingInfo1.getUsage(),
 				ACCEPTABLE_ERROR);
+		Assert.assertEquals(2, accountingInfo1.getCurrentInstances(), ACCEPTABLE_ERROR);
 
 		Assert.assertEquals("user2", accountingInfo2.getUser());
 		Assert.assertEquals("requestingMember2", accountingInfo2.getRequestingMember());
 		Assert.assertEquals("providingMember2", accountingInfo2.getProvidingMember());
 		Assert.assertEquals(usage2, accountingInfo2.getUsage(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(1, accountingInfo2.getCurrentInstances(), ACCEPTABLE_ERROR);
 	}
 	
 	@Test
@@ -470,18 +498,42 @@ public class TestAccountingDataStore {
 	}
 	
 	@Test
-	public void testDefaultDataStoreUrl() {
-		Properties emptyProperties = new Properties();
-		String someDatastoreNamePrefix[] = new String[] {
-				FCUAccountingPlugin.DEFAULT_NAME_DATASTORE_PREFIX, SimpleStorageAccountingPlugin.DEFAULT_NAME_DATASTORE_PREFIX };
+	public void testUpdateInsertingAndUpdatingQuota() throws SQLException {
+		List<AccountingInfo> usage = new ArrayList<AccountingInfo>();
+		AccountingInfo accountingInfo1 = new AccountingInfo("user1", "requestingMember1",
+				"managerId");
+		int initialUsage1 = 10;
+		accountingInfo1.addConsumption(initialUsage1);
+		accountingInfo1.incrementCurrentInstances();
+		usage.add(accountingInfo1);
+
+		Assert.assertTrue(db.update(usage));
+
+		String sql = "select * from " + AccountingDataStore.USAGE_TABLE_NAME;
+		ResultSet rs = db.getConnection().createStatement().executeQuery(sql);
+		List<AccountingInfo> accounting = db.createAccounting(rs);
+
+		// checking initial accounting
+		Assert.assertEquals(1, accounting.size());
+		Assert.assertEquals("user1", accounting.get(0).getUser());
+		Assert.assertEquals("requestingMember1", accounting.get(0).getRequestingMember());
+		Assert.assertEquals("managerId", accounting.get(0).getProvidingMember());
+		Assert.assertEquals(initialUsage1, accounting.get(0).getUsage(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(1, accounting.get(0).getCurrentInstances(), ACCEPTABLE_ERROR);
+
+		Assert.assertTrue(db.updateQuota(new FederationMember("requestingMember1"), 10.0));
 		
-		for (String defaultDatastoreNamePrefix : someDatastoreNamePrefix) {
-			this.db.setDataStoreURL(emptyProperties, defaultDatastoreNamePrefix);
-			
-			String sufixExpected = defaultDatastoreNamePrefix + "_" + AccountingDataStore.DEFAULT_DATASTORE_NAME;
-			String dataStoreURL = this.db.getDataStoreURL();
-			
-			Assert.assertTrue(dataStoreURL.endsWith(sufixExpected));			
-		}
+		sql = "select * from " + AccountingDataStore.USAGE_TABLE_NAME;
+		rs = db.getConnection().createStatement().executeQuery(sql);
+		accounting = db.createAccounting(rs);
+		
+		// checking if only quota has changed
+		Assert.assertEquals(1, accounting.size());
+		Assert.assertEquals("user1", accounting.get(0).getUser());
+		Assert.assertEquals("requestingMember1", accounting.get(0).getRequestingMember());
+		Assert.assertEquals("managerId", accounting.get(0).getProvidingMember());
+		Assert.assertEquals(initialUsage1, accounting.get(0).getUsage(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(1, accounting.get(0).getCurrentInstances(), ACCEPTABLE_ERROR);
+		Assert.assertEquals(10.0, accounting.get(0).getQuota(), ACCEPTABLE_ERROR);
 	}
 }

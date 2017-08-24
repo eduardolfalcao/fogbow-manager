@@ -8,46 +8,44 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.MainHelper;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.DateUtils;
+import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
+import org.fogbowcloud.manager.core.plugins.AccountingPluginXP;
 import org.fogbowcloud.manager.core.plugins.BenchmarkingPlugin;
 import org.fogbowcloud.manager.occi.order.Order;
 
-public class FCUAccountingPlugin implements AccountingPlugin {
+public class FCUAccountingPluginXP extends FCUAccountingPlugin implements AccountingPluginXP {
 
-	protected BenchmarkingPlugin benchmarkingPlugin;
-	protected AccountingDataStore db;
-	protected DateUtils dateUtils;
-	protected long lastUpdate;
+	private String managerId;
 
+	private static final Logger LOGGER = Logger.getLogger(FCUAccountingPluginXP.class);
 	public static final String ACCOUNTING_DATASTORE_URL = "fcu_accounting_datastore_url";
-	protected static final String DEFAULT_NAME_DATASTORE_PREFIX = FCUAccountingPlugin.class.getSimpleName().toLowerCase();
-	
-	private static final Logger LOGGER = Logger.getLogger(FCUAccountingPlugin.class);
 
-	public FCUAccountingPlugin(Properties properties, BenchmarkingPlugin benchmarkingPlugin) {
+	public FCUAccountingPluginXP(Properties properties, BenchmarkingPlugin benchmarkingPlugin) {
 		this(properties, benchmarkingPlugin, new DateUtils());
 	}
 	
-	public FCUAccountingPlugin() {}
-	
-	public FCUAccountingPlugin(Properties properties,
-			BenchmarkingPlugin benchmarkingPlugin, DateUtils dateUtils) {
+	public FCUAccountingPluginXP(Properties properties,
+			BenchmarkingPlugin benchmarkingPlugin, DateUtils dateUtils) {		
 		this.benchmarkingPlugin = benchmarkingPlugin;
 		this.dateUtils = dateUtils;
 		this.lastUpdate = dateUtils.currentTimeMillis();
 
 		properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, 
-				properties.getProperty(getDataStoreUrl()));
-		db = new AccountingDataStore(properties, DEFAULT_NAME_DATASTORE_PREFIX);
+				properties.getProperty(getDataStoreUrl()));		
+		db = new AccountingDataStoreXP(properties);		
+		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 
 	@Override
 	public void update(List<Order> ordersWithInstance) {
-		LOGGER.debug("Updating account with orders=" + ordersWithInstance);
+		LOGGER.debug("<"+managerId+">: "+"Updating account with orders=" + ordersWithInstance);
 		long now = dateUtils.currentTimeMillis();
 		double updatingInterval = ((double) TimeUnit.MILLISECONDS.toSeconds(now - lastUpdate) / 60);
-		LOGGER.debug("updating interval=" + updatingInterval);
+		LOGGER.debug("<"+managerId+">: "+"updating interval=" + updatingInterval);
 
 		Map<AccountingEntryKey, AccountingInfo> usage = new HashMap<AccountingEntryKey, AccountingInfo>();
 
@@ -71,43 +69,25 @@ public class FCUAccountingPlugin implements AccountingPlugin {
 				AccountingInfo accountingInfo = new AccountingInfo(current.getUser(),
 						current.getRequestingMember(), current.getProvidingMember());
 				usage.put(current, accountingInfo);
-			}
+			} 			
 
 			double instanceUsage = getUsage(order, updatingInterval, consumptionInterval);
-
+			
+			usage.get(current).incrementCurrentInstances();		//every time we have to count again by the number of orders with instance
 			usage.get(current).addConsumption(instanceUsage);
 		}
 
-		LOGGER.debug("current usage=" + usage);
+		LOGGER.debug("<"+managerId+">: "+"current usage=" + usage);
 
 		if ((usage.isEmpty()) || db.update(new ArrayList<AccountingInfo>(usage.values()))) {
 			this.lastUpdate = now;
-			LOGGER.debug("Updating lastUpdate to " + this.lastUpdate);
+			LOGGER.debug("<"+managerId+">: "+"Updating lastUpdate to " + this.lastUpdate);
 		}
 	}
-
-	protected double getUsage(Order order, double updatingInterval , double consumptionInterval) {
-		double instancePower = benchmarkingPlugin.getPower(order.getGlobalInstanceId());
-		return instancePower * Math.min(consumptionInterval, updatingInterval);
-	}	
-	
-	protected String getDataStoreUrl() {
-		return ACCOUNTING_DATASTORE_URL;
-	}	
 	
 	@Override
-	public List<AccountingInfo> getAccountingInfo() {
-		return db.getAccountingInfo();
-	}
-
-	@Override
-	public AccountingInfo getAccountingInfo(String user, String requestingMember,
-			String providingMember) {
-		return db.getAccountingInfo(user, requestingMember, providingMember);
-	}
-	
-	public static void main(String[] args) {
-		System.out.println(AccountingDataStore.class.getSimpleName());
+	public void update(FederationMember member, double capacity){
+		((AccountingDataStoreXP)db).updateQuota(member, capacity);
 	}
 	
 }

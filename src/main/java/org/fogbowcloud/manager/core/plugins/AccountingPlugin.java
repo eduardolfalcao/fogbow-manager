@@ -9,8 +9,6 @@ import org.fogbowcloud.manager.occi.order.Order;
 public interface AccountingPlugin {
 	
 	public void update(List<Order> ordersWithInstance);
-	
-	public void update(FederationMember member, double capacity);
 
 	public List<AccountingInfo> getAccountingInfo();
 	

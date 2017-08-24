@@ -8,22 +8,22 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.MainHelper;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.DateUtils;
-import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 
 public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 
-	public static final String ACCOUNTING_DATASTORE_URL = "simple_storage_accounting_datastore_url";
-	private AccountingDataStore db;
-	private DateUtils dateUtils;
-	private long lastUpdate;
-	private String managerId;
+	protected String managerId;
+	protected AccountingDataStore db;
+	protected DateUtils dateUtils;
+	protected long lastUpdate;
 
+	public static final String ACCOUNTING_DATASTORE_URL = "simple_storage_accounting_datastore_url";
+	protected static final String DEFAULT_NAME_DATASTORE_PREFIX = SimpleStorageAccountingPlugin.class.getSimpleName().toLowerCase();
+	
 	private static final Logger LOGGER = Logger.getLogger(SimpleStorageAccountingPlugin.class);
 
 	public SimpleStorageAccountingPlugin(Properties properties) {
@@ -31,13 +31,14 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 	}
 	
 	public SimpleStorageAccountingPlugin(Properties properties, DateUtils dateUtils) {
-		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);	
 		this.dateUtils = dateUtils;
 		this.lastUpdate = dateUtils.currentTimeMillis();
+		
+		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 
 		if(properties.get(AccountingDataStore.ACCOUNTING_DATASTORE_URL)==null)
-			properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, properties.getProperty(getDataStoreUrl()));
-		db = new AccountingDataStore(properties);
+			properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL,properties.getProperty(getDataStoreUrl()));
+		db = new AccountingDataStore(properties, DEFAULT_NAME_DATASTORE_PREFIX);
 	}
 
 	@Override
@@ -84,13 +85,8 @@ public class SimpleStorageAccountingPlugin implements AccountingPlugin {
 
 		if ((usage.isEmpty()) || db.update(new ArrayList<AccountingInfo>(usage.values()))) {
 			this.lastUpdate = now;
-			LOGGER.debug("<"+managerId+">: "+"Updating lastUpdate to " + this.lastUpdate);
+			LOGGER.debug("Updating lastUpdate to " + this.lastUpdate);
 		}
-	}
-	
-	@Override
-	public void update(FederationMember member, double capacity){
-		//TODO to be implemented
 	}
 
 	private double getUsage(Order order, double updatingInterval, double consumptionInterval) {

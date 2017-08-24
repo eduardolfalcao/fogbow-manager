@@ -11,6 +11,7 @@ public class AccountingInfo {
 	private String providingMember;
 	private double usage;
 	private int currentInstances;
+	private double quota;
 	
 	public AccountingInfo(String user, String requestingMember, String providingMember) {
 		this.user = user;
@@ -18,6 +19,7 @@ public class AccountingInfo {
 		this.providingMember = providingMember;
 		this.usage = 0;
 		this.currentInstances = 0;
+		this.quota = Double.MAX_VALUE;
 	}
 	
 	public void addConsumption(double consumption) {
@@ -52,6 +54,14 @@ public class AccountingInfo {
 		this.currentInstances = currentInstances;
 	}
 	
+	public void setQuota(double quota) {
+		this.quota = quota;
+	}
+	
+	public double getQuota() {
+		return quota;
+	}
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof AccountingInfo) {
@@ -59,7 +69,8 @@ public class AccountingInfo {
 			return getUser().equals(other.getUser())
 					&& getRequestingMember().equals(other.getRequestingMember())
 					&& getProvidingMember().equals(other.getProvidingMember())
-					&& (getUsage() - other.getUsage() <= 0.00000001); 
+					&& (getUsage() - other.getUsage() <= 0.00000001)
+					&& (getQuota() - other.getQuota() <= 0.00000001); 
 		}
 		return false;
 	}
@@ -81,6 +92,7 @@ public class AccountingInfo {
 	public String toString() {
 		return "User=" + getUser() + "; requestingMember=" + getRequestingMember()
 				+ "; providingMember=" + getProvidingMember() + "; usage=" + getUsage()
-				+ "; currentInstances=" + getCurrentInstances();
+				+ "; currentInstances=" + getCurrentInstances()
+				+ "; quota=" + getQuota();
 	}
 }
