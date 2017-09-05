@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Level;
@@ -19,8 +16,6 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.ManagerControllerXP;
 import org.fogbowcloud.manager.core.model.DateUtils;
-import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitor;
-import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorAssync;
 import org.fogbowcloud.manager.experiments.scheduler.model.DataReader;
 import org.fogbowcloud.manager.experiments.scheduler.model.Job;
 import org.fogbowcloud.manager.experiments.scheduler.model.Peer;
@@ -42,8 +37,6 @@ public class WorkloadScheduler {
 	private List<Peer> peers;
 	private Map<String, ManagerController> relations;
 	
-	private ScheduledThreadPoolExecutor executor;
-	
 	private Map<String, String> xOCCIAtt;
 	private List<Category> categories;
 	
@@ -53,7 +46,6 @@ public class WorkloadScheduler {
 		LOGGER.setLevel(Level.INFO);
 		this.props = props;
 		this.peers = new ArrayList<Peer>();
-		this.executor = new ScheduledThreadPoolExecutor(fms.size());
 		
 		readWorkloads();
 		sortJobsAndTasks();
@@ -156,21 +148,6 @@ public class WorkloadScheduler {
 			}
 		}
 	}
-	
-	
-//	private static void triggerWorkloadMonitor(final WorkloadMonitor monitor, Properties props) {
-//		final long monitorPeriod = ManagerControllerHelper.getWorkloadMonitorPeriod(props);
-//		monitorTimer.scheduleWithFixedDelay(new TimerTask() {
-//			@Override
-//			public void run() {	
-//				try {
-//					monitor.monitorJobs();
-//				} catch (Throwable e) {
-//					LOGGER.error("Error while monitoring workload", e);
-//				}
-//			}
-//		}, 0, monitorPeriod);
-//	}
 
 	private void readWorkloads(){
 		DataReader df = new DataReader();

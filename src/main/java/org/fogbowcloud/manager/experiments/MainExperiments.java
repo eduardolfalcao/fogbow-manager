@@ -82,8 +82,8 @@ public class MainExperiments {
 		properties.put(WorkloadScheduler.WORKLOAD_FOLDER, args[6]);			//workload_folder
 		properties.put(MonitorPeerStateSingleton.OUTPUT_DATA_ENDING_TIME, args[7]);	//output_data_ending_time
 		
-		String outputfolder = "data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";
-//		String outputfolder = System.getProperty("user.dir")+"/experiments/data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";	//execution on eclipse
+//		String outputfolder = "data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";
+		String outputfolder = System.getProperty("user.dir")+"/experiments/data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";	//execution on eclipse
 		
 		properties.put(MonitorPeerStateSingleton.OUTPUT_FOLDER, outputfolder);		
 		

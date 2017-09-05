@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimerTask;
 import java.util.UUID;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -45,7 +46,7 @@ public class ManagerControllerXP extends ManagerController{
 	private ManagerTimer monitorTimer;
 
 	public ManagerControllerXP(Properties properties) {
-		this(properties, null);
+		this(properties, Executors.newScheduledThreadPool(1));
 	}
 	
 	public ManagerControllerXP(Properties properties, ScheduledExecutorService executor) {
@@ -246,6 +247,16 @@ public class ManagerControllerXP extends ManagerController{
 		Order order = managerDataStoreController.getOrderByInstance(instanceId);
 		instanceRemoved(order);		
 	}	
+	
+	@Override
+	protected void removeRemoteInstance(final Order order) {
+		new Runnable() {					
+			@Override
+			public void run() {
+				ManagerPacketHelper.deleteRemoteInstace(order, packetSender);
+			}
+		}.run();
+	}
 	
 	//a thread that each second try to submit	
 	private boolean isCreateOrderOnDBTimerScheduled = false;

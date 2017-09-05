@@ -21,6 +21,7 @@ import org.fogbowcloud.manager.core.plugins.NetworkPlugin;
 import org.fogbowcloud.manager.core.plugins.PrioritizationPlugin;
 import org.fogbowcloud.manager.core.plugins.StoragePlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
+import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPluginXP;
 import org.fogbowcloud.manager.core.plugins.accounting.SimpleStorageAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin;
@@ -167,7 +168,7 @@ public class SimpleManagerFactory {
 			computeAccountingPlugin = (AccountingPlugin) MainHelper.createInstanceWithBenchmarkingPlugin(
 					ConfigurationConstants.COMPUTE_ACCOUNTING_PLUGIN_CLASS_KEY, properties, benchmarkingPlugin);
 		} catch (Exception e) {
-			computeAccountingPlugin = new FCUAccountingPlugin(properties, benchmarkingPlugin);
+			computeAccountingPlugin = new FCUAccountingPluginXP(properties, benchmarkingPlugin);
 			LOGGER.warn("Accounting plugin (compute) not specified in properties. Using the default one.", e);
 		}
 		

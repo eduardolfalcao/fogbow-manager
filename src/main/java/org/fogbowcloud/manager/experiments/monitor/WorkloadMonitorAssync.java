@@ -26,21 +26,17 @@ public class WorkloadMonitorAssync {
 		this.fm = fm;
 		this.managerId = fm.getManagerId();
 		this.orders = new HashMap<Order, ScheduledFuture<?>>();
-		this.executorMonitor = new ScheduledThreadPoolExecutor(50);
+		this.executorMonitor = new ScheduledThreadPoolExecutor(2);
 		this.executorMonitor.setRemoveOnCancelPolicy(true);
 	}
 	
 	public void monitorOrder(Order o){
-		System.out.println("m1");
 		final OrderXP order = (OrderXP) o;
-		System.out.println("m2");
 		long time = order.getRuntime() - order.getPreviousElapsedTime() - order.getCurrentElapsedTime();
-		System.out.println("m3");
 		ScheduledFuture<?> schedule = executorMonitor.schedule(
 			new Runnable() {					
 				@Override
 				public void run() {
-					System.out.println("m4");
 					boolean isRemoving = false;
 					order.updateElapsedTime(isRemoving);
 					LOGGER.info("<"+managerId+">: "+"checking if the order("+order.getId()+"), with instance("+order.getInstanceId()+"), requested by "+order.getRequestingMemberId()+
@@ -59,7 +55,6 @@ public class WorkloadMonitorAssync {
 				}
 			}, time, TimeUnit.MILLISECONDS);
 		
-		System.out.println("m5");
 		orders.put(order, schedule);
 	}
 	
@@ -68,23 +63,19 @@ public class WorkloadMonitorAssync {
 	}
 	
 	private void removeOrder(final ManagerControllerXP fm, final Order order){
-		Runnable run = new Runnable() {
-			public void run() {
-			    try{
-			    	if(order.isLocal()){
-			    		LOGGER.info("<"+fm.getManagerId()+">: "+"removing local instance ("+order.getInstanceId()+"), orderId("+order.getId()+"), requested by "+order.getRequestingMemberId());
-			    		fm.removeInstance(WorkloadScheduler.FAKE_TOKEN, order.getGlobalInstanceId(), order.getResourceKind());
-			    	} else{
-			    		LOGGER.info("<"+fm.getManagerId()+">: "+"removing local instance ("+order.getInstanceId()+"), orderId("+order.getId()+"), for remote member, requested by "+order.getRequestingMemberId());
-			    		fm.removeInstanceForRemoteMember(order.getGlobalInstanceId());
-			    	} 
-			    } catch(OCCIException ex){
-			    	LOGGER.error("<"+fm.getManagerId()+">: Exception while removing instance " + order.getGlobalInstanceId(),ex);
-			    }
-			}
-	   	};
-	   	new Thread(run).start();
+		try{
+			if(order.isLocal()){
+				LOGGER.info("<"+fm.getManagerId()+">: "+"removing local instance ("+order.getInstanceId()+"), orderId("+order.getId()+"), requested by "+order.getRequestingMemberId());
+			    fm.removeInstance(WorkloadScheduler.FAKE_TOKEN, order.getGlobalInstanceId(), order.getResourceKind());
+			} else{
+				LOGGER.info("<"+fm.getManagerId()+">: "+"removing local instance ("+order.getInstanceId()+"), orderId("+order.getId()+"), for remote member, requested by "+order.getRequestingMemberId());
+			    fm.removeInstanceForRemoteMember(order.getGlobalInstanceId());
+			} 
+		} catch(OCCIException ex){
+			LOGGER.error("<"+fm.getManagerId()+">: Exception while removing instance " + order.getGlobalInstanceId(),ex);
+		}
 	}
+	
 }						
 	
 
