@@ -82,8 +82,12 @@ public class MainExperiments {
 		properties.put(WorkloadScheduler.WORKLOAD_FOLDER, args[6]);			//workload_folder
 		properties.put(MonitorPeerStateSingleton.OUTPUT_DATA_ENDING_TIME, args[7]);	//output_data_ending_time
 		
-//		String outputfolder = "data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";
-		String outputfolder = System.getProperty("user.dir")+"/experiments/data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";	//execution on eclipse
+		String outputfolder;
+		boolean eclipse = Boolean.parseBoolean(args[8]);
+		if(eclipse)
+			outputfolder = System.getProperty("user.dir")+"/experiments/data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";	//execution on eclipse
+		else
+			outputfolder = "data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";		
 		
 		properties.put(MonitorPeerStateSingleton.OUTPUT_FOLDER, outputfolder);		
 		
@@ -103,7 +107,7 @@ public class MainExperiments {
 		
 		int id = 1;
 		for(; id <= numberOfPeers; id++)
-			propertiesList.add(SimpleManagerFactory.adjustPropertiesManager(id, fdnof, properties));
+			propertiesList.add(SimpleManagerFactory.adjustPropertiesManager(id, fdnof, properties, eclipse));
 		
 		List<ManagerControllerXP> fms = new ArrayList<ManagerControllerXP>();
 		for(Properties prop : propertiesList) {

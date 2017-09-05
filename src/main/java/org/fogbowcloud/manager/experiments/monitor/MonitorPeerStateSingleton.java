@@ -117,10 +117,12 @@ public class MonitorPeerStateSingleton{
 				if(currentOrderStates.get(o.getId())!=null && currentOrderStates.get(o.getId()).equals(o.getState())){					
 					return;
 				}				
-					
+				
+				long delay = (o.getPreviousElapsedTime()+o.getCurrentElapsedTime())-o.getRuntime();
 				LOGGER.info("<"+fm.getManagerId()+">: orderid("+o.getId()+") changed state to "+o.getState()+" - requesting("+o.getRequestingMemberId()+") and providing("+o.getProvidingMemberId()+"); "
-						+ "other attrs: instanceid("+o.getInstanceId()+"), elapsedTime("+(o.getPreviousElapsedTime()+o.getCurrentElapsedTime())+"), runtime("+o.getRuntime()+"), "
-								+ "delay("+((o.getPreviousElapsedTime()+o.getCurrentElapsedTime())-o.getRuntime())+") ");
+						+ "other attrs: instanceid("+o.getInstanceId()+"), elapsedTime("+(o.getPreviousElapsedTime()+o.getCurrentElapsedTime())+"), runtime("+o.getRuntime()+") "
+								+ (delay>=0?(", delay("+delay+")"):""));
+				
 				if(o.getState().equals(OrderState.CLOSED) ||
 						o.getState().equals(OrderState.FAILED) ||
 						o.getState().equals(OrderState.DELETED)){					
@@ -173,7 +175,8 @@ public class MonitorPeerStateSingleton{
 							rFed++;
 						}
 					}
-					else{														//F_r!=i
+					else{															//F_r!=i
+						LOGGER.info("<"+fm.getManagerId()+">: @@: "+order);
 						if(order.getProvidingMemberId().equals(fm.getManagerId()))	//F_r!=i&&p==i
 							sFed++;					
 					}

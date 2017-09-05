@@ -117,6 +117,7 @@ public class ManagerControllerXP extends ManagerController{
 		order.setProvidingMemberId(null);
 		
 		if (order.getState().equals(OrderState.DELETED)  || !order.isLocal()) {
+			order.setState(OrderState.DELETED);
 			managerDataStoreController.excludeOrder(order.getId());
 		} else if(instance != null && instance.getState().equals(InstanceState.FAILED)){
 			LOGGER.info("<"+managerId+">: "+"The instance is failed! Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);

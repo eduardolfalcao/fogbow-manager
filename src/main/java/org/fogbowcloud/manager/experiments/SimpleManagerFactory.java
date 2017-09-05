@@ -47,16 +47,18 @@ public class SimpleManagerFactory {
 	private static final Logger LOGGER = Logger.getLogger(SimpleManagerFactory.class);
 	
 	private static final String BASE_PLUGINS = "org.fogbowcloud.manager.core.plugins.";
-	private static final String XMPP_JID_COOPERATIVE = "p";
-	
-	public static final String PATH_FOGBOW_MANAGER = System.getProperty("user.dir");
-//	public static final String PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/datastores/";
-	public static final String PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/experiments/datastores/";	//execution in eclipse
-	
+	private static final String XMPP_JID_COOPERATIVE = "p";	
+	public static final String PATH_FOGBOW_MANAGER = System.getProperty("user.dir");	
+	public static String PATH_DATASTORES;	
 	private static final int HTTP_PORT = 9192;
 	
 	
-	public static Properties adjustPropertiesManager(int id, boolean fdnof, Properties properties){
+	public static Properties adjustPropertiesManager(int id, boolean fdnof, Properties properties, boolean eclipse){
+		
+		if(eclipse)
+			PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/experiments/datastores/";
+		else
+			PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/datastores/";
 		
 		Properties prop = (Properties) properties.clone();		
 		
