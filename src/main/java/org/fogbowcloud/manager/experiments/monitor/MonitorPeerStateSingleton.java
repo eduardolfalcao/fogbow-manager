@@ -104,7 +104,8 @@ public class MonitorPeerStateSingleton{
 			}
 			if(now >= endingTime){
 				states.put((int)now, new PeerState(fm.getManagerId(), (int)now, 0, 0, 0, 0, 0));
-				writeStates(now);
+				LOGGER.info("<"+fm.getManagerId()+">: finishing, now="+now+", endingTime="+endingTime);
+				writeStates(endingTime);
 				finished = true;
 				
 			}	
@@ -119,7 +120,7 @@ public class MonitorPeerStateSingleton{
 				}				
 				
 				long delay = (o.getPreviousElapsedTime()+o.getCurrentElapsedTime())-o.getRuntime();
-				LOGGER.info("<"+fm.getManagerId()+">: orderid("+o.getId()+") changed state to "+o.getState()+" - requesting("+o.getRequestingMemberId()+") and providing("+o.getProvidingMemberId()+"); "
+				LOGGER.info("<"+fm.getManagerId()+">: changed state of orderid("+o.getId()+")  to "+o.getState()+" - requesting("+o.getRequestingMemberId()+") and providing("+o.getProvidingMemberId()+"); "
 						+ "other attrs: instanceid("+o.getInstanceId()+"), elapsedTime("+(o.getPreviousElapsedTime()+o.getCurrentElapsedTime())+"), runtime("+o.getRuntime()+") "
 								+ (delay>=0?(", delay("+delay+")"):""));
 				
@@ -139,10 +140,13 @@ public class MonitorPeerStateSingleton{
 					lastState.getrFed() != currentState.getrFed() ||
 					lastState.getoFed() != currentState.getoFed() ||
 					lastState.getsFed() != currentState.getsFed()){
+				LOGGER.info("<"+fm.getManagerId()+">: currentState @@ is different from last state ==> currentState("+currentState+"), lastState("+lastState+")");
 				synchronized(states){
 					states.put(currentState.getTime(),currentState);
 				}
 				lastState = currentState;
+			}else{
+				LOGGER.info("<"+fm.getManagerId()+">: currentState ## is still the same of last state ==> currentState("+currentState+"), lastState("+lastState+")");
 			}
 			
 		}
@@ -168,6 +172,10 @@ public class MonitorPeerStateSingleton{
 				if(state.equals(OrderState.FULFILLED)){
 					if(order.getRequestingMemberId().equals(fm.getManagerId())){	//F_r=i
 						dTot++;
+						//the order may be fulfilled but the providing member may be null
+						if(order.getProvidingMemberId()==null){
+							LOGGER.info("<"+fm.getManagerId()+">: %% "+(OrderXP)order);
+						}
 						if(order.getProvidingMemberId().equals(fm.getManagerId())){	//F_r=i&&p=i	
 							oFed--;
 						}
@@ -176,7 +184,6 @@ public class MonitorPeerStateSingleton{
 						}
 					}
 					else{															//F_r!=i
-						LOGGER.info("<"+fm.getManagerId()+">: @@: "+order);
 						if(order.getProvidingMemberId().equals(fm.getManagerId()))	//F_r!=i&&p==i
 							sFed++;					
 					}

@@ -243,17 +243,26 @@ public class ManagerControllerXP extends ManagerController{
 	}
 	
 	@Override
-	public void removeInstanceForRemoteMember(String instanceId) {		
+	public void removeInstanceForRemoteMember(String instanceId) {
 		super.removeInstanceForRemoteMember(instanceId);
-		Order order = managerDataStoreController.getOrderByInstance(instanceId);
+		OrderXP order = (OrderXP) managerDataStoreController.getOrderByInstance(instanceId);
+		long delay = order.getCurrentElapsedTime() - order.getRuntime();
+		LOGGER.info("<"+managerId+">: I was asked by "+order.getRequestingMemberId()+" to remove the instance I'm providing him: "
+				+ "instanceId("+order.getInstanceId()+"), orderId("+order.getId()+")"
+				+ (delay > 0?", delay("+delay+")":""));
 		instanceRemoved(order);		
 	}	
 	
 	@Override
-	protected void removeRemoteInstance(final Order order) {
+	protected void removeRemoteInstance(Order o) {
+		final OrderXP order = (OrderXP) o;
 		new Runnable() {					
 			@Override
 			public void run() {
+				long delay = order.getCurrentElapsedTime() - order.getRuntime();
+				LOGGER.info("<"+managerId+">: I am asking "+order.getProvidingMemberId()+" to remove the instance he provided to me: "
+						+ "instanceId("+order.getInstanceId()+"), orderId("+order.getId()+")"
+						+ (delay > 0?", delay("+delay+")":""));
 				ManagerPacketHelper.deleteRemoteInstace(order, packetSender);
 			}
 		}.run();

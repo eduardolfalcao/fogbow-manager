@@ -1266,7 +1266,7 @@ public class ManagerController {
 		resourceKind = resourceKind == null ? OrderConstants.COMPUTE_TERM : resourceKind;
 		
 		if(order!=null)
-		LOGGER.info("<"+managerId+">: "+"Removing instance(" + resourceKind + ") with instanceId(" + instanceId + ") "
+			LOGGER.info("<"+managerId+">: "+"Removing instance(" + resourceKind + ") with instanceId(" + instanceId + ") "
 				+ "and orderId("+order.getId()+") for remote member.");
 
 		Token federationUserToken = getFederationUserToken(order);
