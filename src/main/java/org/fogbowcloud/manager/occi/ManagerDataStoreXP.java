@@ -17,6 +17,7 @@ import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton;
 import org.fogbowcloud.manager.experiments.monitor.WorkloadMonitorAssync;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderState;
+import org.fogbowcloud.manager.occi.order.OrderXP;
 import org.fogbowcloud.manager.occi.storage.StorageLink;
 import org.json.JSONException;
 
@@ -51,6 +52,8 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 	
 	@Override
 	public synchronized boolean addOrder(Order order){
+		
+		LOGGER.info("<"+managerId+">: adding order: " +(OrderXP) order);
 		
 		try{
 			orders.put(order.getId(), order);
@@ -125,6 +128,8 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 	@Override
 	public synchronized boolean removeOrder(Order order) {
 		
+		LOGGER.info("<"+managerId+">: removing order: " +(OrderXP) order);
+		
 		try{
 			orders.remove(order.getId());
 			servedMembers.remove(order.getId());
@@ -166,10 +171,15 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 	}		
 		
 	@Override
-	public synchronized boolean updateOrder(Order order) {		
+	public synchronized boolean updateOrder(Order order) {	
+		
+		LOGGER.info("<"+managerId+">: updating order: " +(OrderXP) order);
+		
 		if(!orders.containsKey(order.getId())){
 			return false;
 		}
+		
+		LOGGER.info("<"+managerId+">: updating passed: " + order.getId());
 			
 		try{
 			orders.put(order.getId(), order);

@@ -115,8 +115,10 @@ public class ManagerControllerXP extends ManagerController{
 		}
 		order.setInstanceId(null);
 		order.setProvidingMemberId(null);
+		LOGGER.info("<"+managerId+">: Order " + order.getId()+" just had instanceId and ProvidingMemberId set to null");
 		
 		if (order.getState().equals(OrderState.DELETED)  || !order.isLocal()) {
+			LOGGER.info("<"+managerId+">: debug1 order: " + order);
 			order.setState(OrderState.DELETED);
 			managerDataStoreController.excludeOrder(order.getId());
 		} else if(instance != null && instance.getState().equals(InstanceState.FAILED)){
@@ -137,8 +139,11 @@ public class ManagerControllerXP extends ManagerController{
 				LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);
 				order.setState(OrderState.CLOSED);
 			}
+		} else{
+			LOGGER.info("<"+managerId+">: debug2 order: " + order);
 		}		
 		
+		LOGGER.info("<"+managerId+">: debug3 order: " + order);
 		this.managerDataStoreController.updateOrder(order);
 		if (instanceId != null) {
 			this.managerDataStoreController.removeAllStorageLinksByInstance(
