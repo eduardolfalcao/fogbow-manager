@@ -249,6 +249,10 @@ public class MonitorPeerStateSingleton{
 		protected Map<String, OrderState> getCurrentOrderStates() {
 			return currentOrderStates;
 		}
+		
+		protected PeerState getLastState() {
+			return lastState;
+		}
 
 	}	
 }

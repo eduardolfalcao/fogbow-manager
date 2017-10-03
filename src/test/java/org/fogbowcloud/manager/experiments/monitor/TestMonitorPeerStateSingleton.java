@@ -1,7 +1,5 @@
 package org.fogbowcloud.manager.experiments.monitor;
 
-import static org.junit.Assert.*;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,12 +10,9 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.ManagerController;
 import org.fogbowcloud.manager.core.ManagerControllerXP;
-import org.fogbowcloud.manager.core.ManagerTestHelperXP;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.experiments.MainExperiments;
-import org.fogbowcloud.manager.experiments.SimpleManagerFactory;
 import org.fogbowcloud.manager.experiments.data.PeerState;
 import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton.MonitorPeerStateAssync;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -29,7 +24,6 @@ import org.fogbowcloud.manager.occi.order.OrderType;
 import org.fogbowcloud.manager.occi.order.OrderXP;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -219,10 +213,19 @@ public class TestMonitorPeerStateSingleton {
 	
 	@Test
 	public void testMonitorOrderWith3OpenLocalOrder() {
-		Mockito.when(mc.getMaxCapacityDefaultUser()).thenReturn(2);
+		Mockito.when(mc.getMaxCapacityDefaultUser()).thenReturn(2);		
+		
 		monitor.monitorOrder(createOrder("o1", true, OrderState.OPEN, true));
+		PeerState state = new PeerState("", 0, 1, 0, 0, 2, 0);
+		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
+		
 		monitor.monitorOrder(createOrder("o2", true, OrderState.OPEN, true));
+		state = new PeerState("", 0, 2, 0, 0, 2, 0);
+		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
+		
 		monitor.monitorOrder(createOrder("o3", true, OrderState.OPEN, true));
+		state = new PeerState("", 0, 3, 1, 0, 2, 0);
+		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		
 		Assert.assertEquals(3, monitor.getCurrentOrders().size());
 		Assert.assertEquals(3, monitor.getCurrentOrderStates().size());
@@ -231,22 +234,32 @@ public class TestMonitorPeerStateSingleton {
 		Assert.assertEquals(OrderState.OPEN, monitor.getCurrentOrderStates().get("o3"));
 		
 		monitor.monitorOrder(createOrder("o3", true, OrderState.OPEN, true));
+		state = new PeerState("", 0, 3, 1, 0, 2, 0);
+		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(3, monitor.getCurrentOrders().size());
 		Assert.assertEquals(3, monitor.getCurrentOrderStates().size());
 		
 		monitor.monitorOrder(createOrder("o3", true, OrderState.FULFILLED, true));
+		state = new PeerState("", 0, 3, 1, 0, 1, 0);
+		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(3, monitor.getCurrentOrders().size());
 		Assert.assertEquals(3, monitor.getCurrentOrderStates().size());
 		
 		monitor.monitorOrder(createOrder("o3", true, OrderState.CLOSED, true));
+		state = new PeerState("", 0, 2, 0, 0, 2, 0);
+		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(2, monitor.getCurrentOrders().size());
 		Assert.assertEquals(2, monitor.getCurrentOrderStates().size());
 		
 		monitor.monitorOrder(createOrder("o2", true, OrderState.DELETED, true));
+		state = new PeerState("", 0, 1, 0, 0, 2, 0);
+		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(1, monitor.getCurrentOrders().size());
 		Assert.assertEquals(1, monitor.getCurrentOrderStates().size());
 		
 		monitor.monitorOrder(createOrder("o1", true, OrderState.FAILED, true));
+		state = new PeerState("", 0, 0, 0, 0, 2, 0);
+		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(0, monitor.getCurrentOrders().size());
 		Assert.assertEquals(0, monitor.getCurrentOrderStates().size());
 	}
@@ -284,6 +297,19 @@ public class TestMonitorPeerStateSingleton {
 		}		
 		
 		return o;
+	}
+	
+	private boolean areTheseStatesEqual(PeerState lastState, PeerState currentState){
+		if(lastState.getdTot() != currentState.getdTot() ||
+				lastState.getdFed() != currentState.getdFed() ||
+				lastState.getrFed() != currentState.getrFed() ||
+				lastState.getoFed() != currentState.getoFed() ||
+				lastState.getsFed() != currentState.getsFed()){
+			return false;
+		} else {
+			return true;
+		}
+		
 	}
 
 }
