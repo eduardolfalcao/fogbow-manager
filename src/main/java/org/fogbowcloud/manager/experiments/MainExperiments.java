@@ -2,6 +2,8 @@ package org.fogbowcloud.manager.experiments;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -60,21 +62,7 @@ public class MainExperiments {
 			System.exit(MainHelper.EXIT_ERROR_CODE);
 		}	
 		
-		Properties properties = new Properties();
-		
-		Properties managerProperties = new Properties();
-		FileInputStream input = new FileInputStream(managerConfigFile);
-		managerProperties.load(input);
-		Properties infraProperties = new Properties();
-		FileInputStream infraInput = new FileInputStream(infrastructureConfgFile);
-		infraProperties.load(infraInput);
-		Properties fedProperties = new Properties();
-		FileInputStream fedInput = new FileInputStream(federationConfgFile);
-		fedProperties.load(fedInput);		 
-		
-		properties.putAll(managerProperties);
-		properties.putAll(infraProperties);
-		properties.putAll(fedProperties);	
+		Properties properties = createProperties(managerConfigFile, infrastructureConfgFile, federationConfgFile);	 
 		
 		int numberOfPeers = Integer.parseInt(args[3]);
 		properties.put(FakeCloudComputePlugin.COMPUTE_FAKE_QUOTA, args[4]);	//compute_fake_quota
@@ -116,7 +104,7 @@ public class MainExperiments {
 			fms.add(manager);
 		}	
 			
-		MonitorPeerStateSingleton.getInstance().init(fms); 		//starting peer state monitoring
+		MonitorPeerStateSingleton.getInstance().init(fms, false); 		//starting peer state monitoring
 		for(ManagerController fm : fms)			
 			((ManagerControllerXP)fm).triggerWorkloadMonitor(MonitorPeerStateSingleton.getInstance().getMonitors().get(((ManagerControllerXP)fm).getManagerId()));
 		
@@ -142,6 +130,26 @@ public class MainExperiments {
 				}
 			}
 		}, 0, workloadSchedulerPeriod);
+	}
+	
+	public static Properties createProperties(File managerConfigFile, File infrastructureConfgFile, File federationConfigFile) throws IOException{
+		Properties properties = new Properties();
+		
+		Properties managerProperties = new Properties();
+		FileInputStream input = new FileInputStream(managerConfigFile);
+		managerProperties.load(input);
+		Properties infraProperties = new Properties();
+		FileInputStream infraInput = new FileInputStream(infrastructureConfgFile);
+		infraProperties.load(infraInput);
+		Properties fedProperties = new Properties();
+		FileInputStream fedInput = new FileInputStream(federationConfigFile);
+		fedProperties.load(fedInput);		 
+		
+		properties.putAll(managerProperties);
+		properties.putAll(infraProperties);
+		properties.putAll(fedProperties);	
+
+		return properties;
 	}
 	
 }

@@ -39,8 +39,8 @@ public class MonitorPeerStateSingleton{
 		return instance;
 	}
 	
-	public void init(List<ManagerControllerXP> managers){
-		if(!usedInit){
+	public void init(List<ManagerControllerXP> managers, boolean forTest){
+		if(!usedInit || forTest){
 			usedInit = true;
 			monitors = new HashMap<String, MonitorPeerStateAssync>();
 			for(ManagerControllerXP mc : managers)
@@ -151,7 +151,7 @@ public class MonitorPeerStateSingleton{
 			
 		}
 			
-		private PeerState getPeerState() {
+		protected PeerState getPeerState() {
 			
 			
 			int dTot = 0;	//O_r=i + P_r=i + F_r=i&&p=i + F_r=i&&p!=i 
@@ -174,7 +174,7 @@ public class MonitorPeerStateSingleton{
 						dTot++;
 						//the order may be fulfilled but the providing member may be null
 						if(order.getProvidingMemberId()==null){
-							LOGGER.info("<"+fm.getManagerId()+">: %% "+(OrderXP)order);
+							LOGGER.error("<"+fm.getManagerId()+">: order("+order.getId()+") has no providing member ==> "+(OrderXP)order);
 						}
 						if(order.getProvidingMemberId().equals(fm.getManagerId())){	//F_r=i&&p=i	
 							oFed--;
@@ -188,7 +188,7 @@ public class MonitorPeerStateSingleton{
 							sFed++;					
 					}
 				}
-				else if((state.equals(OrderState.OPEN)||state.equals(OrderState.PENDING)) && 
+				else if((state.equals(OrderState.OPEN)||state.equals(OrderState.PENDING)) && 			
 						order.getRequestingMemberId().equals(fm.getManagerId()))	//O_r=i || P_r=i
 					dTot++;	
 			}
@@ -240,6 +240,14 @@ public class MonitorPeerStateSingleton{
 				}
 			}
 			CsvGenerator.flushFile(w);
+		}
+		
+		protected Map<String, Order> getCurrentOrders() {
+			return currentOrders;
+		}
+		
+		protected Map<String, OrderState> getCurrentOrderStates() {
+			return currentOrderStates;
 		}
 
 	}	
