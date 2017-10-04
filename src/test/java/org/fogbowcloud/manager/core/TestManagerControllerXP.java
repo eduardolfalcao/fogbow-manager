@@ -2947,12 +2947,14 @@ public class TestManagerControllerXP {
 		Assert.assertFalse(base64UserDataCmd.contains(localManagerPublicKeyData));
 	}
 	
+	//@Test
 	public void testPreemption() {
 		Order localOrder = createOrder("id1", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
 				new HashMap<String, String>(), true,
 				DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		localOrder.setState(OrderState.FULFILLED);
 		localOrder.setInstanceId("instance1");
+		localOrder.setResourceKind(OrderConstants.COMPUTE_TERM);
 		localOrder.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		Order servedOrder1 = createOrder("id2", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
@@ -2960,6 +2962,7 @@ public class TestManagerControllerXP {
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
 		servedOrder1.setState(OrderState.FULFILLED);
 		servedOrder1.setInstanceId("instance2");
+		servedOrder1.setResourceKind(OrderConstants.COMPUTE_TERM);
 		servedOrder1.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		Order servedOrder2 = createOrder("id3", managerTestHelper.getDefaultFederationToken(), new ArrayList<Category>(),
@@ -2967,6 +2970,7 @@ public class TestManagerControllerXP {
 				DefaultDataTestHelper.REMOTE_MANAGER_COMPONENT_URL);
 		servedOrder2.setState(OrderState.FULFILLED);
 		servedOrder2.setInstanceId("instance3");
+		servedOrder2.setResourceKind(OrderConstants.COMPUTE_TERM);
 		servedOrder2.setProvidingMemberId(DefaultDataTestHelper.LOCAL_MANAGER_COMPONENT_URL);
 		
 		ManagerDataStoreController managerDataStoreController = managerController.getManagerDataStoreController();

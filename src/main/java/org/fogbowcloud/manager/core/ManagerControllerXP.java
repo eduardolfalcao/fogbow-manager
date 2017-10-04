@@ -441,8 +441,13 @@ public class ManagerControllerXP extends ManagerController{
 					LOGGER.debug("<"+managerId+">: "+"Couldn't run benchmark.", e);
 				}
 				
+				//update db before removeAsynchronousRemoteOrders because when there is too much peer it can take long time to notify them 
+				if (!order.getState().in(OrderState.DELETED)) {
+					order.setState(OrderState.FULFILLED);
+					managerDataStoreController.updateOrder(order);
+				}
+				
 				//no need to deal with keys
-
 				if (order.isLocal() && !isFulfilledByLocalMember(order)) {
 					removeAsynchronousRemoteOrders(order, false);
 					managerDataStoreController.removeOrderSyncronous(order.getId());
@@ -450,12 +455,7 @@ public class ManagerControllerXP extends ManagerController{
 
 				if (!order.isLocal()) {
 					ManagerPacketHelper.replyToServedOrder(order, packetSender);
-				}
-
-				if (!order.getState().in(OrderState.DELETED)) {
-					order.setState(OrderState.FULFILLED);
-					managerDataStoreController.updateOrder(order);
-				}
+				}				
 
 				LOGGER.debug("<"+managerId+">: "+"Fulfilled order: " + order);
 			}

@@ -98,7 +98,7 @@ public class TestPreemptionWarnHandler {
 				.getOrdersFromUser(token.getAccessId(), true).size());
 		Assert.assertEquals(OrderState.CLOSED, initializeXMPPManagerComponent.getManagerFacade()
 				.getOrdersFromUser(token.getAccessId(), true).get(0).getState());
-	}	
+	}
 
 	private Order createOrder(String resourceKind) {
 		List<Category> categories = new ArrayList<Category>();
