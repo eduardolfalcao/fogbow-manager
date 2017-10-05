@@ -916,6 +916,7 @@ public class ManagerController {
 	
 	public void removeInstance(String federationToken, String instanceId, String resourceKind) {
 		Order order = getOrderForInstance(federationToken, instanceId);
+		LOGGER.info("<"+managerId+">: #@@# orderId("+order.getId()+") " + order.getAddress());
 		instanceId = normalizeFogbowResourceId(instanceId);
 		removeInstance(instanceId, order, resourceKind);
 	}

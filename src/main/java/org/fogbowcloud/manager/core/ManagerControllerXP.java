@@ -144,6 +144,8 @@ public class ManagerControllerXP extends ManagerController{
 		}		
 		
 		LOGGER.info("<"+managerId+">: debug3 order: " + order);
+		LOGGER.info("<"+managerId+">: instanceRemoved #@@# orderId("+order.getId()+") " + order.getAddress());
+		
 		this.managerDataStoreController.updateOrder(order);
 		if (instanceId != null) {
 			this.managerDataStoreController.removeAllStorageLinksByInstance(
@@ -320,6 +322,7 @@ public class ManagerControllerXP extends ManagerController{
 			String orderId = String.valueOf(UUID.randomUUID());
 			Order order = new OrderXP(orderId, federationToken, new LinkedList<Category>(categories),
 					new HashMap<String, String>(xOCCIAtt), true, properties.getProperty("xmpp_jid"));
+			LOGGER.info("<"+managerId+">: createOrders #@@# orderId("+order.getId()+") " + order.getAddress());
 			currentOrders.add(order);
 		}
 		

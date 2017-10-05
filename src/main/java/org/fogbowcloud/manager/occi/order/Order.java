@@ -309,4 +309,9 @@ public class Order {
 		return true;
 	}
 	
+	public String getAddress() {
+	    return getClass().getName() + "@" + 
+	           Integer.toHexString(System.identityHashCode(this));
+	}
+	
 }
