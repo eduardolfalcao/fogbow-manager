@@ -192,7 +192,7 @@ public class ManagerControllerXP extends ManagerController{
 	}
 	
 	public void remoteMemberPreemptedOrder(String orderId){
-		LOGGER.info("<"+managerId+">: "+"Removing local order (id="+orderId+") preempted by remote member");		
+		LOGGER.info("<"+managerId+">: "+"Removing order (id="+orderId+") preempted by remote member");		
 		Order o = managerDataStoreController.getOrder(orderId);
 		instanceRemoved(o);		
 	}

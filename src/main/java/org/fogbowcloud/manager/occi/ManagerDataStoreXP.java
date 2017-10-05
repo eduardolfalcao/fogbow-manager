@@ -178,8 +178,6 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 		if(!orders.containsKey(order.getId())){
 			return false;
 		}
-		
-		LOGGER.info("<"+managerId+">: updating passed: " + order.getId());
 			
 		try{
 			orders.put(order.getId(), order);

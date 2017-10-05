@@ -18,6 +18,7 @@ import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.experiments.data.CsvGenerator;
 import org.fogbowcloud.manager.experiments.data.PeerState;
+import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.occi.order.OrderXP;
@@ -195,15 +196,17 @@ public class MonitorPeerStateSingleton{
 			
 			int maxCapacity = fm.getMaxCapacityDefaultUser();
 			oFed += maxCapacity;
+			oFed = Math.max(oFed, 0);
 			dFed = Math.max(0, dTot - maxCapacity);
 			
 			
 			int now = (int)(TimeUnit.MILLISECONDS.toSeconds(date.currentTimeMillis()-initialTime));
 			
-			if(oFed<0){
-				LOGGER.info("<"+fm.getManagerId()+">: ## time("+now+") current orders:"+currentOrders+"<"+fm.getManagerId()+">FIM\n\n");
-				LOGGER.info("<"+fm.getManagerId()+">: FakeCloudComputePlugin instances: "+((FakeCloudComputePlugin)fm.getComputePlugin()).getInstances());
-			}
+//			if(oFed<0){
+//				LOGGER.info("<"+fm.getManagerId()+">: ## time("+now+") current orders:"+currentOrders+"<"+fm.getManagerId()+">FIM\n\n");
+//				LOGGER.info("<"+fm.getManagerId()+">: ### time("+now+") current orders in Manager:"+fm.getOrdersFromUser(WorkloadScheduler.FAKE_TOKEN)+"<"+fm.getManagerId()+">FIM\n\n");
+//				LOGGER.info("<"+fm.getManagerId()+">: FakeCloudComputePlugin instances: "+((FakeCloudComputePlugin)fm.getComputePlugin()).getInstances());
+//			}
 			
 			return new PeerState(fm.getManagerId(),now, dTot, dFed, rFed, oFed, sFed);		
 		}
