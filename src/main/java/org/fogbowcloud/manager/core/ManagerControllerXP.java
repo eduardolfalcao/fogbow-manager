@@ -444,7 +444,12 @@ public class ManagerControllerXP extends ManagerController{
 					LOGGER.debug("<"+managerId+">: "+"Couldn't run benchmark.", e);
 				}
 				
-				//update db before removeAsynchronousRemoteOrders because when there is too much peer it can take long time to notify them 
+				//TODO check if it is correct
+				if(order.getProvidingMemberId()==null && order.getInstanceId() == null){	//the instance was preempted: do nothing on database
+					return;
+				}					
+				
+				//update db before removeAsynchronousRemoteOrders because when there is too much peer it can take long time to notify them
 				if (!order.getState().in(OrderState.DELETED)) {
 					order.setState(OrderState.FULFILLED);
 					managerDataStoreController.updateOrder(order);
@@ -460,7 +465,6 @@ public class ManagerControllerXP extends ManagerController{
 					ManagerPacketHelper.replyToServedOrder(order, packetSender);
 				}				
 
-				LOGGER.debug("<"+managerId+">: "+"Fulfilled order: " + order);
 			}
 		});
 		

@@ -97,11 +97,10 @@ public class MonitorPeerStateSingleton{
 		
 		public void savePeerState() {
 			long now = TimeUnit.MILLISECONDS.toSeconds(date.currentTimeMillis()-initialTime);
-			if(states.size()>1){			
-				if((now - lastWrite)>outputTime && !finished){
+			if(states.size()>1 && ((now - lastWrite)>outputTime && !finished)){
 					writeStates(now);
-					lastWrite = now;	
-				}			
+					lastWrite = now;
+					LOGGER.info("<"+fm.getManagerId()+">: writing on file, now="+now+", endingTime="+endingTime);
 			}
 			if(now >= endingTime){
 				states.put((int)now, new PeerState(fm.getManagerId(), (int)now, 0, 0, 0, 0, 0));
