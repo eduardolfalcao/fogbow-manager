@@ -13,6 +13,7 @@ import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.ManagerControllerXP;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.experiments.MainExperiments;
+import org.fogbowcloud.manager.experiments.data.OrderStatus;
 import org.fogbowcloud.manager.experiments.data.PeerState;
 import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton.MonitorPeerStateAssync;
 import org.fogbowcloud.manager.occi.model.Category;
@@ -85,7 +86,7 @@ public class TestMonitorPeerStateSingleton {
 	public void testGetPeerStateWith1OpenLocalOrder() {	
 		Mockito.when(mc.getMaxCapacityDefaultUser()).thenReturn(2);
 		OrderXP o = createOrder("o1", true, OrderState.OPEN, true);
-		monitor.getCurrentOrders().put(o.getId(), o);
+		monitor.getCurrentOrders().put(o.getId(), new OrderStatus(o.getState(), o.getRequestingMemberId(), o.getProvidingMemberId()));
 		
 		PeerState state = monitor.getPeerState();
 		Assert.assertNotNull(state);		
@@ -100,9 +101,9 @@ public class TestMonitorPeerStateSingleton {
 	public void testGetPeerStateWith2OpenLocalOrder() {
 		Mockito.when(mc.getMaxCapacityDefaultUser()).thenReturn(2);
 		OrderXP o1 = createOrder("o1", true, OrderState.OPEN, true);
-		monitor.getCurrentOrders().put(o1.getId(), o1);
+		monitor.getCurrentOrders().put(o1.getId(), new OrderStatus(o1.getState(), o1.getRequestingMemberId(), o1.getProvidingMemberId()));
 		OrderXP o2 = createOrder("o2", true, OrderState.OPEN, true);
-		monitor.getCurrentOrders().put(o2.getId(), o2);		
+		monitor.getCurrentOrders().put(o2.getId(), new OrderStatus(o2.getState(), o2.getRequestingMemberId(), o2.getProvidingMemberId()));		
 		
 		PeerState state = monitor.getPeerState();
 		Assert.assertNotNull(state);		
@@ -117,7 +118,7 @@ public class TestMonitorPeerStateSingleton {
 	public void testGetPeerStateWith1FulfilledLocalOrderMetLocally() {	
 		Mockito.when(mc.getMaxCapacityDefaultUser()).thenReturn(2);
 		OrderXP o = createOrder("o1", true, OrderState.FULFILLED, true);
-		monitor.getCurrentOrders().put(o.getId(), o);
+		monitor.getCurrentOrders().put(o.getId(), new OrderStatus(o.getState(), o.getRequestingMemberId(), o.getProvidingMemberId()));
 		
 		PeerState state = monitor.getPeerState();
 		Assert.assertNotNull(state);		
@@ -132,9 +133,9 @@ public class TestMonitorPeerStateSingleton {
 	public void testGetPeerStateWith2FulfilledLocalOrderMetLocally() {	
 		Mockito.when(mc.getMaxCapacityDefaultUser()).thenReturn(2);
 		OrderXP o1 = createOrder("o1", true, OrderState.FULFILLED, true);
-		monitor.getCurrentOrders().put(o1.getId(), o1);
+		monitor.getCurrentOrders().put(o1.getId(), new OrderStatus(o1.getState(), o1.getRequestingMemberId(), o1.getProvidingMemberId()));
 		OrderXP o2 = createOrder("o2", true, OrderState.FULFILLED, true);
-		monitor.getCurrentOrders().put(o2.getId(), o2);		
+		monitor.getCurrentOrders().put(o2.getId(), new OrderStatus(o2.getState(), o2.getRequestingMemberId(), o2.getProvidingMemberId()));		
 		
 		PeerState state = monitor.getPeerState();
 		Assert.assertNotNull(state);		
@@ -149,11 +150,11 @@ public class TestMonitorPeerStateSingleton {
 	public void testGetPeerStateWith2FulfilledLocalOrderMetLocallyAnd1FulfilledLocalOrderMetRemotely() {	
 		Mockito.when(mc.getMaxCapacityDefaultUser()).thenReturn(2);
 		OrderXP o1 = createOrder("o1", true, OrderState.FULFILLED, true);
-		monitor.getCurrentOrders().put(o1.getId(), o1);
+		monitor.getCurrentOrders().put(o1.getId(), new OrderStatus(o1.getState(), o1.getRequestingMemberId(), o1.getProvidingMemberId()));
 		OrderXP o2 = createOrder("o2", true, OrderState.FULFILLED, true);
-		monitor.getCurrentOrders().put(o2.getId(), o2);		
+		monitor.getCurrentOrders().put(o2.getId(), new OrderStatus(o2.getState(), o2.getRequestingMemberId(), o2.getProvidingMemberId()));		
 		OrderXP o3 = createOrder("o3", true, OrderState.FULFILLED, false);
-		monitor.getCurrentOrders().put(o3.getId(), o3);
+		monitor.getCurrentOrders().put(o3.getId(), new OrderStatus(o3.getState(), o3.getRequestingMemberId(), o3.getProvidingMemberId()));
 		
 		PeerState state = monitor.getPeerState();
 		Assert.assertNotNull(state);		
@@ -168,9 +169,9 @@ public class TestMonitorPeerStateSingleton {
 	public void testGetPeerStateWith1FulfilledLocalOrderMetLocallyAnd1FulfilledServedOrderMetLocally() {	
 		Mockito.when(mc.getMaxCapacityDefaultUser()).thenReturn(2);
 		OrderXP o1 = createOrder("o1", true, OrderState.FULFILLED, true);
-		monitor.getCurrentOrders().put(o1.getId(), o1);
+		monitor.getCurrentOrders().put(o1.getId(), new OrderStatus(o1.getState(), o1.getRequestingMemberId(), o1.getProvidingMemberId()));
 		OrderXP o2 = createOrder("o2", false, OrderState.FULFILLED, true);
-		monitor.getCurrentOrders().put(o2.getId(), o2);
+		monitor.getCurrentOrders().put(o2.getId(), new OrderStatus(o2.getState(), o2.getRequestingMemberId(), o2.getProvidingMemberId()));
 		
 		PeerState state = monitor.getPeerState();
 		Assert.assertNotNull(state);		
@@ -185,9 +186,9 @@ public class TestMonitorPeerStateSingleton {
 	public void testGetPeerStateWith2FulfilledServedOrderMetLocally() {	
 		Mockito.when(mc.getMaxCapacityDefaultUser()).thenReturn(2);
 		OrderXP o1 = createOrder("o1", false, OrderState.FULFILLED, true);
-		monitor.getCurrentOrders().put(o1.getId(), o1);
+		monitor.getCurrentOrders().put(o1.getId(), new OrderStatus(o1.getState(), o1.getRequestingMemberId(), o1.getProvidingMemberId()));
 		OrderXP o2 = createOrder("o2", false, OrderState.FULFILLED, true);
-		monitor.getCurrentOrders().put(o2.getId(), o2);
+		monitor.getCurrentOrders().put(o2.getId(), new OrderStatus(o2.getState(), o2.getRequestingMemberId(), o2.getProvidingMemberId()));
 		
 		PeerState state = monitor.getPeerState();
 		Assert.assertNotNull(state);		
@@ -205,10 +206,8 @@ public class TestMonitorPeerStateSingleton {
 		monitor.monitorOrder(o);
 		
 		Assert.assertEquals(1, monitor.getCurrentOrders().size());
-		Assert.assertEquals(1, monitor.getCurrentOrderStates().size());
 		
 		Assert.assertNotNull(monitor.getCurrentOrders().get("o1"));
-		Assert.assertEquals(OrderState.OPEN, monitor.getCurrentOrderStates().get("o1"));
 	}
 	
 	@Test
@@ -227,41 +226,33 @@ public class TestMonitorPeerStateSingleton {
 		state = new PeerState("", 0, 3, 1, 0, 2, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		
-		Assert.assertEquals(3, monitor.getCurrentOrders().size());
-		Assert.assertEquals(3, monitor.getCurrentOrderStates().size());
-		
+		Assert.assertEquals(3, monitor.getCurrentOrders().size());		
 		Assert.assertNotNull(monitor.getCurrentOrders().get("o3"));
-		Assert.assertEquals(OrderState.OPEN, monitor.getCurrentOrderStates().get("o3"));
 		
 		monitor.monitorOrder(createOrder("o3", true, OrderState.OPEN, true));
 		state = new PeerState("", 0, 3, 1, 0, 2, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(3, monitor.getCurrentOrders().size());
-		Assert.assertEquals(3, monitor.getCurrentOrderStates().size());
 		
 		monitor.monitorOrder(createOrder("o3", true, OrderState.FULFILLED, true));
 		state = new PeerState("", 0, 3, 1, 0, 1, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(3, monitor.getCurrentOrders().size());
-		Assert.assertEquals(3, monitor.getCurrentOrderStates().size());
 		
 		monitor.monitorOrder(createOrder("o3", true, OrderState.CLOSED, true));
 		state = new PeerState("", 0, 2, 0, 0, 2, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(2, monitor.getCurrentOrders().size());
-		Assert.assertEquals(2, monitor.getCurrentOrderStates().size());
 		
 		monitor.monitorOrder(createOrder("o2", true, OrderState.DELETED, true));
 		state = new PeerState("", 0, 1, 0, 0, 2, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(1, monitor.getCurrentOrders().size());
-		Assert.assertEquals(1, monitor.getCurrentOrderStates().size());
 		
 		monitor.monitorOrder(createOrder("o1", true, OrderState.FAILED, true));
 		state = new PeerState("", 0, 0, 0, 0, 2, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(0, monitor.getCurrentOrders().size());
-		Assert.assertEquals(0, monitor.getCurrentOrderStates().size());
 	}
 	
 	private OrderXP createOrder(String id, boolean isLocal, OrderState state, boolean metLocally){		

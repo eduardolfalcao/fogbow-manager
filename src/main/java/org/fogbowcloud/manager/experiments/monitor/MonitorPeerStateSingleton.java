@@ -17,6 +17,7 @@ import org.fogbowcloud.manager.core.ManagerControllerXP;
 import org.fogbowcloud.manager.core.model.DateUtils;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.experiments.data.CsvGenerator;
+import org.fogbowcloud.manager.experiments.data.OrderStatus;
 import org.fogbowcloud.manager.experiments.data.PeerState;
 import org.fogbowcloud.manager.experiments.scheduler.WorkloadScheduler;
 import org.fogbowcloud.manager.occi.model.Token;
@@ -67,8 +68,7 @@ public class MonitorPeerStateSingleton{
 		
 		private Map<Integer,PeerState> states;		//time as key, PeerState as value
 		private PeerState lastState;
-		private Map<String,Order> currentOrders;
-		private Map<String,OrderState> currentOrderStates;
+		private Map<String,OrderStatus> currentOrders;
 		
 		private ManagerControllerXP fm;
 		private String path;
@@ -84,8 +84,7 @@ public class MonitorPeerStateSingleton{
 			path = fm.getProperties().getProperty(OUTPUT_FOLDER);		
 			new File(path).mkdirs();		
 			
-			currentOrders = new HashMap<String,Order>();
-			currentOrderStates = new HashMap<String,OrderState>();
+			currentOrders = new HashMap<String,OrderStatus>();
 			states = new LinkedHashMap<Integer,PeerState>();
 			int capacity = Integer.parseInt(fm.getProperties().getProperty(FakeCloudComputePlugin.COMPUTE_FAKE_QUOTA));
 			lastState = new PeerState(fm.getManagerId(), 0, 0, 0, 0, capacity, 0);
@@ -117,7 +116,7 @@ public class MonitorPeerStateSingleton{
 			OrderXP o = (OrderXP) order;
 			synchronized(currentOrders){
 				//do nothing if state hasnt changed
-				if(currentOrderStates.get(o.getId())!=null && currentOrderStates.get(o.getId()).equals(o.getState())){					
+				if(currentOrders.get(o.getId())!=null && currentOrders.get(o.getId()).getState().equals(o.getState())){					
 					return;
 				}				
 				
@@ -130,10 +129,8 @@ public class MonitorPeerStateSingleton{
 						o.getState().equals(OrderState.FAILED) ||
 						o.getState().equals(OrderState.DELETED)){					
 					currentOrders.remove(o.getId());
-					currentOrderStates.remove(o.getId());
 				} else{					
-					currentOrders.put(o.getId(), o);					
-					currentOrderStates.put(o.getId(), o.getState());
+					currentOrders.put(o.getId(), new OrderStatus(o.getState(), o.getRequestingMemberId(), o.getProvidingMemberId()));
 				}
 			}
 			PeerState currentState = getPeerState();
@@ -155,6 +152,8 @@ public class MonitorPeerStateSingleton{
 			
 		protected PeerState getPeerState() {
 			
+			//need: state, requesting, providing
+			
 			
 			int dTot = 0;	//O_r=i + P_r=i + F_r=i&&p=i + F_r=i&&p!=i 
 			int dFed = 0;	//1 - max(0,dTot - maxCapacity) ou 2 - max(max(0,dTot - maxCapacity), rFed)
@@ -162,24 +161,23 @@ public class MonitorPeerStateSingleton{
 			int oFed = 0;	//maxCapacity - F_r=i&&p=i
 			int sFed = 0;	//F_r!=i&&p=i
 			
-			Map<String,Order> currentOrdersClone = null;
+			Map<String,OrderStatus> currentOrdersClone = null;
 			synchronized(currentOrders){
-				currentOrdersClone = new LinkedHashMap<String, Order>();
+				currentOrdersClone = new LinkedHashMap<String, OrderStatus>();
 				currentOrdersClone.putAll(currentOrders);
 			}
 			
-			for(Entry<String,Order> e : currentOrdersClone.entrySet()){
-				Order order = e.getValue();
-				OrderState state = order.getState();
+			for(Entry<String,OrderStatus> e : currentOrdersClone.entrySet()){
+				OrderStatus orderStatus = e.getValue();
+				OrderState state = orderStatus.getState();
 				if(state.equals(OrderState.FULFILLED)){
-					if(order.getRequestingMemberId().equals(fm.getManagerId())){	//F_r=i
+					if(orderStatus.getRequestingMemberId().equals(fm.getManagerId())){	//F_r=i
 						dTot++;
 						//the order may be fulfilled but the providing member may be null
-						if(order.getProvidingMemberId()==null){
-							LOGGER.error("<"+fm.getManagerId()+">: order("+order.getId()+") has no providing member ==> "+(OrderXP)order);
-							LOGGER.info("<"+fm.getManagerId()+">: monitorOrder2 #@@# orderId("+order.getId()+") " + order.getAddress());
+						if(orderStatus.getProvidingMemberId()==null){
+							LOGGER.error("<"+fm.getManagerId()+">: order("+e.getKey()+") has no providing member ==> "+ orderStatus);
 						}
-						if(order.getProvidingMemberId().equals(fm.getManagerId())){	//F_r=i&&p=i	
+						if(orderStatus.getProvidingMemberId().equals(fm.getManagerId())){	//F_r=i&&p=i	
 							oFed--;
 						}
 						else{														//F_r=i&&p!=i
@@ -187,12 +185,12 @@ public class MonitorPeerStateSingleton{
 						}
 					}
 					else{															//F_r!=i
-						if(order.getProvidingMemberId().equals(fm.getManagerId()))	//F_r!=i&&p==i
+						if(orderStatus.getProvidingMemberId().equals(fm.getManagerId()))	//F_r!=i&&p==i
 							sFed++;					
 					}
 				}
 				else if((state.equals(OrderState.OPEN)||state.equals(OrderState.PENDING)) && 			
-						order.getRequestingMemberId().equals(fm.getManagerId()))	//O_r=i || P_r=i
+						orderStatus.getRequestingMemberId().equals(fm.getManagerId()))	//O_r=i || P_r=i
 					dTot++;	
 			}
 			
@@ -240,12 +238,8 @@ public class MonitorPeerStateSingleton{
 			CsvGenerator.flushFile(w);
 		}
 		
-		protected Map<String, Order> getCurrentOrders() {
+		protected Map<String, OrderStatus> getCurrentOrders() {
 			return currentOrders;
-		}
-		
-		protected Map<String, OrderState> getCurrentOrderStates() {
-			return currentOrderStates;
 		}
 		
 		protected PeerState getLastState() {
