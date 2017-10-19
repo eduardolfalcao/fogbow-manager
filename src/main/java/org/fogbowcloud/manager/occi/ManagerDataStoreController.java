@@ -25,6 +25,8 @@ public class ManagerDataStoreController {
 	public ManagerDataStoreController(Properties properties, boolean forExperiments) {
 		if(forExperiments){
 			this.managerDatabase = new ManagerDataStoreXP(properties);
+			this.managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
+		}
 		else
 			this.managerDatabase = new ManagerDataStore(properties);
 	}
