@@ -54,7 +54,7 @@ public class ManagerControllerXP extends ManagerController{
 		LOGGER.setLevel(Level.INFO);		
 		this.ordersToBeCreated = new ArrayList<Order>();
 		this.createOrderOnDBExecutor = new ScheduledThreadPoolExecutor(1);
-		this.monitorTimer = new ManagerTimer(executor);
+		this.monitorTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 	}
 
 	public ComputePlugin getComputePlugin(){
@@ -444,14 +444,19 @@ public class ManagerControllerXP extends ManagerController{
 					LOGGER.debug("<"+managerId+">: "+"Couldn't run benchmark.", e);
 				}
 				
+				LOGGER.info("<"+managerId+">: already run benchmark on order("+order.getId()+"): "+order);				
 				//TODO check if it is correct
-				if(order.getProvidingMemberId()==null && order.getInstanceId() == null){	//the instance was preempted: do nothing on database
+				if(order.getProvidingMemberId()==null || order.getInstanceId() == null){	
+					//the instance was preempted: do nothing on database; or
+					//the instance was preempted: remove order
+					instanceRemoved(order);
 					return;
 				}					
 				
 				//update db before removeAsynchronousRemoteOrders because when there is too much peer it can take long time to notify them
 				if (!order.getState().in(OrderState.DELETED)) {
 					order.setState(OrderState.FULFILLED);
+					LOGGER.info("<"+managerId+">: Just fulfilled order("+order.getId()+") after benchmarking: "+order);
 					managerDataStoreController.updateOrder(order);
 				}
 				

@@ -175,7 +175,7 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 	public synchronized boolean updateOrder(Order order) {	
 		
 		LOGGER.info("<"+managerId+">: updating order: " +(OrderXP) order);
-		LOGGER.info("<"+managerId+">: updateOrder #@@# orderId("+order.getId()+") " + order.getAddress());
+		//LOGGER.info("<"+managerId+">: updateOrder #@@# orderId("+order.getId()+") " + order.getAddress());
 		
 		if(!orders.containsKey(order.getId())){
 			return false;
