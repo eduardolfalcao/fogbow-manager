@@ -139,9 +139,12 @@ public class ManagerControllerXP extends ManagerController{
 				LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);
 				order.setState(OrderState.CLOSED);
 			}
-		}	
+		} else{
+			LOGGER.info("<"+managerId+">: debug2 order: " + order);
+		}		
 		
 		LOGGER.info("<"+managerId+">: debug3 order: " + order);
+		LOGGER.info("<"+managerId+">: instanceRemoved #@@# orderId("+order.getId()+") " + order.getAddress());
 		
 		this.managerDataStoreController.updateOrder(order);
 		if (instanceId != null) {
