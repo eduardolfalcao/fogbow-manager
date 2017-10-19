@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.order.Order;
@@ -19,10 +20,13 @@ public class ManagerDataStoreController {
 	private static final Logger LOGGER = Logger.getLogger(ManagerDataStoreController.class);
 	
 	private ManagerDataStore managerDatabase;
+	private String managerId;
 
 	public ManagerDataStoreController(Properties properties, boolean forExperiments) {
-		if(forExperiments)
+		if(forExperiments){
 			this.managerDatabase = new ManagerDataStoreXP(properties);
+			this.managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
+		}
 		else
 			this.managerDatabase = new ManagerDataStore(properties);
 	}
@@ -39,6 +43,7 @@ public class ManagerDataStoreController {
 	
 	public void updateOrder(Order order) {
 		try {
+			LOGGER.info("<"+managerId+">: Updating order("+order.getId()+"): "+order);
 			this.managerDatabase.updateOrder(order);
 		} catch (Exception e) {
 			String errorMsg = "Error while try to update order.";
