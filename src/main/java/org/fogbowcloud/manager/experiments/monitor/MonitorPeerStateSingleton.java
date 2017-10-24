@@ -170,7 +170,7 @@ public class MonitorPeerStateSingleton{
 				OrderStatus orderStatus = e.getValue();
 				OrderState state = orderStatus.getState();
 				
-				if(orderStatus.getProvidingMemberId()==null){	//probably, the order was instantly preempted/removed
+				if(state.equals(OrderState.FULFILLED) && orderStatus.getProvidingMemberId()==null){	//probably, the order was instantly preempted/removed
 					LOGGER.error("<"+fm.getManagerId()+">: order("+e.getKey()+") has no providing member ==> "+ orderStatus);
 					continue;
 				}
