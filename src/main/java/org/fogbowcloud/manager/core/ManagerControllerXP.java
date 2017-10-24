@@ -97,7 +97,7 @@ public class ManagerControllerXP extends ManagerController{
 		boolean isRemoving = true;
 		order.updateElapsedTime(isRemoving);
 		LOGGER.info("<"+managerId+">: "+"checking if the order("+order.getId()+"), with instance("+order.getInstanceId()+"), requested by "+order.getRequestingMemberId()+
-				" and provided by "+ order.getProvidingMemberId() +" will be removed or rescheduled. runtime: " + order.getRuntime()+
+				" and provided by "+ order.getProvidingMemberId() +", with state "+order.getState()+", will be removed or rescheduled. runtime: " + order.getRuntime()+
 				", previousElapsedTime: "+order.getPreviousElapsedTime()+", currentElapsedTime: "+order.getCurrentElapsedTime()+", fulfilledTime: "+order.getFulfilledTime());
 		
 		if (order.getResourceKind().equals(OrderConstants.COMPUTE_TERM)) {
@@ -113,12 +113,14 @@ public class ManagerControllerXP extends ManagerController{
 		}catch(Exception e){
 			LOGGER.error("<"+managerId+">: "+"Couldn't get instance with id "+instanceId+"! Order: " + order.getId(), e);
 		}
-		order.setInstanceId(null);
+		
+		LOGGER.info("<"+managerId+">: Order " + order.getId()+" will have instanceId and ProvidingMemberId set to null");
+		order.setInstanceId(null);		
 		order.setProvidingMemberId(null);
 		LOGGER.info("<"+managerId+">: Order " + order.getId()+" just had instanceId and ProvidingMemberId set to null");
 		
 		if (order.getState().equals(OrderState.DELETED)  || !order.isLocal()) {
-			LOGGER.info("<"+managerId+">: debug1 order: " + order);
+			LOGGER.info("<"+managerId+">: Setting order("+order.getId()+") to DELETED: " + order);
 			order.setState(OrderState.DELETED);
 			managerDataStoreController.excludeOrder(order.getId());
 		} else if(instance != null && instance.getState().equals(InstanceState.FAILED)){
@@ -139,12 +141,9 @@ public class ManagerControllerXP extends ManagerController{
 				LOGGER.info("<"+managerId+">: "+"Order: " + order.getId() + ", setting state to " + OrderState.CLOSED);
 				order.setState(OrderState.CLOSED);
 			}
-		} else{
-			LOGGER.info("<"+managerId+">: debug2 order: " + order);
-		}		
+		} 	
 		
-		LOGGER.info("<"+managerId+">: debug3 order: " + order);
-		LOGGER.info("<"+managerId+">: instanceRemoved #@@# orderId("+order.getId()+") " + order.getAddress());
+		LOGGER.info("<"+managerId+">: Just changed order("+order.getId()+") state: " + order);
 		
 		this.managerDataStoreController.updateOrder(order);
 		if (instanceId != null) {
@@ -196,6 +195,17 @@ public class ManagerControllerXP extends ManagerController{
 	public void remoteMemberPreemptedOrder(String orderId){
 		LOGGER.info("<"+managerId+">: "+"Removing order (id="+orderId+") preempted by remote member");		
 		Order o = managerDataStoreController.getOrder(orderId);
+		int attempts = 0;
+		if(!o.getState().equals(OrderState.FULFILLED) && attempts<20){	//busy waiting on maximum for 1s
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}finally{
+				attempts++;
+			}
+		}
+		LOGGER.info("<"+managerId+">: "+"Initiating remotion due to preemption on order (id="+orderId+")");
 		instanceRemoved(o);		
 	}
 
@@ -322,7 +332,7 @@ public class ManagerControllerXP extends ManagerController{
 			String orderId = String.valueOf(UUID.randomUUID());
 			Order order = new OrderXP(orderId, federationToken, new LinkedList<Category>(categories),
 					new HashMap<String, String>(xOCCIAtt), true, properties.getProperty("xmpp_jid"));
-			LOGGER.info("<"+managerId+">: createOrders #@@# orderId("+order.getId()+") " + order.getAddress());
+			LOGGER.info("<"+managerId+">: createdOrder orderId("+order.getId()+")");
 			currentOrders.add(order);
 		}
 		
@@ -442,15 +452,6 @@ public class ManagerControllerXP extends ManagerController{
 					benchmarkingPlugin.run(order.getGlobalInstanceId(), instance);
 				} catch (Exception e) {
 					LOGGER.debug("<"+managerId+">: "+"Couldn't run benchmark.", e);
-				}
-				
-				LOGGER.info("<"+managerId+">: already run benchmark on order("+order.getId()+"): "+order);				
-				//TODO check if it is correct
-				if(order.getProvidingMemberId()==null || order.getInstanceId() == null){	
-					//the instance was preempted: do nothing on database; or
-					//the instance was preempted: remove order
-					instanceRemoved(order);
-					return;
 				}					
 				
 				//update db before removeAsynchronousRemoteOrders because when there is too much peer it can take long time to notify them

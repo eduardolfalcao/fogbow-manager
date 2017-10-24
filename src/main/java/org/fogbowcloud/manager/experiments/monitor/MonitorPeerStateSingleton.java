@@ -138,13 +138,13 @@ public class MonitorPeerStateSingleton{
 					lastState.getrFed() != currentState.getrFed() ||
 					lastState.getoFed() != currentState.getoFed() ||
 					lastState.getsFed() != currentState.getsFed()){
-				LOGGER.info("<"+fm.getManagerId()+">: currentState @@ is different from last state ==> currentState("+currentState+"), lastState("+lastState+")");
+				LOGGER.info("<"+fm.getManagerId()+">: #time("+currentState.getTime()+") currentState is different from last state ==> currentState("+currentState+"), lastState("+lastState+")");
 				synchronized(states){
 					states.put(currentState.getTime(),currentState);
 				}
 				lastState = currentState;
 			}else{
-				LOGGER.info("<"+fm.getManagerId()+">: currentState ## is still the same of last state ==> currentState("+currentState+"), lastState("+lastState+")");
+				LOGGER.info("<"+fm.getManagerId()+">: #time("+currentState.getTime()+") currentState is still the same of last state ==> currentState("+currentState+"), lastState("+lastState+")");
 			}
 			
 		}
@@ -169,13 +169,15 @@ public class MonitorPeerStateSingleton{
 			for(Entry<String,OrderStatus> e : currentOrdersClone.entrySet()){
 				OrderStatus orderStatus = e.getValue();
 				OrderState state = orderStatus.getState();
+				
+				if(orderStatus.getProvidingMemberId()==null){	//probably, the order was instantly preempted/removed
+					LOGGER.error("<"+fm.getManagerId()+">: order("+e.getKey()+") has no providing member ==> "+ orderStatus);
+					continue;
+				}
+				
 				if(state.equals(OrderState.FULFILLED)){
 					if(orderStatus.getRequestingMemberId().equals(fm.getManagerId())){	//F_r=i
 						dTot++;
-						//the order may be fulfilled but the providing member may be null
-						if(orderStatus.getProvidingMemberId()==null){
-							LOGGER.error("<"+fm.getManagerId()+">: order("+e.getKey()+") has no providing member ==> "+ orderStatus);
-						}
 						if(orderStatus.getProvidingMemberId().equals(fm.getManagerId())){	//F_r=i&&p=i	
 							oFed--;
 						}

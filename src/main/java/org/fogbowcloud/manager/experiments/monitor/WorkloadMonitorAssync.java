@@ -42,7 +42,6 @@ public class WorkloadMonitorAssync {
 					LOGGER.info("<"+managerId+">: "+"checking if the order("+order.getId()+"), with instance("+order.getInstanceId()+"), requested by "+order.getRequestingMemberId()+
 							" and provided by "+ order.getProvidingMemberId() +" will be removed or rescheduled. runtime: " + order.getRuntime()+
 							", previousElapsedTime: "+order.getPreviousElapsedTime()+", currentElapsedTime: "+order.getCurrentElapsedTime()+", fulfilledTime: "+order.getFulfilledTime());
-					LOGGER.info("<"+managerId+">: monitorOrder #@@# orderId("+order.getId()+") " + order.getAddress());
 					boolean finished = (order.getPreviousElapsedTime() + order.getCurrentElapsedTime()) >= order.getRuntime();
 					if(finished){
 						removeOrder(fm, order);

@@ -144,7 +144,7 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 			LOGGER.error("<"+managerId+">: Exception while monitoring order with id "+order.getId(), e);
 		}		
 		
-		if(order.isLocal()){	//if order is local, then, stop monitoring
+		if(order.isLocal()){	//only monitor local orders
 			try{
 				if (threads.contains(order.getId())) {		
 					threads.remove(order.getId());
@@ -192,24 +192,26 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 			LOGGER.error("<"+managerId+">: Exception while monitoring order with id "+order.getId(), e);
 		}
 		
-		if (order.getState().equals(OrderState.FULFILLED)) {
-			try{
-				this.workloadMonitorAssync.monitorOrder(order);
-				if(!threads.contains(order.getId())){
-					LOGGER.info("<"+managerId+">: "+"Added order id "+order.getId()+" on threads list");
-					threads.add(order.getId());
-				}
-			} catch(Exception e){
-				LOGGER.error("<"+managerId+">: Exception while tried to schedule the monitoring of order with id "+order.getId(), e);
-			}			
-		} else if (threads.contains(order.getId())) {
-			try{
-				LOGGER.info("<"+managerId+">: "+"Removed order id "+order.getId()+" from threads list");
-				threads.remove(order.getId());
-				this.workloadMonitorAssync.stopMonitoring(order);
-			} catch(Exception e){
-				LOGGER.error("<"+managerId+">: Exception while tried to schedule remotion of order with id "+order.getId(), e);
-			}	
+		if(order.isLocal()){	//only monitor local orders
+			if (order.getState().equals(OrderState.FULFILLED) && order.isLocal()) {		
+				try{
+					this.workloadMonitorAssync.monitorOrder(order);
+					if(!threads.contains(order.getId())){
+						LOGGER.info("<"+managerId+">: "+"Added order id "+order.getId()+" on threads list");
+						threads.add(order.getId());
+					}
+				} catch(Exception e){
+					LOGGER.error("<"+managerId+">: Exception while tried to schedule the monitoring of order with id "+order.getId(), e);
+				}			
+			} else if (threads.contains(order.getId())) {
+				try{
+					LOGGER.info("<"+managerId+">: "+"Removed order id "+order.getId()+" from threads list");
+					threads.remove(order.getId());
+					this.workloadMonitorAssync.stopMonitoring(order);
+				} catch(Exception e){
+					LOGGER.error("<"+managerId+">: Exception while tried to schedule remotion of order with id "+order.getId(), e);
+				}	
+			}
 		}
 		
 		return true;
