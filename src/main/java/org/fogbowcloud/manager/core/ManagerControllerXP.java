@@ -390,7 +390,7 @@ public class ManagerControllerXP extends ManagerController{
 							return;
 						}
 
-						if (order.getState().in(OrderState.DELETED, OrderState.CLOSED)) {	//FIXME added CLOSED on this if
+						if (order.getState().in(OrderState.DELETED, OrderState.CLOSED)) {
 							return;
 						}
 

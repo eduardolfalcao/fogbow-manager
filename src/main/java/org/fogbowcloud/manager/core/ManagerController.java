@@ -1756,7 +1756,8 @@ public class ManagerController {
 			if (timeoutReached(order.getSyncronousTime())) {
 				LOGGER.info("<"+managerId+">: "+"The forwarded order " + order.getId()
 						+ " reached timeout and is being removed from asynchronousOrders list.");
-				order.setState(OrderState.OPEN);
+				order.setState(OrderState.OPEN);				
+				//FIXME set providingMemberId to null
 				this.managerDataStoreController.updateOrder(order);		
 			}			
 		}

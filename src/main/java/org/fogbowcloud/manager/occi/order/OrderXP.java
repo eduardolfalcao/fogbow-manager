@@ -96,7 +96,8 @@ public class OrderXP extends Order{
 				+ ", categories: " + categories + ", xOCCIAtt: " + xOCCIAtt 
 				+ ", runtime: " + runtime + ", fulfilledTime: "+fulfilledTime
 				+ ", previousElapsedTime: "+previousElapsedTime+""
-				+ ", currentElapsedTime: "+currentElapsedTime;
+				+ ", currentElapsedTime: "+currentElapsedTime
+				+ ", syncronousStatus: "+syncronousStatus;
 	}
 
 	@Override

@@ -65,13 +65,11 @@ public class WorkloadMonitorAssync {
 	private void removeOrder(final ManagerControllerXP fm, final Order order){
 		try{
 			if(order.isLocal()){
-				LOGGER.info("<"+fm.getManagerId()+">: "+"removing local instance ("+order.getInstanceId()+"), orderId("+order.getId()+"), requested by "+order.getRequestingMemberId());
+				LOGGER.info("<"+fm.getManagerId()+">: removing local instance ("+order.getInstanceId()+"), orderId("+order.getId()+"), requested by "+order.getRequestingMemberId());
 			    fm.removeInstance(WorkloadScheduler.FAKE_TOKEN, order.getGlobalInstanceId(), order.getResourceKind());
 			} else{
-				LOGGER.error("<"+fm.getManagerId()+">: "+"I am trying to remove a served order! And that shouldn't happen! ==> ("+order.getInstanceId()+"), "
+				LOGGER.error("<"+fm.getManagerId()+">: I am trying to remove a served order! And that shouldn't happen! ==> ("+order.getInstanceId()+"), "
 						+ "orderId("+order.getId()+"), remote member("+order.getRequestingMemberId()+")");
-//				LOGGER.info("<"+fm.getManagerId()+">: "+"removing local instance ("+order.getInstanceId()+"), orderId("+order.getId()+"), for remote member, requested by "+order.getRequestingMemberId());
-//			    fm.removeInstanceForRemoteMember(order.getGlobalInstanceId());
 			} 
 		} catch(OCCIException ex){
 			LOGGER.error("<"+fm.getManagerId()+">: Exception while removing instance " + order.getGlobalInstanceId(),ex);

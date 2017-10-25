@@ -97,12 +97,12 @@ public class MonitorPeerStateSingleton{
 		
 		public void savePeerState() {
 			long now = TimeUnit.MILLISECONDS.toSeconds(date.currentTimeMillis()-initialTime);
-			if(states.size()>1 && ((now - lastWrite)>outputTime && !finished)){
+			if(states.size()>1 && ((now - lastWrite)>outputTime && !finished) && !finished){
 					writeStates(now);
 					lastWrite = now;
 					LOGGER.info("<"+fm.getManagerId()+">: writing on file, now="+now+", endingTime="+endingTime);
 			}
-			if(now >= endingTime){
+			if((now >= endingTime) && !finished){
 				states.put((int)now, new PeerState(fm.getManagerId(), (int)now, 0, 0, 0, 0, 0));
 				LOGGER.info("<"+fm.getManagerId()+">: finishing, now="+now+", endingTime="+endingTime);
 				writeStates(endingTime);
@@ -138,13 +138,13 @@ public class MonitorPeerStateSingleton{
 					lastState.getrFed() != currentState.getrFed() ||
 					lastState.getoFed() != currentState.getoFed() ||
 					lastState.getsFed() != currentState.getsFed()){
-				LOGGER.info("<"+fm.getManagerId()+">: #time("+currentState.getTime()+") currentState is different from last state ==> currentState("+currentState+"), lastState("+lastState+")");
+				LOGGER.info("<"+fm.getManagerId()+">: time("+currentState.getTime()+") currentState is different from last state ==> currentState("+currentState+"), lastState("+lastState+")");
 				synchronized(states){
 					states.put(currentState.getTime(),currentState);
 				}
 				lastState = currentState;
 			}else{
-				LOGGER.info("<"+fm.getManagerId()+">: #time("+currentState.getTime()+") currentState is still the same of last state ==> currentState("+currentState+"), lastState("+lastState+")");
+				LOGGER.info("<"+fm.getManagerId()+">: time("+currentState.getTime()+") currentState is still the same of last state ==> currentState("+currentState+"), lastState("+lastState+")");
 			}
 			
 		}
@@ -246,12 +246,6 @@ public class MonitorPeerStateSingleton{
 		protected PeerState getLastState() {
 			return lastState;
 		}
-		
-//		private OrderXP cloneOrder(OrderXP o){
-//			Token clonedToke = new Token(o.getFederationToken().getAccessId(),o.getFederationToken().getUser(), o.getFederationToken().getExpirationDate(), )
-//			
-//			OrderXP clonedOrder = new OrderXP(o.getId()
-//		}
 
 	}	
 }

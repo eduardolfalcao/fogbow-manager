@@ -43,7 +43,7 @@ public class ManagerDataStoreController {
 	
 	public void updateOrder(Order order) {
 		try {
-			LOGGER.info("<"+managerId+">: Updating order("+order.getId()+"): "+order);
+			LOGGER.info("<"+managerId+">: Updating order("+order.getId()+")");
 			this.managerDatabase.updateOrder(order);
 		} catch (Exception e) {
 			String errorMsg = "Error while try to update order.";
@@ -101,7 +101,7 @@ public class ManagerDataStoreController {
 				}
 			}
 		} catch (Exception e) {
-			String errorMsg = "Error while try to get orders by states and resource king.";
+			String errorMsg = "Error while try to get orders by states and resource kind.";
 			LOGGER.error(errorMsg, e);
 			throw new OCCIException(ErrorType.BAD_REQUEST, errorMsg);
 		}
