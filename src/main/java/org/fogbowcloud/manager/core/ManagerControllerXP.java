@@ -390,7 +390,7 @@ public class ManagerControllerXP extends ManagerController{
 							return;
 						}
 
-						if (order.getState().in(OrderState.DELETED)) {
+						if (order.getState().in(OrderState.DELETED, OrderState.CLOSED)) {	//FIXME added CLOSED on this if
 							return;
 						}
 
@@ -606,5 +606,46 @@ public class ManagerControllerXP extends ManagerController{
 			return false;
 		}
 	}	
+	
+//	@Override
+//	public boolean instanceHasOrderRelatedTo(String orderId, String instanceId) {
+//		LOGGER.info("<"+managerId+">: "+"Checking if instance " + instanceId + " is related to order " + orderId);
+//		// checking federation local user instances for local users
+//		if (orderId == null) {
+//			for (Order order : managerDataStoreController.getAllOrders()) {
+//				if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
+//					String reqInstanceId = generateGlobalId(order.getInstanceId(), order.getProvidingMemberId());
+//					if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
+//						LOGGER.info("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
+//						return true;
+//					}
+//				}
+//			}
+//		} else {
+//			// checking federation local users instances for remote members
+//			Order order = managerDataStoreController.getOrder(orderId);
+//			LOGGER.debug("<"+managerId+">: The order with id " + orderId + " is " + order);
+//			if (order == null) {
+//				return false;
+//			}
+//			if (instanceId == null) {
+//				return true;
+//			}
+//
+//			// it is possible that the asynchronous order has not received instanceId yet
+//			if ((order.getState().in(OrderState.OPEN) || order.getState().in(OrderState.PENDING)) 
+//						&& managerDataStoreController.isOrderSyncronous(orderId)) {
+//				LOGGER.info("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
+//				return true;
+//			} else if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
+//				String reqInstanceId = generateGlobalId(order.getInstanceId(), order.getProvidingMemberId());
+//				if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
+//					LOGGER.info("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
+//					return true;
+//				}
+//			}
+//		}
+//		return false;
+//	}
 }
 

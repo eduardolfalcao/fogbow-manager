@@ -193,7 +193,7 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 		}
 		
 		if(order.isLocal()){	//only monitor local orders
-			if (order.getState().equals(OrderState.FULFILLED) && order.isLocal()) {		
+			if (order.getState().equals(OrderState.FULFILLED)) {		
 				try{
 					this.workloadMonitorAssync.monitorOrder(order);
 					if(!threads.contains(order.getId())){
@@ -208,6 +208,7 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 					LOGGER.info("<"+managerId+">: "+"Removed order id "+order.getId()+" from threads list");
 					threads.remove(order.getId());
 					this.workloadMonitorAssync.stopMonitoring(order);
+					//TODO also remove the order from the map?
 				} catch(Exception e){
 					LOGGER.error("<"+managerId+">: Exception while tried to schedule remotion of order with id "+order.getId(), e);
 				}	

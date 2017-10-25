@@ -916,7 +916,6 @@ public class ManagerController {
 	
 	public void removeInstance(String federationToken, String instanceId, String resourceKind) {
 		Order order = getOrderForInstance(federationToken, instanceId);
-		LOGGER.info("<"+managerId+">: #@@# orderId("+order.getId()+") " + order.getAddress());
 		instanceId = normalizeFogbowResourceId(instanceId);
 		removeInstance(instanceId, order, resourceKind);
 	}
@@ -1752,18 +1751,18 @@ public class ManagerController {
 	}
 
 	protected void checkPendingOrders() {
-		List<Order> ordersPedding = this.managerDataStoreController.getOrdersByState(OrderState.PENDING);
-		for (Order order : ordersPedding) {
-			if (timoutReached(order.getSyncronousTime())) {
+		List<Order> ordersPending = this.managerDataStoreController.getOrdersByState(OrderState.PENDING);
+		for (Order order : ordersPending) {
+			if (timeoutReached(order.getSyncronousTime())) {
 				LOGGER.info("<"+managerId+">: "+"The forwarded order " + order.getId()
-						+ " reached timeout and is been removed from asynchronousOrders list.");
+						+ " reached timeout and is being removed from asynchronousOrders list.");
 				order.setState(OrderState.OPEN);
 				this.managerDataStoreController.updateOrder(order);		
 			}			
 		}
 	}
 
-	private boolean timoutReached(long timeStamp) {
+	private boolean timeoutReached(long timeStamp) {
 		long nowMilli = dateUtils.currentTimeMillis();
 		Date now = new Date(nowMilli);
 
