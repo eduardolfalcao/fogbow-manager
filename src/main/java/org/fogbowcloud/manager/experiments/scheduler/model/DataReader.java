@@ -11,7 +11,7 @@ import java.util.List;
 public class DataReader {
 	
 	public static void main(String[] args) throws FileNotFoundException {
-		String file = "/home/eduardolfalcao/cloudcom2017/workload/force-preemption.txt";
+		String file = "experiments/workload/synthetic/kappa1-demand40-cycle10-totalDuration24.txt";
 		DataReader dr = new DataReader();
 		List<Peer> peers = new ArrayList<Peer>();
 		dr.readWorkload(peers, file);
