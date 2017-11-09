@@ -1,4 +1,4 @@
-package org.fogbowcloud.manager.experiments.data;
+package workload;
 
 import java.io.FileWriter;
 import java.io.IOException;
