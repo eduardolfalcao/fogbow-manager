@@ -81,7 +81,7 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 			return null;
 		}
 
-		Collections.sort(memberDebts, new FederationMemberDebtComparator());
+		Collections.sort(memberDebts, new FederationMemberAscendingDebtComparator());
 		LOGGER.debug("<"+managerId+">: "+"Current memberDebts=" + memberDebts);
 		if(managerId.equals("p3")){
 			LOGGER.info("<"+managerId+">: "+"Current memberDebts=" + memberDebts);

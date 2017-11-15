@@ -16,7 +16,7 @@ import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
 import org.fogbowcloud.manager.core.plugins.prioritization.nof.FederationMemberDebt;
-import org.fogbowcloud.manager.core.plugins.prioritization.nof.FederationMemberDebtComparator;
+import org.fogbowcloud.manager.core.plugins.prioritization.nof.FederationMemberAscendingDebtComparator;
 import org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFHelper;
 
 public class NoFMemberPickerPlugin implements FederationMemberPickerPlugin {
@@ -65,7 +65,7 @@ public class NoFMemberPickerPlugin implements FederationMemberPickerPlugin {
 		if (reputableMembers.isEmpty()) {
 			return null;
 		}
-		Collections.sort(reputableMembers, new FederationMemberDebtComparator());
+		Collections.sort(reputableMembers, new FederationMemberAscendingDebtComparator());
 		return reputableMembers.getFirst().getMember();
 	}
 	
