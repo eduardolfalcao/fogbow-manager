@@ -50,21 +50,31 @@ public class RandomizedNoFMemberPickerPlugin implements FederationMemberPickerPl
 		int actualQuantiles = quantiles;
 		if(members.size()<quantiles){
 			actualQuantiles = members.size();
+			for(FederationMember m : members){
+				if(m.getId().equals(localMemberId))
+					actualQuantiles--;
+			}
 		}
+		
+		if(actualQuantiles<1)
+			return null;
 		
 		int chosenQuantile = chooseQuantile(actualQuantiles);
 		
 		List<FederationMember> sortedMembers =  getMembersSortByDebt(members);
 		
-		int min = 1, max = actualQuantiles, currentQuantile = 1;
-		while(currentQuantile!=chosenQuantile){
-			min = max+1;
-			actualQuantiles--;
-			max += actualQuantiles;			
-			currentQuantile++;
-		}
+		if(sortedMembers==null)
+			return null;
 		
-		int drawnPeer = getNumberBetweenMinAndMax(min-1, max-1);
+		int numPeersInterval = sortedMembers.size()/actualQuantiles;
+		int min = (chosenQuantile-1)*numPeersInterval;
+		int max;
+		if(chosenQuantile==actualQuantiles)
+			max = sortedMembers.size()-1;
+		else
+			 max = (chosenQuantile*numPeersInterval)-1;
+		
+		int drawnPeer = getNumberBetweenMinAndMax(min, max);
 		
 		return sortedMembers.get(drawnPeer);
 	}
