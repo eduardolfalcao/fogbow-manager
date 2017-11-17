@@ -11,7 +11,8 @@ import org.fogbowcloud.manager.occi.model.Token;
 public class OrderXP extends Order{
 
 	
-	private long previousElapsedTime, currentElapsedTime, runtime;	
+	private long previousElapsedTime, currentElapsedTime, runtime;
+	private boolean quotaExceededMsgSent = false;
 	
 	
 	private DateUtils dateUtils = new DateUtils();
@@ -85,6 +86,14 @@ public class OrderXP extends Order{
 	
 	public long getCurrentElapsedTime() {
 		return currentElapsedTime;
+	}
+	
+	public void setQuotaExceededMsgSent(boolean quotaExceededMsgSent) {
+		this.quotaExceededMsgSent = quotaExceededMsgSent;
+	}
+	
+	public boolean isQuotaExceededMsgSent() {
+		return quotaExceededMsgSent;
 	}
 	
 

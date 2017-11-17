@@ -19,7 +19,7 @@ public class ContentionCalculator {
 		
 		for(String nof : nofVars){
 			for(int cycle : cycleVars){
-				String path = "/home/eduardo/Área de Trabalho/Experimentos-Doutorado/scripts r/done/40peers-20capacity/cycle"+cycle+"/"+nof+"/";
+				String path = "/home/eduardo/Área de Trabalho/Experimentos-Doutorado/scripts r/done/40peers-20capacity/confs5secs/cycle"+cycle+"/"+nof+"/";
 				Map<PeerAndTime, Status> results = readFiles(path);
 				Map<Integer, Double> contention = computeContention(results);
 				output(contention, path+"contention/contention.csv", nof, String.valueOf(cycle));

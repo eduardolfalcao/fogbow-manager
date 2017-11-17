@@ -591,4 +591,34 @@ public class ManagerPacketHelper {
 		});
 		packetSender.sendPacket(iq);
 	}
+	
+	public static void quotaExceeded(Order order, 
+			AsyncPacketSender packetSender, final AsynchronousOrderCallback callback) {
+		if (packetSender == null) {
+			LOGGER.warn("Packet sender not set.");
+			throw new IllegalArgumentException("Packet sender not set.");
+		}
+		
+		IQ iq = new IQ();
+		iq.setTo(order.getRequestingMemberId());
+		iq.setType(Type.set);
+		Element queryEl = iq.getElement().addElement("query",
+				ManagerXmppComponent.QUOTAEXCEEDED_NAMESPACE);
+		Element orderEl = queryEl.addElement(ORDER_EL);
+		orderEl.addElement(ID_EL).setText(order.getId());
+		Element tokenEl = queryEl.addElement(TOKEN_EL);
+		tokenEl.addElement(ACCESS_ID_EL).setText(order.getFederationToken().getAccessId());
+		
+		packetSender.addPacketCallback(iq, new PacketCallback() {		
+			@Override
+			public void handle(Packet response) {
+				if (response.getError() != null) {
+					callback.error(null);
+				} else {
+					callback.success(null);
+				}
+			}
+		});
+		packetSender.sendPacket(iq);
+	}
 }

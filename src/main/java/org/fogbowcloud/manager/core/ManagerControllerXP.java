@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.fogbowcloud.manager.core.ManagerController.FailedBatchType;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.CapacityControllerPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -173,7 +174,37 @@ public class ManagerControllerXP extends ManagerController{
 			triggerOrderScheduler();	//1s or 2s of delay
 		}
 	}
-
+	
+	public void quotaExceeded(final Order orderRefused) {
+		LOGGER.info("<"+managerId+">: refusing "+orderRefused.getId()+" requested by "+orderRefused.getRequestingMemberId());
+		
+		ManagerPacketHelper.quotaExceeded(orderRefused, packetSender,new AsynchronousOrderCallback() {			
+			@Override
+			public void success(String instanceId) {
+				LOGGER.info("<"+managerId+">: Message of quota exceeded("+orderRefused.getId()+") sent successfully to "+orderRefused.getRequestingMemberId());
+			}
+			
+			@Override
+			public void error(Throwable t) {
+				LOGGER.warn("<"+managerId+">: "+"Error while sending message of quota exceeded("+ orderRefused.getId() + ") to " + orderRefused.getRequestingMemberId());
+			}
+		});
+	}
+	
+	public void makeOrderOpen(String orderId) {
+		Order order = this.managerDataStoreController.getOrder(orderId);
+		synchronized (order) {
+			if(order.getState().equals(OrderState.PENDING)){
+				LOGGER.info("<"+managerId+">: The forwarded order " + order.getId()
+				+ " couldnt be fulfilled in "+order.getProvidingMemberId()+" due to lack of"
+				+ " quota, and is being set to OPEN again.");
+				order.setState(OrderState.OPEN);
+				order.setProvidingMemberId(null);
+				this.managerDataStoreController.updateOrder(order);
+			}
+		}
+	}
+	
 	@Override
 	public void preemption(final Order orderToBePreempted) {
 		LOGGER.info("<"+managerId+">: preempting "+orderToBePreempted.getId()+" from "+orderToBePreempted.getRequestingMemberId());
@@ -578,7 +609,11 @@ public class ManagerControllerXP extends ManagerController{
 							managerDataStoreController.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
 					Order orderToPreempt = prioritizationPlugin.takeFrom(order, ordersWithInstances);
 					LOGGER.info("<"+managerId+">: "+"Order to be preempted: "+orderToPreempt);
-					if (orderToPreempt == null) {
+					if (orderToPreempt == null && !((OrderXP)order).isQuotaExceededMsgSent()) {
+						if(!order.getRequestingMemberId().equals(managerId)){
+							quotaExceeded(order);	//send a message telling the quota is exceeded
+							((OrderXP)order).setQuotaExceededMsgSent(true);
+						}
 						throw e;
 					}
 					preemption(orderToPreempt);
