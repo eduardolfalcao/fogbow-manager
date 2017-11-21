@@ -1,18 +1,24 @@
 package org.fogbowcloud.manager.core.plugins.compute.fake;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
+import org.fogbowcloud.manager.core.ManagerControllerXP;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
+import org.fogbowcloud.manager.experiments.data.OrderStatus;
+import org.fogbowcloud.manager.experiments.data.PeerState;
+import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
@@ -34,6 +40,8 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	
 	private String managerId;
 	
+	private ManagerControllerXP manager = null;
+	
 	public FakeCloudComputePlugin(Properties properties){
 		quota = Integer.parseInt(properties.getProperty(COMPUTE_FAKE_QUOTA));
 		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
@@ -45,6 +53,17 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 			Map<String, String> xOCCIAtt, String imageId) {
 		
 		if(instances.size()>=quota){
+			PeerState currentState = MonitorPeerStateSingleton.getInstance().getMonitors().get(managerId).getCurrentStateDebug();
+			LOGGER.info("<"+managerId+">: <QuotaExceeded> Existing instances("+instances.size()+"): "+instances+". CurrentState: "+currentState+".");
+			
+			List<Order> orders = manager.getManagerDataStoreController().getOrdersIn(OrderState.FULFILLED);
+			int i = 1;
+			for(Order o : orders){
+				LOGGER.info("<"+managerId+">: "+i+" - "+o);
+				i++;
+			}
+			LOGGER.info("<"+managerId+">: ########");
+			
 			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, "<"+managerId+">: "+"There is no more quota in the underlying cloud.");
 		}					
 				
@@ -57,6 +76,10 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 		}
 		
 		return name;
+	}
+	
+	public void setManager(ManagerControllerXP manager) {
+		this.manager = manager;
 	}
 	
 	@Override

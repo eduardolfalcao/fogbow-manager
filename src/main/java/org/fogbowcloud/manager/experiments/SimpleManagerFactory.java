@@ -25,6 +25,7 @@ import org.fogbowcloud.manager.core.plugins.accounting.FCUAccountingPluginXP;
 import org.fogbowcloud.manager.core.plugins.accounting.SimpleStorageAccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
 import org.fogbowcloud.manager.core.plugins.capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin;
+import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.core.plugins.imagestorage.http.HTTPDownloadImageStoragePlugin;
 import org.fogbowcloud.manager.core.plugins.localcredentials.SingleMapperPlugin;
 import org.fogbowcloud.manager.core.plugins.memberauthorization.DefaultMemberAuthorizationPlugin;
@@ -252,6 +253,9 @@ public class SimpleManagerFactory {
 
 		ManagerControllerXP fm = new ManagerControllerXP(properties);
 		fm.setComputePlugin(computePlugin);
+		/* DEBUGGING FIXME*/
+		((FakeCloudComputePlugin)computePlugin).setManager(fm);
+		
 		fm.setAuthorizationPlugin(authorizationPlugin);
 		fm.setLocalIdentityPlugin(localIdentityPlugin);
 		fm.setFederationIdentityPlugin(federationIdentityPlugin);

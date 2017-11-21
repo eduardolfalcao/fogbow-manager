@@ -67,7 +67,7 @@ public class MonitorPeerStateSingleton{
 		private long initialTime, lastWrite, outputTime, endingTime;
 		
 		private Map<Integer,PeerState> states;		//time as key, PeerState as value
-		private PeerState lastState;
+		private PeerState lastState, currentStateDebug;
 		private Map<String,OrderStatus> currentOrders;
 		
 		private ManagerControllerXP fm;
@@ -133,6 +133,7 @@ public class MonitorPeerStateSingleton{
 				}
 			}
 			PeerState currentState = getPeerState();
+			this.currentStateDebug = currentState;
 			if(lastState.getdTot() != currentState.getdTot() ||
 					lastState.getdFed() != currentState.getdFed() ||
 					lastState.getrFed() != currentState.getrFed() ||
@@ -245,6 +246,10 @@ public class MonitorPeerStateSingleton{
 		
 		protected PeerState getLastState() {
 			return lastState;
+		}
+		
+		public PeerState getCurrentStateDebug() {
+			return currentStateDebug;
 		}
 
 	}	
