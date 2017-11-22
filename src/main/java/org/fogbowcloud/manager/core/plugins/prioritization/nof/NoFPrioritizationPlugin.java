@@ -63,55 +63,42 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		
 		List<String> servedMemberIds = getServedMemberIds(ordersWithInstance);
 		LOGGER.debug("<"+managerId+">: "+"Current servedMemberIds=" + servedMemberIds);
-		if(managerId.equals("p3")){
-			LOGGER.info("<"+managerId+">: "+"Current servedMemberIds=" + servedMemberIds);
-		}
+		
 		List<AccountingInfo> accounting = accountingPlugin.getAccountingInfo();
 		Map<String, ResourceUsage> membersUsage = NoFHelper.calculateMembersUsage(localMemberId, accounting);
 		LOGGER.debug("<"+managerId+">: "+"Current membersUsage=" + membersUsage);		
-		if(managerId.equals("p3")){
-			LOGGER.info("<"+managerId+">: "+"Current membersUsage=" + membersUsage);
-		}
-		LinkedList<FederationMemberDebt> memberDebts = calctMemberDebts(servedMemberIds, membersUsage);
-		if (memberDebts.isEmpty()) {
-			LOGGER.debug("<"+managerId+">: "+"There are no member debts.");
-			if(managerId.equals("p3")){
-				LOGGER.debug("<"+managerId+">: "+"There are no member debts.");
-			}
+		LinkedList<FederationMemberCredit> memberCredits = calctMemberCredits(servedMemberIds, membersUsage);
+		if (memberCredits.isEmpty()) {
+			LOGGER.debug("<"+managerId+">: "+"There are no member credits.");
 			return null;
 		}
 
-		Collections.sort(memberDebts, new FederationMemberAscendingDebtComparator());
-		LOGGER.debug("<"+managerId+">: "+"Current memberDebts=" + memberDebts);
-		if(managerId.equals("p3")){
-			LOGGER.info("<"+managerId+">: "+"Current memberDebts=" + memberDebts);
-		}
+		Collections.sort(memberCredits, new FederationMemberCreditComparator());
+		LOGGER.debug("<"+managerId+">: "+"Current memberCredits=" + memberCredits);
 		
-		double requestingMemberDebt = calcDebt(membersUsage, newOrder.getRequestingMemberId());
-		LOGGER.debug("<"+managerId+">: "+"Requesting member debt=" + requestingMemberDebt);
-		if(managerId.equals("p3")){
-			LOGGER.info("<"+managerId+">: "+"Requesting member debt=" + requestingMemberDebt);
-		}
-		FederationMemberDebt firstMember = memberDebts.getFirst();
-		if (firstMember.getDebt() < requestingMemberDebt) {
-			String memberId = firstMember.getMember().getResourcesInfo().getId();
+		double requestingMemberCredit = calcCredit(membersUsage, newOrder.getRequestingMemberId());
+		LOGGER.debug("<"+managerId+">: "+"Requesting member credit=" + requestingMemberCredit);
+		
+		FederationMemberCredit memberWithLowestCredit = memberCredits.getLast();
+		if (memberWithLowestCredit.getCredit() < requestingMemberCredit) {
+			String memberId = memberWithLowestCredit.getMember().getResourcesInfo().getId();
 			List<Order> memberRequests = filterByRequestingMember(memberId, ordersWithInstance);
 			return getMostRecentOrder(memberRequests);
 		}
 		return null;
 	}
 
-	private LinkedList<FederationMemberDebt> calctMemberDebts(List<String> servedMembers,
+	private LinkedList<FederationMemberCredit> calctMemberCredits(List<String> servedMembers,
 			Map<String, ResourceUsage> membersUsage) {
-		LinkedList<FederationMemberDebt> memberDebts = new LinkedList<FederationMemberDebt>();
+		LinkedList<FederationMemberCredit> memberCredits = new LinkedList<FederationMemberCredit>();
 		for (String currentMemberId : servedMembers) {
 			if (localMemberId.equals(currentMemberId)) {
 				continue;
 			}
-			double debt = calcDebt(membersUsage, currentMemberId);
-			memberDebts.add(new FederationMemberDebt(currentMemberId, debt));
+			double credit = calcCredit(membersUsage, currentMemberId);
+			memberCredits.add(new FederationMemberCredit(currentMemberId, credit));
 		}
-		return memberDebts;
+		return memberCredits;
 	}
 
 	private List<String> getServedMemberIds(List<Order> orders) {
@@ -124,8 +111,8 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		return servedMemberIds;
 	}
 
-	protected double calcDebt(Map<String, ResourceUsage> membersUsage, String memberId) {
-		double debt = 0;
+	protected double calcCredit(Map<String, ResourceUsage> membersUsage, String memberId) {		
+		double credit = 0;
 		if (localMemberId.equals(memberId)) {
 			if (prioritizeLocal) {
 				return Double.MAX_VALUE;
@@ -135,14 +122,14 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		}
 
 		if (membersUsage.containsKey(memberId)) {
-			debt = membersUsage.get(memberId).getConsumed()
-					- membersUsage.get(memberId).getDonated();
+			credit = membersUsage.get(memberId).getDonated()
+					- membersUsage.get(memberId).getConsumed();
 			if (!trustworthy) {
-				debt = Math.max(0,
-						debt + Math.sqrt(membersUsage.get(memberId).getDonated()));
+				credit = Math.max(0,
+						credit + Math.sqrt(membersUsage.get(memberId).getDonated()));
 			}
 		}
-		return debt;
+		return credit;
 	}
 
 	private Order getMostRecentOrder(List<Order> memberorders) {

@@ -2,13 +2,13 @@ package org.fogbowcloud.manager.core.plugins.memberpicker;
 
 import java.util.Comparator;
 
-import org.fogbowcloud.manager.core.plugins.prioritization.nof.FederationMemberDebt;
+import org.fogbowcloud.manager.core.plugins.prioritization.nof.FederationMemberCredit;
 
-public class FederationMemberDescendingDebtComparator implements Comparator<FederationMemberDebt> {
+public class FederationMemberDescendingDebtComparator implements Comparator<FederationMemberCredit> {
 	@Override
-	public int compare(FederationMemberDebt firstMemberDebt,
-			FederationMemberDebt secondMemberDebt) {
+	public int compare(FederationMemberCredit firstMemberDebt,
+			FederationMemberCredit secondMemberDebt) {
 		
-		return new Double(secondMemberDebt.getDebt()).compareTo(new Double(firstMemberDebt.getDebt()));
+		return new Double(secondMemberDebt.getCredit()).compareTo(new Double(firstMemberDebt.getCredit()));
 	}
 }

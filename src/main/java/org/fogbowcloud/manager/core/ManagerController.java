@@ -1182,8 +1182,9 @@ public class ManagerController {
 				OrderConstants.MIXIN_CLASS));
 	}
 
-	protected void preemption(Order orderToPreemption) {
-		removeInstance(orderToPreemption.getInstanceId(), orderToPreemption, OrderConstants.COMPUTE_TERM);
+	protected void preemption(Order orderToBePreempted) {
+		LOGGER.info("<"+managerId+">: preempting "+orderToBePreempted.getId()+" from "+orderToBePreempted.getRequestingMemberId());
+		removeInstance(orderToBePreempted.getInstanceId(), orderToBePreempted, OrderConstants.COMPUTE_TERM);
 	}
 
 	protected void triggerServedOrderMonitoring() {

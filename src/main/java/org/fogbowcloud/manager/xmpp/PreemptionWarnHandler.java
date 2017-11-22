@@ -22,12 +22,13 @@ public class PreemptionWarnHandler extends AbstractQueryHandler {
 	public IQ handle(IQ query) {
 		String orderId = query.getElement().element("query").element(ManagerPacketHelper.ORDER_EL)
 				.elementText("id");
+		String providingMemberId = query.getFrom().toBareJID();
 		
 		LOGGER.info("<"+facade.getManagerId()+">: "+"I had one order/instance preempted. OrderId: " + orderId);
 		
-		IQ response = IQ.createResultIQ(query);
+		IQ response = IQ.createResultIQ(query);		
 		try {
-			((ManagerControllerXP)facade).remoteMemberPreemptedOrder(orderId);
+			((ManagerControllerXP)facade).remoteMemberPreemptedOrder(orderId,providingMemberId);
 		} catch (OCCIException e) {
 			response.setError(ManagerPacketHelper.getCondition(e));
 		}

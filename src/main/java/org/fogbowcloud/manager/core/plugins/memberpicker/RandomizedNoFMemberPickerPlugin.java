@@ -15,7 +15,7 @@ import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
 import org.fogbowcloud.manager.core.plugins.FederationMemberPickerPlugin;
 import org.fogbowcloud.manager.core.plugins.accounting.AccountingInfo;
 import org.fogbowcloud.manager.core.plugins.accounting.ResourceUsage;
-import org.fogbowcloud.manager.core.plugins.prioritization.nof.FederationMemberDebt;
+import org.fogbowcloud.manager.core.plugins.prioritization.nof.FederationMemberCredit;
 import org.fogbowcloud.manager.core.plugins.prioritization.nof.NoFHelper;
 
 public class RandomizedNoFMemberPickerPlugin implements FederationMemberPickerPlugin {
@@ -83,7 +83,7 @@ public class RandomizedNoFMemberPickerPlugin implements FederationMemberPickerPl
 		List<AccountingInfo> accounting = accoutingPlugin.getAccountingInfo();
 		Map<String, ResourceUsage> membersUsage = NoFHelper.calculateMembersUsage(localMemberId,
 				accounting);
-		LinkedList<FederationMemberDebt> reputableMembers = new LinkedList<FederationMemberDebt>();
+		LinkedList<FederationMemberCredit> reputableMembers = new LinkedList<FederationMemberCredit>();
 
 		for (FederationMember currentMember : members) {				
 			String memberId = currentMember.getId();
@@ -100,7 +100,7 @@ public class RandomizedNoFMemberPickerPlugin implements FederationMemberPickerPl
 							debt + Math.sqrt(membersUsage.get(memberId).getDonated()));
 				}
 			}
-			reputableMembers.add(new FederationMemberDebt(currentMember, debt));
+			reputableMembers.add(new FederationMemberCredit(currentMember, debt));
 		}
 		
 		if (reputableMembers.isEmpty()) {
@@ -110,7 +110,7 @@ public class RandomizedNoFMemberPickerPlugin implements FederationMemberPickerPl
 		Collections.sort(reputableMembers, new FederationMemberDescendingDebtComparator());
 		
 		List<FederationMember> sortedMembers = new ArrayList<FederationMember>();
-		for(FederationMemberDebt m : reputableMembers){
+		for(FederationMemberCredit m : reputableMembers){
 			sortedMembers.add(m.getMember());
 		}
 		

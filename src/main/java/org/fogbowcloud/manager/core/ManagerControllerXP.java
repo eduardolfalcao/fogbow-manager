@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.fogbowcloud.manager.core.ManagerController.FailedBatchType;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.CapacityControllerPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
@@ -28,14 +27,12 @@ import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.ResourceRepository;
-import org.fogbowcloud.manager.occi.model.ResponseConstants;
 import org.fogbowcloud.manager.occi.model.Token;
 import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderState;
 import org.fogbowcloud.manager.occi.order.OrderXP;
-import org.fogbowcloud.manager.occi.storage.StorageLink;
 import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 
 public class ManagerControllerXP extends ManagerController{
@@ -193,15 +190,13 @@ public class ManagerControllerXP extends ManagerController{
 	
 	public void makeOrderOpen(String orderId) {
 		Order order = this.managerDataStoreController.getOrder(orderId);
-		synchronized (order) {
-			if(order.getState().equals(OrderState.PENDING)){
-				LOGGER.info("<"+managerId+">: The forwarded order " + order.getId()
-				+ " couldnt be fulfilled in "+order.getProvidingMemberId()+" due to lack of"
-				+ " quota, and is being set to OPEN again.");
-				order.setState(OrderState.OPEN);
-				order.setProvidingMemberId(null);
-				this.managerDataStoreController.updateOrder(order);
-			}
+		if(order.getState().equals(OrderState.PENDING)){
+			LOGGER.info("<"+managerId+">: The forwarded order " + order.getId()
+			+ " couldnt be fulfilled in "+order.getProvidingMemberId()+" due to lack of"
+			+ " quota, and is being set to OPEN again.");
+			order.setState(OrderState.OPEN);
+			order.setProvidingMemberId(null);
+			this.managerDataStoreController.updateOrder(order);
 		}
 	}
 	
@@ -223,9 +218,16 @@ public class ManagerControllerXP extends ManagerController{
 		});
 	}
 	
-	public void remoteMemberPreemptedOrder(String orderId){
-		LOGGER.info("<"+managerId+">: "+"Removing order (id="+orderId+") preempted by remote member");		
+	public void remoteMemberPreemptedOrder(String orderId, String providingMemberId){
 		Order o = managerDataStoreController.getOrder(orderId);
+		
+		//the member is trying to preempt an order he thinks he is providing
+		if(!o.getProvidingMemberId().equals(providingMemberId)){
+			return;
+		}
+		
+		LOGGER.info("<"+managerId+">: "+"Removing order (id="+orderId+") preempted by remote member");		
+		
 		int attempts = 0;
 		if(!o.getState().equals(OrderState.FULFILLED) && attempts<20){	//busy waiting on maximum for 1s
 			try {
@@ -424,6 +426,13 @@ public class ManagerControllerXP extends ManagerController{
 						if (order.getState().in(OrderState.DELETED, OrderState.CLOSED)) {
 							return;
 						}
+						
+						//it just might had already been fulfilled locally, int his very moment, then, just ignore it
+						//after benchmarking, the local peer will notify the other peers to cancel the requests
+						if (order.getState() == OrderState.FULFILLED){	
+							return;
+						}
+							
 
 						// reseting time stamp
 						managerDataStoreController.updateOrderSyncronous(order.getId(), dateUtils.currentTimeMillis());
@@ -492,7 +501,9 @@ public class ManagerControllerXP extends ManagerController{
 					managerDataStoreController.updateOrder(order);
 				}
 				
-				//no need to deal with keys
+				//order foi fulfilled local e remota muito rapidamente
+				
+				//no need to deal with keys	//FIXME the order might have been FULFILLED locally but can also be already asked for a remote member...
 				if (order.isLocal() && !isFulfilledByLocalMember(order)) {
 					removeAsynchronousRemoteOrders(order, false);
 					managerDataStoreController.removeOrderSyncronous(order.getId());
