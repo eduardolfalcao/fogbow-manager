@@ -1,0 +1,12 @@
+SubmitTime RunTime JobID UserID PeerID TraceID Cluster.IAT Cluster.JRT Cluster.TRT
+10 2000 1 U1 P1 gwa-t1 C1 C4 C1
+100 500 1 U1 P1 gwa-t1 C1 C4 C1
+100 500 1 U1 P1 gwa-t1 C1 C4 C1
+100 500 1 U1 P1 gwa-t1 C1 C4 C1
+100 500 1 U1 P1 gwa-t1 C1 C4 C1
+100 500 1 U1 P1 gwa-t1 C1 C4 C1
+100 500 1 U1 P1 gwa-t1 C1 C4 C1
+100 500 1 U1 P1 gwa-t1 C1 C4 C1
+100 500 1 U1 P1 gwa-t1 C1 C4 C1
+10 500 1 U2 P2 gwa-t1 C1 C4 C1
+10 500 1 U3 P3 gwa-t1 C1 C4 C1
