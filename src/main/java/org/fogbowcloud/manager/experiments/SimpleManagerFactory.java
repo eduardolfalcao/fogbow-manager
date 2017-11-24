@@ -53,13 +53,14 @@ public class SimpleManagerFactory {
 	public static String PATH_DATASTORES;	
 	private static final int HTTP_PORT = 9192;
 	
-	
-	public static Properties adjustPropertiesManager(int id, boolean fdnof, Properties properties, boolean eclipse){
-		
+	public static void initPathDataStore(boolean eclipse){
 		if(eclipse)
 			PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/experiments/datastores/";
 		else
 			PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/datastores/";
+	}
+	
+	public static Properties adjustPropertiesManager(int id, boolean fdnof, Properties properties){
 		
 		Properties prop = (Properties) properties.clone();		
 		

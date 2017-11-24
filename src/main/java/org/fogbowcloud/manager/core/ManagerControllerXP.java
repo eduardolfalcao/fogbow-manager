@@ -388,11 +388,16 @@ public class ManagerControllerXP extends ManagerController{
 		if (packetSender == null) {
 			return;
 		}
-
-		FederationMember member = memberPickerPlugin.pick(allowedMembers);
-		if (member == null) {
-			return;
-		}
+		
+		FederationMember member = null;
+		int attempts = 0;
+		do{
+			member = memberPickerPlugin.pick(allowedMembers);
+			if (member == null) {
+				return;
+			}
+			attempts++;
+		} while(wasOrderAlreadySentToMember(o, member) && attempts<1000);
 
 		final String memberAddress = member.getId();
 
@@ -412,6 +417,7 @@ public class ManagerControllerXP extends ManagerController{
 					public void success(String instanceId) {
 						LOGGER.info("<"+managerId+">: "+"The order(" + order.getId() + ")  with runtime("+order.getRuntime()
 								+ ") forwarded to " + memberAddress + " gets instance "+ instanceId);
+						LOGGER.info(memberAddress+" providing to "+managerId);
 						if (managerDataStoreController.isOrderSyncronous(order.getId()) == false) {
 							return;
 						}
@@ -523,7 +529,21 @@ public class ManagerControllerXP extends ManagerController{
 		if (!order.isLocal() && !servedOrderMonitoringTimer.isScheduled()) {
 			triggerServedOrderMonitoring();
 		}
-	}	
+	}
+	
+	private boolean wasOrderAlreadySentToMember(Order order, FederationMember memberPicked){
+		List<String> federationMembersServered = this.managerDataStoreController.getFederationMembersServedBy(order.getId());
+		boolean alreadySent = false;
+		if (federationMembersServered == null) {
+			return alreadySent;
+		}
+		for (String federationMemberServered : federationMembersServered) {			
+			if(memberPicked.getId().equals(federationMemberServered)){
+				alreadySent = true;
+			}
+		}
+		return alreadySent;		
+	}
 
 	
 	public void triggerWorkloadMonitor(final MonitorPeerStateAssync monitor) {

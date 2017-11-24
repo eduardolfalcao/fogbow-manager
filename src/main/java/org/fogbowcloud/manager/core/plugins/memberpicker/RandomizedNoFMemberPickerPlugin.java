@@ -39,7 +39,7 @@ public class RandomizedNoFMemberPickerPlugin implements FederationMemberPickerPl
 		try {
 			this.quantiles = Integer.valueOf(properties.getProperty("quantiles"));			
 		} catch (Exception e) {
-			LOGGER.error("Error while getting int value for qunatiles. The default value is 4.", e);
+			LOGGER.error("Error while getting int value for quantiles. The default value is 4.", e);
 			this.quantiles = 4;
 		}
 	}

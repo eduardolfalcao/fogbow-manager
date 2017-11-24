@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.TimerTask;
@@ -77,25 +78,31 @@ public class MainExperiments {
 		else
 			outputfolder = "data/"+args[5]+"-"+numberOfPeers+"peers-"+args[4]+"capacity/";		
 		
-		properties.put(MonitorPeerStateSingleton.OUTPUT_FOLDER, outputfolder);		
+		properties.put(MonitorPeerStateSingleton.OUTPUT_FOLDER, outputfolder);
 		
-		MainHelper.configureLog4j(properties.getProperty(LOG4J_CONF));
+		
+		
+		MainHelper.configureLog4j(properties.getProperty(LOG4J_CONF));		
+		SimpleManagerFactory.initPathDataStore(eclipse);
 		try{
+			LOGGER.info("Trying to clean data dir: "+SimpleManagerFactory.PATH_DATASTORES);
 			FileUtils.cleanDirectory(new File(SimpleManagerFactory.PATH_DATASTORES));
+			LOGGER.info("Cleaned "+new File(SimpleManagerFactory.PATH_DATASTORES).getAbsolutePath());
 		}catch(Exception e){
-			LOGGER.warn(e.getMessage());
+			LOGGER.warn("Exception cleaning datastores: "+Arrays.toString(e.getStackTrace()));
 		}
 		try{
+			LOGGER.info("Trying to clean output dir: "+properties.getProperty(MonitorPeerStateSingleton.OUTPUT_FOLDER));
 			FileUtils.cleanDirectory(new File(properties.getProperty(MonitorPeerStateSingleton.OUTPUT_FOLDER)));
+			LOGGER.info("Cleaned "+properties.getProperty(MonitorPeerStateSingleton.OUTPUT_FOLDER));
 		}catch(Exception e){
-			LOGGER.warn(e.getMessage());
+			LOGGER.warn("Exception cleaning output dir: "+Arrays.toString(e.getStackTrace()));
 		}
 		
-		List<Properties> propertiesList = new ArrayList<Properties>();
 		
-		int id = 1;
-		for(; id <= numberOfPeers; id++)
-			propertiesList.add(SimpleManagerFactory.adjustPropertiesManager(id, fdnof, properties, eclipse));
+		List<Properties> propertiesList = new ArrayList<Properties>();		
+		for(int id = 1; id <= numberOfPeers; id++)
+			propertiesList.add(SimpleManagerFactory.adjustPropertiesManager(id, fdnof, properties));
 		
 		List<ManagerControllerXP> fms = new ArrayList<ManagerControllerXP>();
 		for(Properties prop : propertiesList) {

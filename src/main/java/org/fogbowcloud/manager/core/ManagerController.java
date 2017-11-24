@@ -1547,7 +1547,7 @@ public class ManagerController {
 	}
 	
 	protected void removeAsynchronousRemoteOrders(Order order, boolean removeAll) {
-		List<String> federationMembersServered = this.managerDataStoreController.getFederationMembersServeredBy(order.getId());
+		List<String> federationMembersServered = this.managerDataStoreController.getFederationMembersServedBy(order.getId());
 		LOGGER.info("<"+managerId+">: "+"Order with id("+order.getId()+") was just fulfilled by "+order.getProvidingMemberId()+"!");
 		if (federationMembersServered == null) {
 			return;
@@ -1764,7 +1764,7 @@ public class ManagerController {
 		}
 	}
 
-	private boolean timeoutReached(long timeStamp) {
+	protected boolean timeoutReached(long timeStamp) {
 		long nowMilli = dateUtils.currentTimeMillis();
 		Date now = new Date(nowMilli);
 

@@ -91,41 +91,57 @@ compute_results <- function(df_data,tempo_final){
   return(result)
 }
 
+#path <- "~/Área de Trabalho/Experimentos-Doutorado/scripts r/done/"
+#path$exp <- paste(path,"40peers-20capacity/randomNof/cycle",sep="")
+path <- "/home/eduardolfalcao/workspace3/fogbow-manager/experiments/data scripts r/done/"
+path$exp <- paste(path,"40peers-20capacity/prioritizationFixed/cycle",sep="")
+
+
 adjust_data <- function(tempo_final, cycle){
-  path <- "~/Área de Trabalho/Experimentos-Doutorado/scripts r/done/"
-  path$exp <- paste(path,"40peers-20capacity/randomNof/cycle",sep="")
+  
+  print(path)
+  print(path$exp)
   path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+  print(path$cycle)
   
-  path$sdnof <- paste(path$cycle,"sdnof/",sep="")
-  data.sdnof <- load_data(path$sdnof)
-  data.sdnof <- create_columns(data.sdnof, FALSE, 20, cycle)
-  data.sdnof <- compute_results(data.sdnof, tempo_final)
+  path$sdnof.weightedSelection <- paste(path$cycle,"sdnof-weightedSelection/",sep="")
+  data.sdnof.weightedSelection <- load_data(path$sdnof.weightedSelection)
+  data.sdnof.weightedSelection <- create_columns(data.sdnof.weightedSelection, FALSE, 20, cycle)
+  data.sdnof.weightedSelection <- compute_results(data.sdnof.weightedSelection, tempo_final)
+  data.sdnof.weightedSelection$selection <- "weighted"
   
-  path$fdnof <- paste(path$cycle,"fdnof/",sep="")
-  data.fdnof <- load_data(path$fdnof)
-  data.fdnof <- create_columns(data.fdnof, TRUE, 20, cycle)
-  data.fdnof <- compute_results(data.fdnof, tempo_final)
+  path$sdnof.weightedBroadcastSelection <- paste(path$cycle,"sdnof-weightedBroadcastSelection/",sep="")
+  data.sdnof.weightedBroadcastSelection <- load_data(path$sdnof.weightedBroadcastSelection)
+  data.sdnof.weightedBroadcastSelection <- create_columns(data.sdnof.weightedBroadcastSelection, FALSE, 20, cycle)
+  data.sdnof.weightedBroadcastSelection <- compute_results(data.sdnof.weightedBroadcastSelection, tempo_final)
+  data.sdnof.weightedBroadcastSelection$selection <- "weighted broadcast"
   
-  data <- rbind(data.sdnof, data.fdnof)  
+  #path$fdnof <- paste(path$cycle,"fdnof/",sep="")
+  #data.fdnof <- load_data(path$fdnof)
+  #data.fdnof <- create_columns(data.fdnof, TRUE, 20, cycle)
+  #data.fdnof <- compute_results(data.fdnof, tempo_final)
+  
+  #data <- rbind(data.sdnof, data.fdnof)
+  data <- rbind(data.sdnof.weightedSelection, data.sdnof.weightedBroadcastSelection)  
   
   data
 }
 
 get_contention <- function(cycle){
-  path <- "~/Área de Trabalho/Experimentos-Doutorado/scripts r/done/"
-  path$exp <- paste(path,"40peers-20capacity/randomNof/cycle",sep="")
   path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
   
   path$nof <- paste(path$cycle,"sdnof",sep="")
   path$contention <- paste(path$nof,"/contention/",sep="")
   data.sdnof <- load_data(path$contention)
   
-  path$nof <- paste(path$cycle,"fdnof",sep="")
-  path$contention <- paste(path$nof,"/contention/",sep="")
-  data.fdnof <- load_data(path$contention)
-  data <- rbind(data.fdnof, data.sdnof)
+  #path$nof <- paste(path$cycle,"fdnof",sep="")
+  #path$contention <- paste(path$nof,"/contention/",sep="")
+  #data.fdnof <- load_data(path$contention)
+  #data <- rbind(data.fdnof, data.sdnof)
   
-  data
+  #data
+  
+  data.sdnof
 }
   
 
@@ -158,8 +174,6 @@ library(ggplot2)
 
 
 cycle <- 60
-path <- "~/Área de Trabalho/Experimentos-Doutorado/scripts r/done/"
-path$exp <- paste(path,"40peers-20capacity/randomNof/cycle",sep="")
 path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
 
 png(paste(path$cycle,"fairness.png",sep=""), width=1280, height=720)

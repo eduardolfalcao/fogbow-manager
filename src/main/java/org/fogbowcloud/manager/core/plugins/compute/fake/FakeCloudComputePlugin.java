@@ -52,43 +52,7 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	public synchronized String requestInstance(Token token, List<Category> categories,
 			Map<String, String> xOCCIAtt, String imageId) {
 		
-		if(instances.size()>=quota){
-			
-//			List<Order> orders = manager.getManagerDataStoreController().getOrdersIn(OrderState.FULFILLED);
-//			int ordersFulfilledLocally = 0;
-//			for(Order o : orders){
-//				if(o.getProvidingMemberId().equals(managerId))
-//						ordersFulfilledLocally++;
-//			}
-//			
-//			//sempre que sFed+dTot-rFed for < que quota, não deveria haver quota exceeded
-//			
-//			PeerState currentState = MonitorPeerStateSingleton.getInstance().getMonitors().get(managerId).getCurrentStateDebug();
-//			if((currentState.getdTot()-currentState.getrFed()+currentState.getsFed())<quota){				
-//				LOGGER.info("<"+managerId+">: <QuotaExceeded> Orders fulfilled locally: "+ordersFulfilledLocally+". "
-//						+ "Instances on compute: "+instances.size()+"; "+instances+". "
-//						+ "CurrentState: "+currentState+".");
-//				
-//				List<String> instancesWithoutOrder = new ArrayList<String>();
-//				instancesWithoutOrder.addAll(instances);
-//				
-//				int i = 1;
-//				for(Order o : orders){
-//					LOGGER.info("<"+managerId+">: <QuotaExceeded> order num "+i+" - "+o);
-//					instancesWithoutOrder.remove(o.getInstanceId());
-//					i++;
-//				}
-//				
-//				i = 1;
-//				for(String instanceMissing : instancesWithoutOrder){
-//					LOGGER.info("<"+managerId+">: <QuotaExceeded> instance missing num "+i+" - "+instanceMissing);
-//					i++;
-//				}
-//				
-//				
-//				LOGGER.info("<"+managerId+">: ########");				
-//			}
-			
+		if(instances.size()>=quota){			
 			throw new OCCIException(ErrorType.QUOTA_EXCEEDED, "<"+managerId+">: "+"There is no more quota in the underlying cloud.");
 		}					
 				
@@ -152,13 +116,12 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	}
 
 	/**
-	 * The methods above do not interfere in simulation lane. 
+	 * The methods above do not interfere in experimentation lane. 
 	 */
 	@Override
 	public void removeInstances(Token token) {
 		/**
-		 * FIXME
-		 * Usado apenas em testes.
+		 * used in tests
 		 */		
 	}
 	
@@ -171,8 +134,7 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	@Override
 	public List<Instance> getInstances(Token token) {
 		/**
-		 * FIXME
-		 * Usado apenas em testes (getAllFogbowFederationInstances).
+		 * used in tests (getAllFogbowFederationInstances).
 		 */
 		return null;
 	}

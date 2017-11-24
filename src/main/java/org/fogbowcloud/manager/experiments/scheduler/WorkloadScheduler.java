@@ -25,6 +25,7 @@ import org.fogbowcloud.manager.occi.order.Order;
 import org.fogbowcloud.manager.occi.order.OrderAttribute;
 import org.fogbowcloud.manager.occi.order.OrderConstants;
 import org.fogbowcloud.manager.occi.order.OrderType;
+import org.fogbowcloud.manager.xmpp.ManagerPacketHelper;
 
 public class WorkloadScheduler {
 	
@@ -90,21 +91,26 @@ public class WorkloadScheduler {
 	
 	private void runJobs(){
 		Map<ManagerController, List<Job>> peersAndJobs = getJobs(time);		    	
-		for(Entry<ManagerController, List<Job>> e : peersAndJobs.entrySet()){
-		   	List<Job> jobsToBeSubmitted = e.getValue();
-		   	ManagerController mc = e.getKey();
-		   	for(Job j : jobsToBeSubmitted){			    										
-				Map<String, String> xOCCIAttClone = new HashMap<String, String>();
-				xOCCIAttClone.putAll(xOCCIAtt);
-				List<Category> categoriesClone = new ArrayList<Category>();
-				categoriesClone.addAll(categories);
-				for(int i = 0; i < j.getTasks().size(); i++){
-					xOCCIAttClone.put(OrderAttribute.RUNTIME.getValue(), String.valueOf(j.getTasks().get(i).getRuntime()*1000));
-					List<Order> orders = mc.createOrders(WorkloadScheduler.FAKE_TOKEN, categoriesClone, xOCCIAttClone);
-					j.getTasks().get(i).setOrderId(orders.get(0).getId());
-				}					
-				LOGGER.info("Time: "+time+", Peer "+j.getPeerId()+" creating "+j);
-		   	}
+		for(final Entry<ManagerController, List<Job>> e : peersAndJobs.entrySet()){
+			new Runnable() {					
+				@Override
+				public void run() {
+					List<Job> jobsToBeSubmitted = e.getValue();
+				   	ManagerController mc = e.getKey();
+				   	for(Job j : jobsToBeSubmitted){			    										
+						Map<String, String> xOCCIAttClone = new HashMap<String, String>();
+						xOCCIAttClone.putAll(xOCCIAtt);
+						List<Category> categoriesClone = new ArrayList<Category>();
+						categoriesClone.addAll(categories);
+						for(int i = 0; i < j.getTasks().size(); i++){
+							xOCCIAttClone.put(OrderAttribute.RUNTIME.getValue(), String.valueOf(j.getTasks().get(i).getRuntime()*1000));
+							List<Order> orders = mc.createOrders(WorkloadScheduler.FAKE_TOKEN, categoriesClone, xOCCIAttClone);
+							j.getTasks().get(i).setOrderId(orders.get(0).getId());
+						}					
+						LOGGER.info("Time: "+time+", Peer "+j.getPeerId()+" creating "+j);
+				   	}
+				}
+			}.run();			
 		}
 	}
 	

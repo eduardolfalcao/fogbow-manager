@@ -394,7 +394,7 @@ public class ManagerDataStoreController {
 		}
 	}
 
-	public List<String> getFederationMembersServeredBy(String orderId) {
+	public List<String> getFederationMembersServedBy(String orderId) {
 		try {
 			return this.managerDatabase.getFederationMembersServeredBy(orderId);
 		} catch (Exception e) {

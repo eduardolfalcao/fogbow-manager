@@ -74,12 +74,14 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		}
 
 		Collections.sort(memberCredits, new FederationMemberCreditComparator());
-		LOGGER.debug("<"+managerId+">: "+"Current memberCredits=" + memberCredits);
+		LOGGER.info("<"+managerId+">: "+"Current memberCredits=" + memberCredits);
 		
 		double requestingMemberCredit = calcCredit(membersUsage, newOrder.getRequestingMemberId());
-		LOGGER.debug("<"+managerId+">: "+"Requesting member credit=" + requestingMemberCredit);
+		FederationMemberCredit memberWithLowestCredit = memberCredits.getFirst();
 		
-		FederationMemberCredit memberWithLowestCredit = memberCredits.getLast();
+		LOGGER.info("<"+managerId+">: "+"Requesting member("+newOrder.getRequestingMemberId()+") credit: " + requestingMemberCredit+"; "
+				+ "Member("+memberWithLowestCredit.getMember().getId()+") with lowest credit: " + memberWithLowestCredit.getCredit());		
+		
 		if (memberWithLowestCredit.getCredit() < requestingMemberCredit) {
 			String memberId = memberWithLowestCredit.getMember().getResourcesInfo().getId();
 			List<Order> memberRequests = filterByRequestingMember(memberId, ordersWithInstance);
@@ -122,13 +124,18 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		}
 
 		if (membersUsage.containsKey(memberId)) {
-			credit = membersUsage.get(memberId).getDonated()
-					- membersUsage.get(memberId).getConsumed();
+			credit = membersUsage.get(memberId).getConsumed()		
+					- membersUsage.get(memberId).getDonated();		
 			if (!trustworthy) {
 				credit = Math.max(0,
-						credit + Math.sqrt(membersUsage.get(memberId).getDonated()));
+						credit + Math.log(membersUsage.get(memberId).getConsumed()));	//TODO create test to address this case
 			}
 		}
+		
+		LOGGER.info("<"+managerId+">: "+memberId+" donated to "+managerId+" " + membersUsage.get(memberId).getConsumed()+"; "
+				+ memberId+" consumed from "+managerId+" "+membersUsage.get(memberId).getDonated()+"; "
+				+ "credit of "+memberId+" on "+managerId+" perspective: "+credit);
+		
 		return credit;
 	}
 
