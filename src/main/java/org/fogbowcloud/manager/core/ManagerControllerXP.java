@@ -639,7 +639,7 @@ public class ManagerControllerXP extends ManagerController{
 					ArrayList<Order> ordersWithInstances = new ArrayList<Order>(
 							managerDataStoreController.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
 					Order orderToPreempt = prioritizationPlugin.takeFrom(order, ordersWithInstances);
-					LOGGER.info("<"+managerId+">: "+"Order to be preempted: "+orderToPreempt);
+					LOGGER.info("<"+managerId+">: Order to be preempted: "+orderToPreempt);
 					if (orderToPreempt == null && !((OrderXP)order).isQuotaExceededMsgSent()) {
 						if(!order.getRequestingMemberId().equals(managerId)){
 							quotaExceeded(order);	//send a message telling the quota is exceeded

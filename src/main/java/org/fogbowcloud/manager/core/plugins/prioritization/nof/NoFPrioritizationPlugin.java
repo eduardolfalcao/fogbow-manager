@@ -55,31 +55,31 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 	
 	@Override
 	public Order takeFrom(Order newOrder, List<Order> ordersWithInstance) {
-		LOGGER.debug("<"+managerId+">: "+"Choosing order to take instance from ordersWithInstance="
+		LOGGER.debug("<"+managerId+">: <Order("+newOrder.getId()+")> "+"Choosing order to take instance from ordersWithInstance="
 				+ ordersWithInstance + " for requestMember=" + newOrder.getRequestingMemberId());
 		if (ordersWithInstance == null) {			
 			return null;
 		}
 		
-		List<String> servedMemberIds = getServedMemberIds(ordersWithInstance);
-		LOGGER.debug("<"+managerId+">: "+"Current servedMemberIds=" + servedMemberIds);
+		List<String> servedMemberIds = getServedMemberIds(ordersWithInstance, newOrder);
+		LOGGER.info("<"+managerId+">: "+"Current servedMemberIds=" + servedMemberIds);
 		
 		List<AccountingInfo> accounting = accountingPlugin.getAccountingInfo();
 		Map<String, ResourceUsage> membersUsage = NoFHelper.calculateMembersUsage(localMemberId, accounting);
-		LOGGER.debug("<"+managerId+">: "+"Current membersUsage=" + membersUsage);		
+		LOGGER.info("<"+managerId+">: "+"Current membersUsage=" + membersUsage);		
 		LinkedList<FederationMemberCredit> memberCredits = calctMemberCredits(servedMemberIds, membersUsage);
 		if (memberCredits.isEmpty()) {
-			LOGGER.debug("<"+managerId+">: "+"There are no member credits.");
+			LOGGER.info("<"+managerId+">: "+"There are no member credits. <Order("+newOrder.getId()+")>");
 			return null;
 		}
 
 		Collections.sort(memberCredits, new FederationMemberCreditComparator());
-		LOGGER.info("<"+managerId+">: "+"Current memberCredits=" + memberCredits);
+		LOGGER.info("<"+managerId+">: <Order("+newOrder.getId()+")> Current memberCredits=" + memberCredits);
 		
-		double requestingMemberCredit = calcCredit(membersUsage, newOrder.getRequestingMemberId());
+		double requestingMemberCredit = calcCredit(membersUsage, newOrder.getRequestingMemberId(), newOrder.getId());
 		FederationMemberCredit memberWithLowestCredit = memberCredits.getFirst();
 		
-		LOGGER.info("<"+managerId+">: "+"Requesting member("+newOrder.getRequestingMemberId()+") credit: " + requestingMemberCredit+"; "
+		LOGGER.info("<"+managerId+">: <Order("+newOrder.getId()+")> Requesting member("+newOrder.getRequestingMemberId()+") credit: " + requestingMemberCredit+"; "
 				+ "Member("+memberWithLowestCredit.getMember().getId()+") with lowest credit: " + memberWithLowestCredit.getCredit());		
 		
 		if (memberWithLowestCredit.getCredit() < requestingMemberCredit) {
@@ -97,13 +97,13 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 			if (localMemberId.equals(currentMemberId)) {
 				continue;
 			}
-			double credit = calcCredit(membersUsage, currentMemberId);
+			double credit = calcCredit(membersUsage, currentMemberId, "");
 			memberCredits.add(new FederationMemberCredit(currentMemberId, credit));
 		}
 		return memberCredits;
 	}
 
-	private List<String> getServedMemberIds(List<Order> orders) {
+	private List<String> getServedMemberIds(List<Order> orders, Order o) {
 		List<String> servedMemberIds = new LinkedList<String>();
 		for (Order currentOrder : orders) {
 			if (!servedMemberIds.contains(currentOrder.getRequestingMemberId())) {
@@ -113,7 +113,7 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		return servedMemberIds;
 	}
 
-	protected double calcCredit(Map<String, ResourceUsage> membersUsage, String memberId) {		
+	protected double calcCredit(Map<String, ResourceUsage> membersUsage, String memberId, String orderId) {		
 		double credit = 0;
 		if (localMemberId.equals(memberId)) {
 			if (prioritizeLocal) {
@@ -130,11 +130,11 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 				credit = Math.max(0,
 						credit + Math.log(membersUsage.get(memberId).getConsumed()));	//TODO create test to address this case
 			}
-		}
-		
-		LOGGER.info("<"+managerId+">: "+memberId+" donated to "+managerId+" " + membersUsage.get(memberId).getConsumed()+"; "
-				+ memberId+" consumed from "+managerId+" "+membersUsage.get(memberId).getDonated()+"; "
-				+ "credit of "+memberId+" on "+managerId+" perspective: "+credit);
+			
+			LOGGER.info("<"+managerId+">: "+memberId+" donated to "+managerId+" " + membersUsage.get(memberId).getConsumed()+"; "
+					+ memberId+" consumed from "+managerId+" "+membersUsage.get(memberId).getDonated()+"; "
+					+ "credit of "+memberId+" on "+managerId+" perspective: "+credit);
+		}	
 		
 		return credit;
 	}

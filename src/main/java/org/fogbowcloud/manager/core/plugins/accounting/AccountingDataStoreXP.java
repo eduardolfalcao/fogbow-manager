@@ -65,6 +65,8 @@ public class AccountingDataStoreXP extends AccountingDataStore{
 			statements.add(statement);
 			close(statements, connection);
 		}
+		
+		LOGGER.info("<"+managerId+">: Created accounting dataStore on sqlite!");
 	}
 	
 	private static final String UPDATE_MEMBER_USAGE_SQL = "UPDATE " + USAGE_TABLE_NAME

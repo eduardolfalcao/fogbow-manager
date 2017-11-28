@@ -1,10 +1,5 @@
 package org.fogbowcloud.manager.core.plugins.accounting;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,11 +8,7 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.ManagerControllerHelper;
 import org.fogbowcloud.manager.core.model.FederationMember;
-import org.fogbowcloud.manager.occi.DataStoreHelper;
-import org.fogbowcloud.manager.occi.order.Order;
-import org.sqlite.javax.SQLiteConnectionPoolDataSource;
 
 public class AccountingDataStoreXPInMemory extends AccountingDataStore{
 	
@@ -31,17 +22,13 @@ public class AccountingDataStoreXPInMemory extends AccountingDataStore{
 
 	private static final Logger LOGGER = Logger.getLogger(AccountingDataStoreXPInMemory.class);
 	
-	public AccountingDataStoreXPInMemory(Properties properties) {		
+	public AccountingDataStoreXPInMemory(Properties properties) {	
+		super();
 		this.properties = properties;		
 		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 		database = new HashMap<AccountingEntryKey, AccountingInfo>();
+		LOGGER.info("<"+managerId+">: Created accounting dataStore on memory!");
 	}
-	
-	private static final String UPDATE_MEMBER_USAGE_SQL = "UPDATE " + USAGE_TABLE_NAME
-			+ " SET usage = usage + ?, instances = ? WHERE user = ? AND requesting_member = ? AND providing_member = ?";
-	
-	private static final String INSERT_MEMBER_USAGE_SQL = "INSERT INTO " + USAGE_TABLE_NAME
-			+ " VALUES(?, ?, ?, ?, ?, ?)";
 	
 	@Override
 	public synchronized boolean update(List<AccountingInfo> usage) {

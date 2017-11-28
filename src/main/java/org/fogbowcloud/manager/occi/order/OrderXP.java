@@ -106,7 +106,8 @@ public class OrderXP extends Order{
 				+ ", runtime: " + runtime + ", fulfilledTime: "+fulfilledTime
 				+ ", previousElapsedTime: "+previousElapsedTime+""
 				+ ", currentElapsedTime: "+currentElapsedTime
-				+ ", syncronousStatus: "+syncronousStatus;
+				+ ", syncronousStatus: "+syncronousStatus
+				+ ", quotaExceededMsgSent: "+quotaExceededMsgSent;
 	}
 
 	@Override

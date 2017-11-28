@@ -1,32 +1,21 @@
 package org.fogbowcloud.manager.core.plugins.compute.fake;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
-import org.fogbowcloud.manager.core.ManagerControllerXP;
 import org.fogbowcloud.manager.core.model.ImageState;
 import org.fogbowcloud.manager.core.model.ResourcesInfo;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
-import org.fogbowcloud.manager.core.plugins.benchmarking.VanillaBenchmarkingPlugin;
-import org.fogbowcloud.manager.experiments.data.OrderStatus;
-import org.fogbowcloud.manager.experiments.data.PeerState;
-import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton;
 import org.fogbowcloud.manager.occi.instance.Instance;
 import org.fogbowcloud.manager.occi.model.Category;
 import org.fogbowcloud.manager.occi.model.ErrorType;
 import org.fogbowcloud.manager.occi.model.OCCIException;
 import org.fogbowcloud.manager.occi.model.Token;
-import org.fogbowcloud.manager.occi.order.Order;
-import org.fogbowcloud.manager.occi.order.OrderAttribute;
-import org.fogbowcloud.manager.occi.order.OrderState;
 import org.restlet.Request;
 import org.restlet.Response;
 
@@ -39,8 +28,6 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 	private List<String> instances = new ArrayList<String>();
 	
 	private String managerId;
-	
-	private ManagerControllerXP manager = null;
 	
 	public FakeCloudComputePlugin(Properties properties){
 		quota = Integer.parseInt(properties.getProperty(COMPUTE_FAKE_QUOTA));
@@ -65,10 +52,6 @@ public class FakeCloudComputePlugin implements ComputePlugin {
 		}
 		
 		return name;
-	}
-	
-	public void setManager(ManagerControllerXP manager) {
-		this.manager = manager;
 	}
 	
 	@Override

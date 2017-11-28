@@ -176,6 +176,8 @@ public class SimpleManagerFactory {
 			LOGGER.warn("Accounting plugin (compute) not specified in properties. Using the default one.", e);
 		}
 		
+		
+		
 		AccountingPlugin storageAccountingPlugin = null;
 		try {
 			storageAccountingPlugin = (AccountingPlugin) MainHelper.createInstance(
@@ -253,10 +255,7 @@ public class SimpleManagerFactory {
 		}
 
 		ManagerControllerXP fm = new ManagerControllerXP(properties);
-		fm.setComputePlugin(computePlugin);
-		/* DEBUGGING FIXME*/
-		((FakeCloudComputePlugin)computePlugin).setManager(fm);
-		
+		fm.setComputePlugin(computePlugin);		
 		fm.setAuthorizationPlugin(authorizationPlugin);
 		fm.setLocalIdentityPlugin(localIdentityPlugin);
 		fm.setFederationIdentityPlugin(federationIdentityPlugin);
