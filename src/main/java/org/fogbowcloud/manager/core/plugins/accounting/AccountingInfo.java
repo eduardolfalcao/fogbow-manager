@@ -22,6 +22,15 @@ public class AccountingInfo {
 		this.quota = Double.MAX_VALUE;
 	}
 	
+	public AccountingInfo(AccountingInfo clone) {
+		this.user = clone.getUser();
+		this.requestingMember = clone.getRequestingMember();
+		this.providingMember = clone.getProvidingMember();
+		this.usage = clone.getUsage();
+		this.currentInstances = clone.getCurrentInstances();
+		this.quota = clone.getQuota();
+	}	
+	
 	public void addConsumption(double consumption) {
 		this.usage += consumption;
 	}

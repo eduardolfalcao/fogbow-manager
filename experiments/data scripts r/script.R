@@ -99,10 +99,7 @@ path$exp <- paste(path,"40peers-20capacity/prioritizationFixed/cycle",sep="")
 
 adjust_data <- function(tempo_final, cycle){
   
-  print(path)
-  print(path$exp)
   path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
-  print(path$cycle)
   
   path$sdnof.weightedSelection <- paste(path$cycle,"sdnof-weightedSelection/",sep="")
   data.sdnof.weightedSelection <- load_data(path$sdnof.weightedSelection)
@@ -130,18 +127,22 @@ adjust_data <- function(tempo_final, cycle){
 get_contention <- function(cycle){
   path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
   
-  path$nof <- paste(path$cycle,"sdnof",sep="")
-  path$contention <- paste(path$nof,"/contention/",sep="")
-  data.sdnof <- load_data(path$contention)
+  path$sdnof.weightedSelection <- paste(path$cycle,"sdnof-weightedSelection/",sep="")
+  path$contention <- paste(path$sdnof.weightedSelection,"/contention/",sep="")
+  data.sdnof.weightedSelection <- load_data(path$contention)
+  
+  path$sdnof.weightedBroadcastSelection <- paste(path$cycle,"sdnof-weightedBroadcastSelection/",sep="")
+  path$contention <- paste(path$sdnof.weightedBroadcastSelection,"/contention/",sep="")
+  data.sdnof.weightedBroadcastSelection <- load_data(path$contention)
   
   #path$nof <- paste(path$cycle,"fdnof",sep="")
   #path$contention <- paste(path$nof,"/contention/",sep="")
   #data.fdnof <- load_data(path$contention)
   #data <- rbind(data.fdnof, data.sdnof)
   
-  #data
+  data <- rbind(data.sdnof.weightedSelection, data.sdnof.weightedBroadcastSelection)
   
-  data.sdnof
+  data
 }
   
 
@@ -173,19 +174,20 @@ data$id <- sapply( data$id, as.numeric )
 library(ggplot2)
 
 
-cycle <- 60
+cycle <- 10
+data <- data.10cycle
 path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
 
 png(paste(path$cycle,"fairness.png",sep=""), width=1280, height=720)
 ggplot(data[data$cycle==cycle,], aes(t, fairness)) + 
-  geom_line(aes(colour=nof, group=interaction(nof,id))) +
+  geom_line(aes(colour=selection, group=interaction(selection,id))) +
   theme_bw() + theme(legend.position = "top") + ylim(0,5) + scale_x_continuous(breaks = seq(0, tempo_final, by = 3600)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 dev.off()
 
 png(paste(path$cycle,"satisfaction.png",sep=""), width=1280, height=720)
 ggplot(data[data$cycle==cycle,], aes(t, satisfaction)) + 
-  geom_line(aes(colour=nof, group=interaction(nof,id))) +
+  geom_line(aes(colour=selection, group=interaction(selection,id))) +
   theme_bw() + theme(legend.position = "top") + scale_x_continuous(breaks = seq(0, tempo_final, by = 3600)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) + ylim(0,1)
 dev.off()

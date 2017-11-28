@@ -36,7 +36,7 @@ public class FCUAccountingPluginXP extends FCUAccountingPlugin implements Accoun
 
 		properties.put(AccountingDataStore.ACCOUNTING_DATASTORE_URL, 
 				properties.getProperty(getDataStoreUrl()));		
-		db = new AccountingDataStoreXP(properties);		
+		db = new AccountingDataStoreXPInMemory(properties);		
 		managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 
