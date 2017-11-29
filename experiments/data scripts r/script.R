@@ -94,24 +94,24 @@ compute_results <- function(df_data,tempo_final){
 #path <- "~/Área de Trabalho/Experimentos-Doutorado/scripts r/done/"
 #path$exp <- paste(path,"40peers-20capacity/randomNof/cycle",sep="")
 path <- "/home/eduardolfalcao/workspace3/fogbow-manager/experiments/data scripts r/done/"
-path$exp <- paste(path,"40peers-20capacity/prioritizationFixed/cycle",sep="")
+path$exp <- paste(path,"40peers-20capacity/weightedNof/cycle",sep="")
 
 
 adjust_data <- function(tempo_final, cycle){
   
   path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
   
-  path$sdnof.weightedSelection <- paste(path$cycle,"sdnof-weightedSelection/",sep="")
-  data.sdnof.weightedSelection <- load_data(path$sdnof.weightedSelection)
-  data.sdnof.weightedSelection <- create_columns(data.sdnof.weightedSelection, FALSE, 20, cycle)
-  data.sdnof.weightedSelection <- compute_results(data.sdnof.weightedSelection, tempo_final)
-  data.sdnof.weightedSelection$selection <- "weighted"
+  path$sdnof.7min <- paste(path$cycle,"sdnof-7minutes/",sep="")
+  data.sdnof.7min <- load_data(path$sdnof.7min)
+  data.sdnof.7min <- create_columns(data.sdnof.7min, FALSE, 20, cycle)
+  data.sdnof.7min <- compute_results(data.sdnof.7min, tempo_final)
+  data.sdnof.7min$orderTime <- 7
   
-  path$sdnof.weightedBroadcastSelection <- paste(path$cycle,"sdnof-weightedBroadcastSelection/",sep="")
-  data.sdnof.weightedBroadcastSelection <- load_data(path$sdnof.weightedBroadcastSelection)
-  data.sdnof.weightedBroadcastSelection <- create_columns(data.sdnof.weightedBroadcastSelection, FALSE, 20, cycle)
-  data.sdnof.weightedBroadcastSelection <- compute_results(data.sdnof.weightedBroadcastSelection, tempo_final)
-  data.sdnof.weightedBroadcastSelection$selection <- "weighted broadcast"
+  path$sdnof.10min <- paste(path$cycle,"sdnof-10minutes/",sep="")
+  data.sdnof.10min <- load_data(path$sdnof.10min)
+  data.sdnof.10min <- create_columns(data.sdnof.10min, FALSE, 20, cycle)
+  data.sdnof.10min <- compute_results(data.sdnof.10min, tempo_final)
+  data.sdnof.10min$orderTime <- 10
   
   #path$fdnof <- paste(path$cycle,"fdnof/",sep="")
   #data.fdnof <- load_data(path$fdnof)
@@ -119,7 +119,7 @@ adjust_data <- function(tempo_final, cycle){
   #data.fdnof <- compute_results(data.fdnof, tempo_final)
   
   #data <- rbind(data.sdnof, data.fdnof)
-  data <- rbind(data.sdnof.weightedSelection, data.sdnof.weightedBroadcastSelection)  
+  data <- rbind(data.sdnof.7min, data.sdnof.10min)  
   
   data
 }
@@ -127,20 +127,22 @@ adjust_data <- function(tempo_final, cycle){
 get_contention <- function(cycle){
   path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
   
-  path$sdnof.weightedSelection <- paste(path$cycle,"sdnof-weightedSelection/",sep="")
-  path$contention <- paste(path$sdnof.weightedSelection,"/contention/",sep="")
-  data.sdnof.weightedSelection <- load_data(path$contention)
+  path$sdnof.7min <- paste(path$cycle,"sdnof-7minutes",sep="")
+  path$contention <- paste(path$sdnof.7min,"/contention/",sep="")
+  data.sdnof.7min <- load_data(path$contention)
+  data.sdnof.7min$orderTime <- 7
   
-  path$sdnof.weightedBroadcastSelection <- paste(path$cycle,"sdnof-weightedBroadcastSelection/",sep="")
-  path$contention <- paste(path$sdnof.weightedBroadcastSelection,"/contention/",sep="")
-  data.sdnof.weightedBroadcastSelection <- load_data(path$contention)
+  path$sdnof.10min <- paste(path$cycle,"sdnof-10minutes",sep="")
+  path$contention <- paste(path$sdnof.10min,"/contention/",sep="")
+  data.sdnof.10min <- load_data(path$contention)
+  data.sdnof.10min$orderTime <- 10
   
   #path$nof <- paste(path$cycle,"fdnof",sep="")
   #path$contention <- paste(path$nof,"/contention/",sep="")
   #data.fdnof <- load_data(path$contention)
   #data <- rbind(data.fdnof, data.sdnof)
   
-  data <- rbind(data.sdnof.weightedSelection, data.sdnof.weightedBroadcastSelection)
+  data <- rbind(data.sdnof.7min, data.sdnof.10min)
   
   data
 }
@@ -180,16 +182,17 @@ path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
 
 png(paste(path$cycle,"fairness.png",sep=""), width=1280, height=720)
 ggplot(data[data$cycle==cycle,], aes(t, fairness)) + 
-  geom_line(aes(colour=selection, group=interaction(selection,id))) +
-  theme_bw() + theme(legend.position = "top") + ylim(0,5) + scale_x_continuous(breaks = seq(0, tempo_final, by = 3600)) +
+  geom_line(aes(colour=factor(orderTime), group=interaction(orderTime,id))) +
+  theme_bw() + theme(legend.position = "top") + ylim(0,5) + scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 dev.off()
 
 png(paste(path$cycle,"satisfaction.png",sep=""), width=1280, height=720)
 ggplot(data[data$cycle==cycle,], aes(t, satisfaction)) + 
-  geom_line(aes(colour=selection, group=interaction(selection,id))) +
-  theme_bw() + theme(legend.position = "top") + scale_x_continuous(breaks = seq(0, tempo_final, by = 3600)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + ylim(0,1)
+  geom_line(aes(colour=factor(orderTime), group=interaction(orderTime,id))) +
+  theme_bw() + theme(legend.position = "top") + scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
+  scale_y_continuous(breaks = seq(0,1.8, by = 0.25), limits = c(0,1.8)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 dev.off()
 
 png(paste(path$cycle,"contention.png",sep=""), width=1280, height=720)

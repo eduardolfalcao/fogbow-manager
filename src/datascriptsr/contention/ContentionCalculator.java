@@ -15,13 +15,13 @@ public class ContentionCalculator {
 	public static void main(String[] args) {
 		
 //		String [] nofVars = {"sdnof", "fdnof"};
-		String [] nofVars = {"sdnof-weightedSelection", "sdnof-weightedBroadcastSelection"};
+		String [] nofVars = {"sdnof-10minutes","sdnof-7minutes"};
 //		int [] cycleVars = {10,30,60};
 		int [] cycleVars = {10};
 		
 		for(String nof : nofVars){
 			for(int cycle : cycleVars){
-				String path = "/home/eduardolfalcao/workspace3/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/prioritizationFixed/cycle"+cycle+"/"+nof+"/";
+				String path = "/home/eduardolfalcao/workspace3/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/weightedNof/cycle"+cycle+"/"+nof+"/";
 				Map<PeerAndTime, Status> results = readFiles(path);
 				Map<Integer, Double> contention = computeContention(results);
 				output(contention, path+"contention/contention.csv", nof, String.valueOf(cycle));
