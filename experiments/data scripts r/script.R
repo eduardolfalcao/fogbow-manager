@@ -101,13 +101,13 @@ adjust_data <- function(tempo_final, cycle){
   
   path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
   
-  path$sdnof.7min <- paste(path$cycle,"sdnof-7minutes/",sep="")
+  path$sdnof.7min <- paste(path$cycle,"sdnof-7minutes/with60sBreaks/",sep="")
   data.sdnof.7min <- load_data(path$sdnof.7min)
   data.sdnof.7min <- create_columns(data.sdnof.7min, FALSE, 20, cycle)
   data.sdnof.7min <- compute_results(data.sdnof.7min, tempo_final)
   data.sdnof.7min$orderTime <- 7
   
-  path$sdnof.10min <- paste(path$cycle,"sdnof-10minutes/",sep="")
+  path$sdnof.10min <- paste(path$cycle,"sdnof-10minutes/with60sBreaks/",sep="")
   data.sdnof.10min <- load_data(path$sdnof.10min)
   data.sdnof.10min <- create_columns(data.sdnof.10min, FALSE, 20, cycle)
   data.sdnof.10min <- compute_results(data.sdnof.10min, tempo_final)
@@ -175,6 +175,7 @@ data$id <- sapply( data$id, as.numeric )
 #install.packages("ggplot2")
 library(ggplot2)
 
+head(data)
 
 cycle <- 10
 data <- data.10cycle
@@ -195,9 +196,16 @@ ggplot(data[data$cycle==cycle,], aes(t, satisfaction)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 dev.off()
 
-png(paste(path$cycle,"contention.png",sep=""), width=1280, height=720)
-ggplot(data.10cycle.contention, aes(t, kappa, colour=nof)) + geom_line() + theme_bw() + theme(legend.position = "top") + scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) #+ ylim(0,50)
+png(paste(path$cycle,"contention-yUnlimited.png",sep=""), width=1280, height=720)
+ggplot(data.10cycle.contention, aes(t, kappa, colour=factor(orderTime))) + 
+  geom_line() + theme_bw() + theme(legend.position = "top") + scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + ylim(0,50)
+dev.off()
+
+png(paste(path$cycle,"contention-yLimitBy2.png",sep=""), width=1280, height=720)
+ggplot(data.10cycle.contention, aes(t, kappa, colour=factor(orderTime))) + 
+  geom_line() + theme_bw() + theme(legend.position = "top") + scale_x_continuous(breaks = seq(0, tempo_final, by = 50), limits = c(1800,3600)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + ylim(0,5)# +xlim(1800,3600)
 dev.off()
 
 png(paste(path$cycle,"contention.png",sep=""), width=1280, height=720)
@@ -212,9 +220,13 @@ dev.off()
 
 
 
+library(plyr)
+dataQuartiles.sat <- ddply(data[data$orderTime==7,], "t", summarise, min = min(satisfaction), firstquart=quantile(satisfaction, probs=.25), median=median(satisfaction),
+                       mean=mean(satisfaction),thirdquart=quantile(satisfaction, probs=.75),max=max(satisfaction))
 
 
-summary(data[data$cycle==60 & data$nof=="fd" & data$t==42000,])
+
+summary(data[data$cycle==10 & data$nof=="sd" & data$t==42000 & data$orderTime==10,])
 
 data[data$cycle==30 & data$nof=="sd" & data$t==42000 & data$satisfaction<0.017,]
 #peer26
