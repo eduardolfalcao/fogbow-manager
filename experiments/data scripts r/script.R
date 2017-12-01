@@ -221,8 +221,44 @@ dev.off()
 
 
 library(plyr)
-dataQuartiles.sat <- ddply(data[data$orderTime==7,], "t", summarise, min = min(satisfaction), firstquart=quantile(satisfaction, probs=.25), median=median(satisfaction),
-                       mean=mean(satisfaction),thirdquart=quantile(satisfaction, probs=.75),max=max(satisfaction))
+dataQuartiles.sat <- ddply(data[data$orderTime==7 & data$t%%60==0,], "t", summarise, max=max(satisfaction), thirdquart=quantile(satisfaction, probs=.75),
+                           mean=mean(satisfaction), median=median(satisfaction), firstquart=quantile(satisfaction, probs=.25), min = min(satisfaction))
+
+dataQuartiles.sat[dataQuartiles.sat$t==42000,]
+
+library(reshape2)
+dataQuartiles.sat.melt <- melt(dataQuartiles.sat, id.vars = "t")
+
+library(ggplot2)
+path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+png(paste(path$cycle,"satisfaction-sdnof-lambda7-quartiles.png",sep=""), width=1280, height=720)
+ggplot(dataQuartiles.sat.melt, aes(x = t, y = value, color = variable)) +
+  theme_bw() + scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
+  scale_y_continuous(breaks = seq(0,1.8, by = 0.25), limits = c(0,1.25)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  geom_line()
+dev.off()
+
+
+library(plyr)
+dataQuartiles.sat <- ddply(data[data$orderTime==7 & data$t%%60==0,], "t", summarise, max=max(fairness), thirdquart=quantile(fairness, probs=.75),
+                           mean=mean(fairness), median=median(fairness), firstquart=quantile(fairness, probs=.25), min = min(fairness))
+
+library(reshape2)
+dataQuartiles.sat.melt <- melt(dataQuartiles.sat, id.vars = "t")
+
+library(ggplot2)
+path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+png(paste(path$cycle,"fairness-sdnof-lambda7-quartiles.png",sep=""), width=1280, height=720)
+ggplot(dataQuartiles.sat.melt, aes(x = t, y = value, color = variable)) +
+  theme_bw() + scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
+  scale_y_continuous(breaks = seq(0,2, by = 0.25), limits = c(0,2)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  geom_line()
+dev.off()
+
+
+
 
 
 
