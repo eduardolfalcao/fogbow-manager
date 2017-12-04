@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
@@ -14,7 +15,10 @@ public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityCont
 	
 	private double deltaC; 
 	private double minimumThreshold;
-	private double maximumThreshold;	
+	private double maximumThreshold;
+	private String managerId;
+	
+	private final static Logger LOGGER = Logger.getLogger(PairwiseFairnessDrivenController.class.getName());
 	
 	private Map<FederationMember, HillClimbingAlgorithm> hillClimbingControllers;	
 	
@@ -27,6 +31,8 @@ public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityCont
 				.getProperty(CONTROLLER_MINIMUM_THRESHOLD));
 		this.maximumThreshold = Double.parseDouble(properties
 				.getProperty(CONTROLLER_MAXIMUM_THRESHOLD));
+		
+		this.managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 
 	@Override
@@ -36,6 +42,8 @@ public class PairwiseFairnessDrivenController extends FairnessDrivenCapacityCont
 	
 	@Override
 	public void updateCapacity(FederationMember member, double maximumCapacity) {
+		LOGGER.info("<"+managerId+">: Running PairwiseFairnessDrivenController (FDNOF) for member: "+member.getId());
+		
 		maximumCapacity = normalizeMaximumCapacity(maximumCapacity);		
 		if (this.hillClimbingControllers.containsKey(member) && 
 				this.hillClimbingControllers.get(member).getLastUpdated() == this.dateUtils.currentTimeMillis()) {

@@ -3,6 +3,7 @@ package org.fogbowcloud.manager.core.plugins.capacitycontroller.fairnessdriven;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.ConfigurationConstants;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.AccountingPlugin;
@@ -13,6 +14,9 @@ import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 public class GlobalFairnessDrivenController extends FairnessDrivenCapacityController{
 	
 	private HillClimbingAlgorithm hillClimbingController;
+	private String managerId;
+	
+	private final static Logger LOGGER = Logger.getLogger(GlobalFairnessDrivenController.class.getName());
 	
 	public GlobalFairnessDrivenController(Properties properties, AccountingPlugin accountingPlugin) {
 		super(properties, accountingPlugin);
@@ -22,6 +26,8 @@ public class GlobalFairnessDrivenController extends FairnessDrivenCapacityContro
 		minimumThreshold = Double.parseDouble(properties.getProperty(CONTROLLER_MINIMUM_THRESHOLD));
 		maximumThreshold = Double.parseDouble(properties.getProperty(CONTROLLER_MAXIMUM_THRESHOLD));
 		this.hillClimbingController = new HillClimbingAlgorithm(deltaC, minimumThreshold, maximumThreshold);
+		
+		this.managerId = properties.getProperty(ConfigurationConstants.XMPP_JID_KEY);
 	}
 
 	public double getMaxCapacityToSupply(FederationMember member) {
@@ -29,6 +35,7 @@ public class GlobalFairnessDrivenController extends FairnessDrivenCapacityContro
 	}
 	
 	public void updateCapacity(FederationMember member, double maximumCapacity) {
+		LOGGER.info("<"+managerId+">: Running GlobalFairnessDrivenController ");		
 		maximumCapacity = normalizeMaximumCapacity(maximumCapacity);
 		updateFairness();
 		this.hillClimbingController.updateCapacity(maximumCapacity);

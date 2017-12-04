@@ -361,14 +361,16 @@ public class ManagerController {
 					LOGGER.error("<"+managerId+">: Erro while updating virtual quotas.", e);
 				}
 			}
-		}, ManagerControllerHelper.getBootstrappingPeriod(properties), capacityControllerUpdaterPeriod);
+		}, 0, capacityControllerUpdaterPeriod);
 	}
 	
 	private void updateVirtualQuotas() {
-		LOGGER.debug("<"+managerId+">: Updating virtual quotas (capacity controller plugin).");
+		LOGGER.info("<"+managerId+">: Updating virtual quotas (capacity controller plugin).");
+		int maxCapacity = getMaxCapacityDefaultUser();
+		this.capacityControllerPlugin.updateCapacity(null, maxCapacity);
+		
 		for(FederationMember member : new ArrayList<FederationMember>(this.members)) {
 			if(!(member.getId().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)))){				
-				int maxCapacity = getMaxCapacityDefaultUser();				
 				this.capacityControllerPlugin.updateCapacity(member, maxCapacity);
 				LOGGER.debug("<"+managerId+">: Member: " + member.getId() + "Quota: "
 						+ this.capacityControllerPlugin.getMaxCapacityToSupply(member));
@@ -1070,7 +1072,13 @@ public class ManagerController {
 		}
 	}
 	
+	boolean firstTime = true;
 	public boolean isThereEnoughQuota(String requestingMemberId){
+		if(firstTime){
+			updateVirtualQuotas();
+			firstTime = false;
+		}
+		
 		int instancesFulfilled = 0;
 		List<Order> allServedOrders = this.managerDataStoreController.getAllServedOrders();
 		for (Order order : allServedOrders) {
@@ -1093,7 +1101,7 @@ public class ManagerController {
 		boolean res = instancesFulfilled < virtualQuotaFloor;		
 		
 		LOGGER.debug("<"+managerId+">: The quota of "+managerId+" for "+requestingMemberId+" is "+virtualQuota);
-		LOGGER.debug("<"+managerId+">: isThereEnoughQuota for "+requestingMemberId+"? "+res);
+		LOGGER.info("<"+managerId+">: isThereEnoughQuota for "+requestingMemberId+"? "+res);
 		
 		return res;
 	}
