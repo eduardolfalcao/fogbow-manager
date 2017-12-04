@@ -21,7 +21,8 @@ public class AddResultsInTime {
 		
 		for(String nof : nofVars){
 			for(int cycle : cycleVars){
-				String path = "/home/eduardolfalcao/workspace3/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/weightedNof/cycle"+cycle+"/"+nof+"/";
+//				String path = "/home/eduardolfalcao/workspace3/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/weightedNof/cycle"+cycle+"/"+nof+"/";
+				String path = "/home/eduardo/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/weightedNof/cycle"+cycle+"/"+nof+"/";
 				readFileAndAddLine(path, time);
 			}			
 		}
