@@ -9,19 +9,22 @@ import java.util.TreeMap;
 import org.fogbowcloud.manager.experiments.data.CsvGenerator;
 
 public class ContentionCalculator {
+	
+	private static final String PATH_BASE_NOTEBOOK = "/home/eduardo/git/";
+	private static final String PATH_BASE_LSD = "/home/eduardolfalcao/workspace3/";
 
 	static DataReader dr = new DataReader();
 	
 	public static void main(String[] args) {
 		
 //		String [] nofVars = {"sdnof", "fdnof"};
-		String [] nofVars = {"sdnof-10minutes","sdnof-7minutes"};
+		String [] nofVars = {"sdnof-7minutes","fdnof-7minutes"};
 //		int [] cycleVars = {10,30,60};
 		int [] cycleVars = {10};
 		
 		for(String nof : nofVars){
 			for(int cycle : cycleVars){
-				String path = "/home/eduardolfalcao/workspace3/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/weightedNof/cycle"+cycle+"/"+nof+"/";
+				String path = PATH_BASE_NOTEBOOK+"fogbow-manager/experiments/data scripts r/done/40peers-20capacity/weightedNof/cycle"+cycle+"/"+nof+"/";
 				Map<PeerAndTime, Status> results = readFiles(path);
 				Map<Integer, Double> contention = computeContention(results);
 				output(contention, path+"contention/contention.csv", nof, String.valueOf(cycle));
