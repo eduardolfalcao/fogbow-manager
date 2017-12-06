@@ -75,7 +75,7 @@ compute_results <- function(df_data,tempo_final){
       if(x[j,]$t>=tempo_final && finished == FALSE){
         x[j,]$t <- tempo_final
         finished <- TRUE
-      }else if(x[j,]$t>=tempo_final && finished == TRUE){
+      }else if(x[j,]$t>tempo_final && finished == TRUE){
         x[j,]$t <- -1
       }
       
@@ -91,21 +91,21 @@ compute_results <- function(df_data,tempo_final){
   return(result)
 }
 
-pathBase <- "/home/eduardo/git/"  #notebook
-#pathBase <- "/home/eduardolfalcao/workspace3/"  #lsd
+#pathBase <- "/home/eduardo/git/"  #notebook
+pathBase <- "/home/eduardolfalcao/git/"  #lsd
 path <- paste(pathBase,"fogbow-manager/experiments/data scripts r/done/",sep="")
 path$exp <- paste(path,"40peers-20capacity/weightedNof/cycle",sep="")
 
 
 adjust_data <- function(tempo_final, orderTime, experiment, cycle){
   
-  path$orderTime <- paste(paste(path$exp,cycle,sep=""),"/freerider/",sep="")
+  path$orderTime <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
   
   path$sdnof <- paste(path$orderTime,"sdnof-",sep="")
   path$sdnof <- paste(path$sdnof,experiment,sep="")
   path$sdnof <- paste(path$sdnof,"/",sep="")
   data.sdnof <- load_data(path$sdnof)
-  data.sdnof <- create_columns(data.sdnof, FALSE, 20, orderTime)
+  data.sdnof <- create_columns(data.sdnof, FALSE, 20, cycle)
   data.sdnof <- compute_results(data.sdnof, tempo_final)
   data.sdnof$orderTime <- orderTime
   
@@ -113,7 +113,7 @@ adjust_data <- function(tempo_final, orderTime, experiment, cycle){
   path$fdnof <- paste(path$fdnof,experiment,sep="")
   path$fdnof <- paste(path$fdnof,"/",sep="")
   data.fdnof <- load_data(path$fdnof)
-  data.fdnof <- create_columns(data.fdnof, TRUE, 20, orderTime)
+  data.fdnof <- create_columns(data.fdnof, TRUE, 20, cycle)
   data.fdnof <- compute_results(data.fdnof, tempo_final)
   data.fdnof$orderTime <- orderTime
   
@@ -123,7 +123,7 @@ adjust_data <- function(tempo_final, orderTime, experiment, cycle){
 }
 
 get_contention <- function(orderTime, experiment, cycle){
-  path$orderTime <- paste(paste(path$exp,cycle,sep=""),"/freerider/",sep="")
+  path$orderTime <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
   
   path$sdnof <- paste(path$orderTime,"sdnof-",sep="")
   path$sdnof <- paste(path$sdnof,experiment,sep="")
@@ -148,10 +148,10 @@ get_contention <- function(orderTime, experiment, cycle){
 tempo_final = 42000
 
 cycle = 10
-orderTime = 7
+orderTime = 6.6
 experiment <- paste(orderTime,"minutes",sep="")
-data.orderTime7.fr = adjust_data(tempo_final, orderTime, experiment, cycle)
-data.7cycle.contention = get_contention(orderTime,experiment, cycle)
+data.orderTime6 = adjust_data(tempo_final, orderTime, experiment, cycle)
+data.cycle6.contention = get_contention(orderTime,experiment, cycle)
 
 data.orderTime7 = data.10cycle
 

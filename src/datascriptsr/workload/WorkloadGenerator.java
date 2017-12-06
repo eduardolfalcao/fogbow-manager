@@ -7,7 +7,7 @@ public class WorkloadGenerator {
 	
 	public static void main(String[] args) {
 		int numPeersPerGroup = 20;
-		int demand = 40;
+		int demand = 30;
 		int[] cycle = new int[]{10*60, 30*60, 60*60};
 		int totalDuration = 24*60*60;	//in seconds
 		
