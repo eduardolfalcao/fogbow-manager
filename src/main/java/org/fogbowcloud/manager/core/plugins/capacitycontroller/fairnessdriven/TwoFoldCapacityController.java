@@ -30,10 +30,11 @@ public class TwoFoldCapacityController implements CapacityControllerPlugin {
 		double maxCapacity;
 		if (this.pairwiseController.getCurrentFairness(member) >= 0) {
 			maxCapacity = this.pairwiseController.getMaxCapacityToSupply(member);
+			LOGGER.info("<"+managerId+">: The max capacity for "+member.getId()+" is "+maxCapacity+"; (pairwise)fairness: "+this.pairwiseController.getCurrentFairness(member));
 		} else {
 			maxCapacity = this.globalController.getMaxCapacityToSupply(member);
-		}
-		LOGGER.info("<"+managerId+">: The max capacity for "+member.getId()+" is "+maxCapacity);
+			LOGGER.info("<"+managerId+">: The max capacity for "+member.getId()+" is "+maxCapacity+"; (global)fairness: "+this.globalController.getCurrentFairness(member));
+		}		
 		return maxCapacity;
 	}
 	

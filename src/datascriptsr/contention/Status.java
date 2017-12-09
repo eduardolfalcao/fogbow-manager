@@ -5,6 +5,8 @@ public class Status{
 	private int dFed, oFed;
 	private int dTot,rFed,sFed;
 	
+	public Status() {}
+	
 	public Status(int dFed, int oFed) {
 		super();
 		this.dFed = dFed;
@@ -29,6 +31,10 @@ public class Status{
 	public int getdFed() {
 		return dFed;
 	}
+	
+	public void addDFed(int dFed) {
+		this.dFed += dFed;;
+	}
 
 	public void setdFed(int dFed) {
 		this.dFed = dFed;
@@ -36,6 +42,10 @@ public class Status{
 
 	public int getoFed() {
 		return oFed;
+	}
+	
+	public void addOFed(int oFed) {
+		this.oFed += oFed;;
 	}
 
 	public void setoFed(int oFed) {
