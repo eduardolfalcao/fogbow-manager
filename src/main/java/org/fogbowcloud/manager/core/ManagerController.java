@@ -372,7 +372,7 @@ public class ManagerController {
 		for(FederationMember member : new ArrayList<FederationMember>(this.members)) {
 			if(!(member.getId().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)))){				
 				this.capacityControllerPlugin.updateCapacity(member, maxCapacity);
-				LOGGER.debug("<"+managerId+">: Member: " + member.getId() + "Quota: "
+				LOGGER.info("<"+managerId+">: Member: " + member.getId() + "Quota: "
 						+ this.capacityControllerPlugin.getMaxCapacityToSupply(member));
 			}
 		}

@@ -12,7 +12,7 @@ public class WorkloadGenerator {
 		int totalDuration = 24*60*60;	//in seconds
 		
 		for(int curCycle : cycle){
-			String filename = "experiments/workload/synthetic/kappa1-demand"+demand+"-cycle"+curCycle/60+"-totalDuration"+totalDuration/60/60+".txt";
+			String filename = "experiments/workload/synthetic/kappa05-demand"+demand+"-cycle"+curCycle/60+"-totalDuration"+totalDuration/60/60+".txt";
 			new WorkloadGenerator(numPeersPerGroup, demand, curCycle, totalDuration, filename);
 		}
 	}

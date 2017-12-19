@@ -91,8 +91,8 @@ compute_results <- function(df_data,tempo_final){
   return(result)
 }
 
-#pathBase <- "/home/eduardo/git/"  #notebook
-pathBase <- "/home/eduardolfalcao/git/"  #lsd
+pathBase <- "/home/eduardo/git/"  #notebook
+#pathBase <- "/home/eduardolfalcao/git/"  #lsd
 path <- paste(pathBase,"fogbow-manager/experiments/data scripts r/done/",sep="")
 path$exp <- paste(path,"40peers-20capacity/weightedNof/cycle",sep="")
 
@@ -101,25 +101,26 @@ adjust_data <- function(tempo_final, orderTime, experiment, cycle){
   
   path$orderTime <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
   
-  path$sdnof <- paste(path$orderTime,"sdnof-",sep="")
-  path$sdnof <- paste(path$sdnof,experiment,sep="")
-  path$sdnof <- paste(path$sdnof,"-0.5kappa/with60sBreaks/",sep="")
-  data.sdnof <- load_data(path$sdnof)
-  data.sdnof <- create_columns(data.sdnof, FALSE, 20, cycle)
-  data.sdnof <- compute_results(data.sdnof, tempo_final)
-  data.sdnof$orderTime <- orderTime
+  #path$sdnof <- paste(path$orderTime,"sdnof-",sep="")
+  #path$sdnof <- paste(path$sdnof,experiment,sep="")
+  #path$sdnof <- paste(path$sdnof,"-05kappa-fr/with60sBreaks/",sep="")
+  #data.sdnof <- load_data(path$sdnof)
+  #data.sdnof <- create_columns(data.sdnof, FALSE, 20, cycle)
+  #data.sdnof <- compute_results(data.sdnof, tempo_final)
+  #data.sdnof$orderTime <- orderTime
   
   path$fdnof <- paste(path$orderTime,"fdnof-",sep="")
   path$fdnof <- paste(path$fdnof,experiment,sep="")
-  path$fdnof <- paste(path$fdnof,"-0.5kappa/with60sBreaks/",sep="")
+  path$fdnof <- paste(path$fdnof,"-05kappa-fr/with60sBreaks/",sep="")
+  print(path$fdnof)
   data.fdnof <- load_data(path$fdnof)
   data.fdnof <- create_columns(data.fdnof, TRUE, 20, cycle)
   data.fdnof <- compute_results(data.fdnof, tempo_final)
   data.fdnof$orderTime <- orderTime
   
-  data <- rbind(data.sdnof, data.fdnof)  
+  #data <- rbind(data.sdnof, data.fdnof)  
   
-  data
+  data.fdnof
 }
 
 movingAverage <- function(x, n=1, centered=FALSE) {
@@ -179,7 +180,7 @@ get_contention <- function(orderTime, experiment, cycle, ma=100){
   
   path$sdnof <- paste(path$orderTime,"sdnof-",sep="")
   path$sdnof <- paste(path$sdnof,experiment,sep="")
-  path$sdnof <- paste(path$sdnof,"-0.5kappa/contention/",sep="")
+  path$sdnof <- paste(path$sdnof,"-05kappa/contention/",sep="")
   print(path$sdnof)
   data.sdnof <- load_data(path$sdnof)
   data.sdnof$orderTime <- orderTime
@@ -187,7 +188,7 @@ get_contention <- function(orderTime, experiment, cycle, ma=100){
   
   path$fdnof <- paste(path$orderTime,"fdnof-",sep="")
   path$fdnof <- paste(path$fdnof,experiment,sep="")
-  path$fdnof <- paste(path$fdnof,"-0.5kappa/contention/",sep="")
+  path$fdnof <- paste(path$fdnof,"-05kappa/contention/",sep="")
   print(path$fdnof)
   data.fdnof <- load_data(path$fdnof)
   data.fdnof$orderTime <- orderTime
@@ -201,12 +202,13 @@ get_contention <- function(orderTime, experiment, cycle, ma=100){
 
   
 
-tempo_final = 42000
+tempo_final = 86400
 
 cycle = 10
-orderTime = 10
+orderTime = 30
 experiment <- paste(orderTime,"minutes",sep="")
-data.orderTime10 = adjust_data(tempo_final, orderTime, experiment, cycle)
+data.orderTime30 = adjust_data(tempo_final, orderTime, experiment, cycle)
+data.orderTime30$cycle <- 30
 data.cycle10.contention = get_contention(orderTime,experiment, cycle,ma=1)
 
 data.orderTime7 = data.10cycle
@@ -240,10 +242,11 @@ path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
 
 png(paste(path$cycle,"fairness-lambda10-orderTime6.6.png",sep=""), width=350, height=400)
 ggplot(data[data$t<=tempo_final,], aes(t, fairness)) + 
-  geom_line(aes(colour=nof, group=interaction(nof,id))) +
+  geom_line(aes(colour=comportamento, group=interaction(comportamento,id))) +
+  facet_grid(. ~ nof) +
   theme_bw(base_size=15) + theme(legend.position = "right") + #scale_x_continuous(breaks = seq(0, tempo_final, by = 1200)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
-  ylab("justiça") + ylim(0,4) + theme(legend.position = "top")
+  ylab("justiça") + ylim(0,7) + theme(legend.position = "top")
   #ggtitle("order time = 6.6min, lambda = 10, 50 peers")
 dev.off()
 
@@ -255,6 +258,61 @@ ggplot(data[data$t<tempo_final,], aes(t, satisfaction)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
   ylab("satisfação") + theme(legend.position = "top")
   #ggtitle("order time = 6.6min, lambda = 10, 50 peers")
+dev.off()
+
+tempo_final=42000
+data$comportamento="cooperativo"
+data[data$id<=40,]$comportamento <- "cooperativo"
+data[data$id>40,]$comportamento <- "carona"
+
+data.orderTime30$comportamento="cooperativo"
+library(stringi)
+data.orderTime30$id <- stri_replace_all_regex(data.orderTime30$id, "p", "")
+data.orderTime30$id <- sapply( data.orderTime30$id, as.numeric )
+data.orderTime30[data.orderTime30$id<=40,]$comportamento <- "cooperativo"
+data.orderTime30[data.orderTime30$id>40,]$comportamento <- "carona"
+
+#data[data$t==36000 & data$satisfaction<=0.5 & data$nof=="fd",]$id
+nrow(data[data$id<=40 & data$t==tempo_final-60 & data$nof=="fd" & data$fairness>=0.75,])
+#data[data$id<=40 & data$id>=20 & data$t==tempo_final-60 & data$nof=="fd",]
+
+orderBy(data[data$id=="p11" & data$t==86400 & data$nof=="fd",])
+
+data[data$t==60000 & data$nof=="sd" & data$comportamento=="cooperativo",]
+
+
+path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+png(paste(path$cycle,"satisfaction-lambda10-ciclo10-demand30-wfr-line-24h.png",sep=""), width=800, height=400)
+ggplot(data[data$t<tempo_final,], aes(t, satisfaction)) + 
+  geom_line(aes(colour=comportamento, group=interaction(comportamento,id))) + facet_grid(. ~ nof) +
+  theme_bw(base_size=15) + theme(legend.position = "right") + #scale_x_continuous(breaks = seq(0, tempo_final, by = 1200)) +
+  scale_y_continuous(breaks = seq(0,1.4, by = 0.25), limits=c(0,1.4)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
+  ylab("satisfação") + theme(legend.position = "right")
+dev.off()
+#ggtitle("order time = 6.6min, lambda = 10, 50 peers")
+
+path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+png(paste(path$cycle,"satisfaction-lambda10e30-ciclo10e30-demand30-wfr-line-24h.png",sep=""), width=800, height=400)
+ggplot(datalambda[datalambda$t<tempo_final,], aes(t, satisfaction)) + 
+  geom_line(aes(colour=comportamento, group=interaction(comportamento,id))) + facet_wrap(nof ~ cycle, ncol=3) +
+  theme_bw(base_size=15) + theme(legend.position = "right") + #scale_x_continuous(breaks = seq(0, tempo_final, by = 1200)) +
+  scale_y_continuous(breaks = seq(0,1.4, by = 0.25), limits=c(0,1.4)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
+  ylab("satisfação") + theme(legend.position = "top")
+dev.off()
+
+datalambda$nof = factor(datalambda$nof, levels=c('sd','fd'))
+
+data$nof = factor(data$nof, levels=c('sd','fd'))
+
+png(paste(path$cycle,"fairness-lambda10-ciclo10-demand30-wfr-line.png",sep=""), width=800, height=400)
+ggplot(data[data$t<tempo_final & data$id==11,], aes(t, fairness)) + 
+  geom_line(aes(colour=comportamento, group=interaction(comportamento,id))) + facet_grid(. ~ nof) +
+  theme_bw(base_size=15) + theme(legend.position = "right") + #scale_x_continuous(breaks = seq(0, tempo_final, by = 1200)) +
+  scale_y_continuous(breaks = seq(-1,3.25, by = 0.25), limits=c(-1,3.25)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
+  ylab("justiça") + theme(legend.position = "right")
 dev.off()
 
 #library(png)
@@ -303,13 +361,13 @@ dev.off()
 library(plyr)
 library(reshape2)
 
-dataQuartiles.sat.sd <- ddply(data[data$t%%60==0 & data$nof=="sd" & data$t<tempo_final,], "t", summarise, máximo=max(satisfaction), terceiro_quartil=quantile(satisfaction, probs=.75),
-                           média=mean(satisfaction), mediana=median(satisfaction), primeiro_quartil=quantile(satisfaction, probs=.25), mínimo = min(satisfaction))
+dataQuartiles.sat.sd <- ddply(data[data$t%%60==0 & data$nof=="sd" & data$t<=42000,], "t", summarise, máximo=max(satisfaction), percentil_80=quantile(satisfaction, probs=.80),
+                           média=mean(satisfaction), mediana=median(satisfaction), percentil_20=quantile(satisfaction, probs=.20), mínimo = min(satisfaction))
 dataQuartiles.sat.melt.sd <- melt(dataQuartiles.sat.sd, id.vars = "t")
 dataQuartiles.sat.melt.sd$nof <- "sd"
 
-dataQuartiles.sat.fd <- ddply(data[data$t%%60==0 & data$nof=="fd" & data$t<tempo_final,], "t", summarise, máximo=max(satisfaction), terceiro_quartil=quantile(satisfaction, probs=.75),
-                              média=mean(satisfaction), mediana=median(satisfaction), primeiro_quartil=quantile(satisfaction, probs=.25), mínimo = min(satisfaction))
+dataQuartiles.sat.fd <- ddply(data[data$t%%60==0 & data$nof=="fd" & data$t<=42000,], "t", summarise, máximo=max(satisfaction), percentil_80=quantile(satisfaction, probs=.80),
+                              média=mean(satisfaction), mediana=median(satisfaction), percentil_20=quantile(satisfaction, probs=.20), mínimo = min(satisfaction))
 dataQuartiles.sat.melt.fd <- melt(dataQuartiles.sat.fd, id.vars = "t")
 dataQuartiles.sat.melt.fd$nof <- "fd"
 
@@ -319,43 +377,64 @@ dataQuartiles.sat.melt$nof = factor(dataQuartiles.sat.melt$nof, levels=c('sd','f
 
 library(ggplot2)
 path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
-png(paste(path$cycle,"satisfacao-lambda10-ciclo10-demand30.png",sep=""), width=800, height=400)
+png(paste(path$cycle,"satisfacao-lambda10-ciclo10-demand30-wfr.png",sep=""), width=800, height=400)
 ggplot(dataQuartiles.sat.melt, aes(x = t, y = value, color = variable)) +
   theme_bw(base_size=15) + #scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
-  scale_y_continuous(breaks = seq(0,1.15, by = 0.25), limits = c(0,1.15)) +
+  scale_y_continuous(breaks = seq(0,1.5, by = 0.25), limits = c(0,1.5)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   facet_grid(. ~ nof) + ylab("satisfação") + theme(legend.title=element_blank()) +
   geom_line()
 dev.off()
 
 
+
+
 library(plyr)
 library(reshape2)
-dataQuartiles.fair.sd <- ddply(data[data$t%%60==0 & data$nof=="sd" & data$t<tempo_final,], "t", summarise, máximo=max(fairness), terceiro_quartil=quantile(fairness, probs=.75),
+data[data$id<=40 & data$nof=="sd" & data$t>10000 & data$fairness>=3,]
+
+data.orderTime30$cycle
+
+
+data.orderTime30$nof <- "fd"
+datalambda <- rbind(data,data.orderTime30)
+
+datalambdaQuartiles.fair.sd <- ddply(datalambda[datalambda$t%%60==0 & datalambda$nof=="sd" & datalambda$cycle==10 & datalambda$t<=tempo_final & datalambda$id<=40,], "t", summarise, máximo=max(fairness), terceiro_quartil=quantile(fairness, probs=.75),
                               média=mean(fairness), mediana=median(fairness), primeiro_quartil=quantile(fairness, probs=.25), mínimo = min(fairness))
-dataQuartiles.fair.melt.sd <- melt(dataQuartiles.fair.sd, id.vars = "t")
-dataQuartiles.fair.melt.sd$nof <- "sd"
+datalambdaQuartiles.fair.melt.sd <- melt(datalambdaQuartiles.fair.sd, id.vars = "t")
+datalambdaQuartiles.fair.melt.sd$nof <- "sd"
+datalambdaQuartiles.fair.melt.sd$cycle <- 10
 
-dataQuartiles.fair.fd <- ddply(data[data$t%%60==0 & data$nof=="fd" & data$t<tempo_final,], "t", summarise, máximo=max(fairness), terceiro_quartil=quantile(fairness, probs=.75),
+datalambdaQuartiles.fair.fd <- ddply(datalambda[datalambda$t%%60==0 & datalambda$nof=="fd" & datalambda$cycle==10 & datalambda$t<=tempo_final & datalambda$id<=40,], "t", summarise, máximo=max(fairness), terceiro_quartil=quantile(fairness, probs=.75),
                               média=mean(fairness), mediana=median(fairness), primeiro_quartil=quantile(fairness, probs=.25), mínimo = min(fairness))
-dataQuartiles.fair.melt.fd <- melt(dataQuartiles.fair.fd, id.vars = "t")
-dataQuartiles.fair.melt.fd$nof <- "fd"
+datalambdaQuartiles.fair.melt.fd <- melt(datalambdaQuartiles.fair.fd, id.vars = "t")
+datalambdaQuartiles.fair.melt.fd$nof <- "fd"
+datalambdaQuartiles.fair.melt.fd$cycle <- 10
 
-dataQuartiles.fair.melt = rbind(dataQuartiles.fair.melt.sd,dataQuartiles.fair.melt.fd)
+datalambdaQuartiles.fair.fdlambda <- ddply(datalambda[datalambda$t%%60==0 & datalambda$nof=="fd" & datalambda$cycle==30 & datalambda$t<=tempo_final & datalambda$id<=40,], "t", summarise, máximo=max(fairness), terceiro_quartil=quantile(fairness, probs=.75),
+                                     média=mean(fairness), mediana=median(fairness), primeiro_quartil=quantile(fairness, probs=.25), mínimo = min(fairness))
+datalambdaQuartiles.fair.melt.fdlambda <- melt(datalambdaQuartiles.fair.fdlambda, id.vars = "t")
+datalambdaQuartiles.fair.melt.fdlambda$nof <- "fd"
+datalambdaQuartiles.fair.melt.fdlambda$cycle <- 30
 
-dataQuartiles.fair.melt$nof = factor(dataQuartiles.fair.melt$nof, levels=c('sd','fd'))
+datalambdaQuartiles.fair.melt = rbind(datalambdaQuartiles.fair.melt.sd,datalambdaQuartiles.fair.melt.fd,datalambdaQuartiles.fair.melt.fdlambda)
+
+datalambdaQuartiles.fair.melt$nof = factor(datalambdaQuartiles.fair.melt$nof, levels=c('sd','fd'))
 
 library(ggplot2)
 path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
-png(paste(path$cycle,"fairness-lambda10-ciclo10-demand30.png",sep=""), width=800, height=400)
-ggplot(dataQuartiles.fair.melt, aes(x = t, y = value, color = variable)) +
+png(paste(path$cycle,"fairness-lambda10e30-ciclo10e30-demand30-wfr-24h.png",sep=""), width=800, height=400)
+ggplot(datalambdaQuartiles.fair.melt, aes(x = t, y = value, color = variable)) +
   theme_bw(base_size=15) + #scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
-  scale_y_continuous(breaks = seq(0,5, by = 0.5), limits = c(0,5)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  facet_grid(. ~ nof) + ylab("justiça") + theme(legend.title=element_blank()) +
+  scale_y_continuous(breaks = seq(0,7.5, by = 0.5), limits = c(0,7.5)) +
+  xlim(0,86399) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + theme(legend.position = "top") +
+  facet_wrap(nof ~ cycle, ncol=3) + ylab("justiça") + theme(legend.title=element_blank()) +
   geom_line()
 dev.off()
 
+dataQuartiles.fair.melt[dataQuartiles.fair.melt$value>=1.35 & dataQuartiles.fair.melt$t>40000 &
+                          dataQuartiles.fair.melt$variable=="máximo" & dataQuartiles.fair.melt$nof=="fd",]
 
 library(plyr)
 dataQuartiles.sat <- ddply(data[data$orderTime==7 & data$t%%60==0,], "t", summarise, max=max(fairness), thirdquart=quantile(fairness, probs=.75),
