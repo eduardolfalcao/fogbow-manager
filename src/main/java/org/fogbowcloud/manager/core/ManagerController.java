@@ -124,7 +124,7 @@ public class ManagerController {
 	protected IdentityPlugin federationIdentityPlugin;
 	protected PrioritizationPlugin prioritizationPlugin;
 	protected MapperPlugin mapperPlugin;
-	private CapacityControllerPlugin capacityControllerPlugin;
+	protected CapacityControllerPlugin capacityControllerPlugin;
 	protected Properties properties;
 	protected AsyncPacketSender packetSender;
 	protected FederationMemberAuthorizationPlugin validator;
@@ -157,7 +157,7 @@ public class ManagerController {
 			this.instanceMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.servedOrderMonitoringTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
 			this.accountingUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1));
-			this.capacityControllerUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(1)); 
+			this.capacityControllerUpdaterTimer = new ManagerTimer(Executors.newScheduledThreadPool(3)); 
 		} else {
 			this.orderSchedulerTimer = new ManagerTimer(executor);
 			this.instanceMonitoringTimer = new ManagerTimer(executor);
@@ -367,7 +367,7 @@ public class ManagerController {
 	private void updateVirtualQuotas() {
 		LOGGER.info("<"+managerId+">: Updating virtual quotas (capacity controller plugin).");
 		int maxCapacity = getMaxCapacityDefaultUser();
-		this.capacityControllerPlugin.updateCapacity(null, maxCapacity);
+		this.capacityControllerPlugin.updateCapacity(null, maxCapacity);	//update the global capacity
 		
 		for(FederationMember member : new ArrayList<FederationMember>(this.members)) {
 			if(!(member.getId().equals(properties.getProperty(ConfigurationConstants.XMPP_JID_KEY)))){				

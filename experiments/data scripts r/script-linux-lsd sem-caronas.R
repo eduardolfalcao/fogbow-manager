@@ -4,7 +4,16 @@ load_data <- function(path) {
   do.call(rbind, tables)
 }
 
-create_columns <- function(x, controller, capacity, cycle){
+#install.packages("foreach")
+#install.packages("doMC")
+#install.packages("dplyr")
+
+library(foreach)
+library(doMC)
+library(dplyr)
+registerDoMC(cores = 7)
+
+create_columns <- function(x, controller, capacity, cycle, contention){
   if(controller==TRUE){
     x["nof"] <- "fd"
   } else{
@@ -17,19 +26,13 @@ create_columns <- function(x, controller, capacity, cycle){
   x["req"] <- 0
   x["fairness"] <- 0
   x["satisfaction"] <- 0
-  x["contention"] <- 0
+  x["compSatisfaction"] <- 0
+  x["contention"] <- contention
   x["cycle"] <- cycle
+  # x["unattended"] <- 0
+  # x["unattendedAcumulado"] <- 0
   x
 }
-
-#install.packages("foreach")
-#install.packages("doMC")
-#install.packages("dplyr")
-
-library(foreach)
-library(doMC)
-library(dplyr)
-registerDoMC(cores = 7)
 
 compute_results <- function(df_data,tempo_final){
   
@@ -59,11 +62,27 @@ compute_results <- function(df_data,tempo_final){
       if(x[j-1,]$oFed>0){
         offered <- offered + (x[j-1,]$oFed * (x[j,]$t - x[j-1,]$t))
       }
+      if(x[j-1,]$oFed>0){
+        offered <- offered + (x[j-1,]$oFed * (x[j,]$t - x[j-1,]$t))
+      }
       
       x[j-1,]$prov <- prov
       x[j-1,]$cons <- cons
       x[j-1,]$req <- req
       x[j-1,]$offered <- offered
+      
+      # x[j-1,]$unattended <- (x[j-1,]$dTot - (x[j-1,]$dTot - max(x[j-1,]$dFed,x[j-1,]$rFed)) - x[j-1,]$rFed)*(x[j,]$t - x[j-1,]$t)
+      # if(j > 2){
+      #   x[j-1,]$unattendedAcumulado <- x[j-2,]$unattendedAcumulado + x[j-1,]$unattended
+      # }else{
+      #   x[j-1,]$unattendedAcumulado <- x[j-1,]$unattended
+      # }
+      # 
+      # if((x[j-1,]$unattendedAcumulado + cons)==0){
+      #   x[j-1,]$compSatisfaction <- -1
+      # } else {
+      #   x[j-1,]$compSatisfaction <- 1 - x[j-1,]$unattendedAcumulado/(x[j-1,]$unattendedAcumulado + cons)
+      # }
       
       if(x[j-1,]$prov==0){
         x[j-1,]$fairness <- -1
@@ -72,12 +91,12 @@ compute_results <- function(df_data,tempo_final){
       }
       
       
-      #if(x[j,]$t>=tempo_final && finished == FALSE){
-      #  x[j,]$t <- tempo_final
-      #  finished <- TRUE
-      #}else if(x[j,]$t>tempo_final && finished == TRUE){
-      #  x[j,]$t <- -1
-      #}
+      if(x[j,]$t>=tempo_final && finished == FALSE){
+        x[j,]$t <- tempo_final
+        finished <- TRUE
+      }else if(x[j,]$t>tempo_final && finished == TRUE){
+        x[j,]$t <- -1
+      }
       
       if(x[j-1,]$req==0){
         x[j-1,]$satisfaction <- -1
@@ -91,35 +110,50 @@ compute_results <- function(df_data,tempo_final){
   return(result)
 }
 
-pathBase <- "/home/eduardo/git/"  #notebook
-#pathBase <- "/home/eduardolfalcao/git/"  #lsd
+#pathBase <- "/home/eduardo/git/"  #notebook
+pathBase <- "/home/eduardolfalcao/git/"  #lsd
 path <- paste(pathBase,"fogbow-manager/experiments/data scripts r/done/",sep="")
 path$exp <- paste(path,"40peers-20capacity/weightedNof/cycle",sep="")
 
 
-adjust_data <- function(tempo_final, orderTime, experiment, cycle){
+adjust_data <- function(tempo_final, orderTime, cycle){
   
   path$orderTime <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
   
-  path$sdnof <- paste(path$orderTime,"sdnof-",sep="")
-  path$sdnof <- paste(path$sdnof,experiment,sep="")
-  path$sdnof <- paste(path$sdnof,"-05kappa/with60sBreaks/",sep="")
-  data.sdnof <- load_data(path$sdnof)
-  data.sdnof <- create_columns(data.sdnof, FALSE, 20, cycle)
-  data.sdnof <- compute_results(data.sdnof, tempo_final)
-  data.sdnof$orderTime <- orderTime
-  
+  contention <- 0.5
+
+  path$sdnof <- paste(path$orderTime,"sdnof",sep="")
+  path$sdnof <- paste(path$sdnof,"-05kappa-semCaronas/with60sBreaks/",sep="")
+  print(path$sdnof)
+  data.sdnof.05 <- load_data(path$sdnof)
+  data.sdnof.05 <- create_columns(data.sdnof.05, FALSE, 20, cycle, contention)
+  data.sdnof.05 <- compute_results(data.sdnof.05, tempo_final)
+
   path$fdnof <- paste(path$orderTime,"fdnof-",sep="")
-  path$fdnof <- paste(path$fdnof,experiment,sep="")
-  path$fdnof <- paste(path$fdnof,"-05kappa/with60sBreaks/",sep="")
+  path$fdnof <- paste(path$fdnof,"05kappa-semCaronas/with60sBreaks/",sep="")
   print(path$fdnof)
-  data.fdnof <- load_data(path$fdnof)
-  data.fdnof <- create_columns(data.fdnof, TRUE, 20, cycle)
-  data.fdnof <- compute_results(data.fdnof, tempo_final)
-  data.fdnof$orderTime <- orderTime
-  
-  data <- rbind(data.sdnof, data.fdnof)  
-  
+  data.fdnof.05 <- load_data(path$fdnof)
+  data.fdnof.05 <- create_columns(data.fdnof.05, TRUE, 20, cycle, contention)
+  data.fdnof.05 <- compute_results(data.fdnof.05, tempo_final)
+
+  contention <- 1
+
+  path$sdnof <- paste(path$orderTime,"sdnof",sep="")
+  path$sdnof <- paste(path$sdnof,"-1kappa-semCaronas/with60sBreaks/",sep="")
+  print(path$sdnof)
+  data.sdnof.1 <- load_data(path$sdnof)
+  data.sdnof.1 <- create_columns(data.sdnof.1, FALSE, 20, cycle, contention)
+  data.sdnof.1 <- compute_results(data.sdnof.1, tempo_final)
+
+  path$fdnof <- paste(path$orderTime,"fdnof-",sep="")
+  path$fdnof <- paste(path$fdnof,"1kappa-semCaronas/with60sBreaks/",sep="")
+  print(path$fdnof)
+  data.fdnof.1 <- load_data(path$fdnof)
+  data.fdnof.1 <- create_columns(data.fdnof.1, TRUE, 20, cycle, contention)
+  data.fdnof.1 <- compute_results(data.fdnof.1, tempo_final)
+
+  data <- rbind(data.sdnof.05, data.fdnof.05, data.sdnof.1, data.fdnof.1)
+
   data
 }
 
@@ -128,8 +162,128 @@ tempo_final = 86400
 
 cycle = 10
 orderTime = 10
-experiment <- paste(orderTime,"minutes",sep="")
-data.orderTime10.05kappa = adjust_data(tempo_final, orderTime, experiment, cycle)
+data.semcaronas = adjust_data(tempo_final, orderTime, cycle)
+data = data.semcaronas
+
+data.semcaronas[data.semcaronas$id=="p1" & data.semcaronas$satisfaction>1,]
+
+
+
+## plotando a satisfação
+library(plyr)
+library(reshape2)
+
+dataQuartiles.sat.sd.05 <- ddply(data[data$t%%60==0 & data$nof=="sd" & data$contention==0.5,], "t", summarise, terceiro_quartil=quantile(satisfaction, probs=.75),
+                                 média=mean(satisfaction), mediana=median(satisfaction), primeiro_quartil=quantile(satisfaction, probs=.25), mínimo = min(satisfaction))
+dataQuartiles.sat.melt.sd.05 <- melt(dataQuartiles.sat.sd.05, id.vars = "t")
+dataQuartiles.sat.melt.sd.05$nof <- "sd"
+dataQuartiles.sat.melt.sd.05$contenção <- 0.5
+
+dataQuartiles.sat.fd.05 <- ddply(data[data$t%%60==0 & data$nof=="fd" & data$contention==0.5,], "t", summarise, terceiro_quartil=quantile(satisfaction, probs=.75),
+                                 média=mean(satisfaction), mediana=median(satisfaction), primeiro_quartil=quantile(satisfaction, probs=.25), mínimo = min(satisfaction))
+dataQuartiles.sat.melt.fd.05 <- melt(dataQuartiles.sat.fd.05, id.vars = "t")
+dataQuartiles.sat.melt.fd.05$nof <- "fd"
+dataQuartiles.sat.melt.fd.05$contenção <- 0.5
+
+dataQuartiles.sat.sd.1 <- ddply(data[data$t%%60==0 & data$nof=="sd" & data$contention==1,], "t", summarise, terceiro_quartil=quantile(satisfaction, probs=.75),
+                                média=mean(satisfaction), mediana=median(satisfaction), primeiro_quartil=quantile(satisfaction, probs=.25), mínimo = min(satisfaction))
+dataQuartiles.sat.melt.sd.1 <- melt(dataQuartiles.sat.sd.1, id.vars = "t")
+dataQuartiles.sat.melt.sd.1$nof <- "sd"
+dataQuartiles.sat.melt.sd.1$contenção <- 1
+
+dataQuartiles.sat.fd.1 <- ddply(data[data$t%%60==0 & data$nof=="fd" & data$contention==1,], "t", summarise, terceiro_quartil=quantile(satisfaction, probs=.75),
+                                média=mean(satisfaction), mediana=median(satisfaction), primeiro_quartil=quantile(satisfaction, probs=.25), mínimo = min(satisfaction))
+dataQuartiles.sat.melt.fd.1 <- melt(dataQuartiles.sat.fd.1, id.vars = "t")
+dataQuartiles.sat.melt.fd.1$nof <- "fd"
+dataQuartiles.sat.melt.fd.1$contenção <- 1
+
+dataQuartiles.sat.melt = rbind(dataQuartiles.sat.melt.sd.05,dataQuartiles.sat.melt.fd.05,dataQuartiles.sat.melt.sd.1,dataQuartiles.sat.melt.fd.1)
+
+dataQuartiles.sat.melt$nof = factor(dataQuartiles.sat.melt$nof, levels=c('sd','fd'))
+
+library(ggplot2)
+path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+png(paste(path$cycle,"satisfacao-lambda10-semcarona-kappa05-vert-3q.png",sep=""), width=800, height=350)
+ggplot(dataQuartiles.sat.melt[dataQuartiles.sat.melt$t<tempo_final,], aes(x = t, y = value, color = variable)) +
+  theme_bw(base_size=15) + #scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
+  scale_y_continuous(breaks = seq(0,1, by = 0.25), limits = c(0,1)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  facet_wrap(contenção ~ nof, ncol=4, labeller = label_both) +
+  #facet_grid(contenção ~ nof, labeller = label_both) + 
+  ylab("satisfação") + theme(legend.title=element_blank()) + theme(legend.position = "top") +
+  geom_line() + scale_colour_manual(values=c("#B79F00", "#00BA38", "#00BFC4", "#619CFF", "#F564E3")) 
+dev.off()
+
+library(scales)
+show_col(hue_pal()(6))
+
+summary(data.semcaronas[data.semcaronas$contention==1 & data.semcaronas$t==tempo_final-60 & data.semcaronas$nof=="sd",])
+summary(data.semcaronas[data.semcaronas$contention==1 & data.semcaronas$t==tempo_final-60 & data.semcaronas$nof=="fd",])
+
+nrow(data.semcaronas[data.semcaronas$contention==1 & data.semcaronas$t==tempo_final-60 & data.semcaronas$nof=="sd" & data.semcaronas$fairness>0.70,])
+nrow(data.semcaronas[data.semcaronas$contention==1 & data.semcaronas$t==tempo_final-60 & data.semcaronas$nof=="fd" & data.semcaronas$fairness>0.70,])
+
+
+###########
+library(plyr)
+library(reshape2)
+
+dataQuartiles.fair.sd.05 <- ddply(data[data$t%%60==0 & data$nof=="sd" & data$contention==0.5,], "t", summarise, máximo=max(fairness),terceiro_quartil=quantile(fairness, probs=.75),
+                                 média=mean(fairness), mediana=median(fairness), primeiro_quartil=quantile(fairness, probs=.25), mínimo = min(fairness))
+dataQuartiles.fair.melt.sd.05 <- melt(dataQuartiles.fair.sd.05, id.vars = "t")
+dataQuartiles.fair.melt.sd.05$nof <- "sd"
+dataQuartiles.fair.melt.sd.05$contenção <- 0.5
+
+dataQuartiles.fair.fd.05 <- ddply(data[data$t%%60==0 & data$nof=="fd" & data$contention==0.5,], "t", summarise, máximo=max(fairness),terceiro_quartil=quantile(fairness, probs=.75),
+                                 média=mean(fairness), mediana=median(fairness), primeiro_quartil=quantile(fairness, probs=.25), mínimo = min(fairness))
+dataQuartiles.fair.melt.fd.05 <- melt(dataQuartiles.fair.fd.05, id.vars = "t")
+dataQuartiles.fair.melt.fd.05$nof <- "fd"
+dataQuartiles.fair.melt.fd.05$contenção <- 0.5
+
+dataQuartiles.fair.sd.1 <- ddply(data[data$t%%60==0 & data$nof=="sd" & data$contention==1,], "t", summarise, máximo=max(fairness),terceiro_quartil=quantile(fairness, probs=0.75),
+                                média=mean(fairness), mediana=median(fairness), primeiro_quartil=quantile(fairness, probs=.25), mínimo = min(fairness))
+dataQuartiles.fair.melt.sd.1 <- melt(dataQuartiles.fair.sd.1, id.vars = "t")
+dataQuartiles.fair.melt.sd.1$nof <- "sd"
+dataQuartiles.fair.melt.sd.1$contenção <- 1
+
+dataQuartiles.fair.fd.1 <- ddply(data[data$t%%60==0 & data$nof=="fd" & data$contention==1,], "t", summarise, máximo=max(fairness),terceiro_quartil=quantile(fairness, probs=.75),
+                                média=mean(fairness), mediana=median(fairness), primeiro_quartil=quantile(fairness, probs=.25), mínimo = min(fairness))
+dataQuartiles.fair.melt.fd.1 <- melt(dataQuartiles.fair.fd.1, id.vars = "t")
+dataQuartiles.fair.melt.fd.1$nof <- "fd"
+dataQuartiles.fair.melt.fd.1$contenção <- 1
+
+dataQuartiles.fair.melt = rbind(dataQuartiles.fair.melt.sd.05,dataQuartiles.fair.melt.fd.05,dataQuartiles.fair.melt.sd.1,dataQuartiles.fair.melt.fd.1)
+
+dataQuartiles.fair.melt$nof = factor(dataQuartiles.fair.melt$nof, levels=c('sd','fd'))
+
+library(ggplot2)
+path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+png(paste(path$cycle,"fairness-lambda10-semcarona-kappa05e1-vert.png",sep=""), width=800, height=350)
+ggplot(dataQuartiles.fair.melt[dataQuartiles.fair.melt$t<tempo_final,], aes(x = t, y = value, color = variable)) +
+  theme_bw(base_size=15) + #scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
+  scale_y_continuous(breaks = seq(0,7, by = 0.5), limits = c(0,7)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  facet_wrap(contenção ~ nof, ncol=4, labeller = label_both) +
+  #facet_grid(contenção ~ nof, labeller = label_both) + 
+  ylab("justiça") + theme(legend.title=element_blank()) + theme(legend.position = "top") +
+  geom_line()
+dev.off()
+
+
+
+
+
+
+
+
+###################
+
+
+
+data.05kappa.semcaronas.satComp = adjust_data(tempo_final, orderTime, cycle)
+summary(data.05kappa.semcaronas.satComp[data.05kappa.semcaronas.satComp$t>80000,]$compSatisfaction)
+
+
 head(data.orderTime10.05kappa)
 data.orderTime10.05kappa$contenção = 0.5
 summary(data.orderTime10.05kappa)
@@ -301,48 +455,6 @@ ggplot(data.60cycle.contention, aes(t, kappa, colour=nof)) + geom_line() + theme
 dev.off()
 
 
-
-library(plyr)
-library(reshape2)
-
-dataQuartiles.sat.sd.05 <- ddply(data[data$t%%60==0 & data$nof=="sd" & data$contenção==0.5,], "t", summarise, máximo=max(satisfaction), terceiro_quartil=quantile(satisfaction, probs=.75),
-                           média=mean(satisfaction), mediana=median(satisfaction), primeiro_quartil=quantile(satisfaction, probs=.25), mínimo = min(satisfaction))
-dataQuartiles.sat.melt.sd.05 <- melt(dataQuartiles.sat.sd.05, id.vars = "t")
-dataQuartiles.sat.melt.sd.05$nof <- "sd"
-dataQuartiles.sat.melt.sd.05$contenção <- 0.5
-
-dataQuartiles.sat.fd.05 <- ddply(data[data$t%%60==0 & data$nof=="fd" & data$contenção==0.5,], "t", summarise, máximo=max(satisfaction), terceiro_quartil=quantile(satisfaction, probs=.75),
-                              média=mean(satisfaction), mediana=median(satisfaction), primeiro_quartil=quantile(satisfaction, probs=.25), mínimo = min(satisfaction))
-dataQuartiles.sat.melt.fd.05 <- melt(dataQuartiles.sat.fd.05, id.vars = "t")
-dataQuartiles.sat.melt.fd.05$nof <- "fd"
-dataQuartiles.sat.melt.fd.05$contenção <- 0.5
-
-dataQuartiles.sat.sd.1 <- ddply(data[data$t%%60==0 & data$nof=="sd" & data$contenção==1,], "t", summarise, máximo=max(satisfaction), terceiro_quartil=quantile(satisfaction, probs=.75),
-                                 média=mean(satisfaction), mediana=median(satisfaction), primeiro_quartil=quantile(satisfaction, probs=.25), mínimo = min(satisfaction))
-dataQuartiles.sat.melt.sd.1 <- melt(dataQuartiles.sat.sd.1, id.vars = "t")
-dataQuartiles.sat.melt.sd.1$nof <- "sd"
-dataQuartiles.sat.melt.sd.1$contenção <- 1
-
-dataQuartiles.sat.fd.1 <- ddply(data[data$t%%60==0 & data$nof=="fd" & data$contenção==1,], "t", summarise, máximo=max(satisfaction), terceiro_quartil=quantile(satisfaction, probs=.75),
-                                 média=mean(satisfaction), mediana=median(satisfaction), primeiro_quartil=quantile(satisfaction, probs=.25), mínimo = min(satisfaction))
-dataQuartiles.sat.melt.fd.1 <- melt(dataQuartiles.sat.fd.1, id.vars = "t")
-dataQuartiles.sat.melt.fd.1$nof <- "fd"
-dataQuartiles.sat.melt.fd.1$contenção <- 1
-
-dataQuartiles.sat.melt = rbind(dataQuartiles.sat.melt.sd.05,dataQuartiles.sat.melt.fd.05,dataQuartiles.sat.melt.sd.1,dataQuartiles.sat.melt.fd.1)
-
-dataQuartiles.sat.melt$nof = factor(dataQuartiles.sat.melt$nof, levels=c('sd','fd'))
-
-library(ggplot2)
-path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
-png(paste(path$cycle,"satisfacao-lambda10-ciclo10-demand30-semcarona-kappa05e1.png",sep=""), width=800, height=600)
-ggplot(dataQuartiles.sat.melt, aes(x = t, y = value, color = variable)) +
-  theme_bw(base_size=15) + #scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
-  scale_y_continuous(breaks = seq(0,1.125, by = 0.25), limits = c(0,1.125)) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  facet_grid(contenção ~ nof, labeller = label_both) + ylab("satisfação") + theme(legend.title=element_blank()) +
-  geom_line()
-dev.off()
 
 
 

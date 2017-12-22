@@ -53,7 +53,7 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 	@Override
 	public synchronized boolean addOrder(Order order){
 		
-		LOGGER.info("<"+managerId+">: adding order("+order.getId()+"): " +(OrderXP) order);
+		LOGGER.info("<"+managerId+">: adding order("+order.getId()+")");
 		
 		try{
 			orders.put(order.getId(), order);
@@ -128,7 +128,7 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 	@Override
 	public synchronized boolean removeOrder(Order order) {
 		
-		LOGGER.info("<"+managerId+">: removing order("+order.getId()+"): " +(OrderXP) order);
+		LOGGER.info("<"+managerId+">: removing order("+order.getId()+")");
 		
 		try{
 			orders.remove(order.getId());
@@ -173,7 +173,7 @@ public class ManagerDataStoreXP extends ManagerDataStore{
 	@Override
 	public synchronized boolean updateOrder(Order order) {	
 		
-		LOGGER.info("<"+managerId+">: updating order("+order.getId()+"): " +(OrderXP) order);
+		LOGGER.info("<"+managerId+">: updating order("+order.getId()+")");
 		
 		if(!orders.containsKey(order.getId())){
 			return false;

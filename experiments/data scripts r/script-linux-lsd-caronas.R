@@ -91,33 +91,40 @@ compute_results <- function(df_data,tempo_final){
   return(result)
 }
 
-pathBase <- "/home/eduardo/git/"  #notebook
-#pathBase <- "/home/eduardolfalcao/git/"  #lsd
+#pathBase <- "/home/eduardo/git/"  #notebook
+pathBase <- "/home/eduardolfalcao/git/"  #lsd
 path <- paste(pathBase,"fogbow-manager/experiments/data scripts r/done/",sep="")
 path$exp <- paste(path,"40peers-20capacity/weightedNof/cycle",sep="")
 
 
-adjust_data <- function(tempo_final, cycle, experiment){
+adjust_data <- function(tempo_final, cycle){
   
   path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
   
   path$sdnof <- paste(path$cycle,"sdnof-",sep="")
-  path$sdnof <- paste(path$sdnof,experiment,sep="")
-  path$sdnof <- paste(path$sdnof,"-05kappa-fr/with60sBreaks/",sep="")
+  path$sdnof <- paste(path$sdnof,"05kappa-comCaronas/with60sBreaks/",sep="")
   data.sdnof <- load_data(path$sdnof)
   print(path$sdnof)
   data.sdnof <- create_columns(data.sdnof, FALSE, 20, cycle)
   data.sdnof <- compute_results(data.sdnof, tempo_final)
   
   path$fdnof <- paste(path$cycle,"fdnof-",sep="")
-  path$fdnof <- paste(path$fdnof,experiment,sep="")
-  path$fdnof <- paste(path$fdnof,"-05kappa-fr/with60sBreaks/",sep="")
+  path$fdnof <- paste(path$fdnof,"05kappa-comCaronas/with60sBreaks/",sep="")
   print(path$fdnof)
-  data.fdnof <- load_data(path$fdnof)
-  data.fdnof <- create_columns(data.fdnof, TRUE, 20, cycle)
-  data.fdnof <- compute_results(data.fdnof, tempo_final)
+  data.fdnof.lambda10 <- load_data(path$fdnof)
+  data.fdnof.lambda10 <- create_columns(data.fdnof.lambda10, TRUE, 20, cycle)
+  data.fdnof.lambda10 <- compute_results(data.fdnof.lambda10, tempo_final)
   
-  data <- rbind(data.sdnof, data.fdnof)  
+  # path$fdnof <- paste(path$cycle,"fdnof-",sep="")
+  # path$fdnof <- paste(path$fdnof,"05kappa-comCaronas-lambda30/with60sBreaks/",sep="")
+  # print(path$fdnof)
+  # data.fdnof.lambda30 <- load_data(path$fdnof)
+  # data.fdnof.lambda30 <- create_columns(data.fdnof.lambda30, TRUE, 20, 30)
+  # data.fdnof.lambda30 <- compute_results(data.fdnof.lambda30, tempo_final)
+  # 
+  # data <- rbind(data.sdnof, data.fdnof.lambda10, data.fdnof.lambda30)  
+  
+  data <- rbind(data.sdnof, data.fdnof.lambda10)  
   
   data
 }
@@ -200,8 +207,7 @@ get_contention <- function(orderTime, experiment, cycle, ma=100){
 
 tempo_final = 86400
 cycle = 10
-experiment <- paste(cycle,"minutes",sep="")
-data.cycle10 = adjust_data(tempo_final, cycle, experiment)
+data.caronas = adjust_data(tempo_final, cycle)
 
 
 adjust_data <- function(tempo_final, cycle, experiment){
@@ -254,22 +260,24 @@ data = rbind(data.10cycle,data.30cycle,data.60cycle)
 
 #install.packages("stringi")
 library(stringi)
-data$id <- stri_replace_all_regex(data$id, "p", "")
-data$id <- sapply( data$id, as.numeric )
+data.caronas$id <- stri_replace_all_regex(data.caronas$id, "p", "")
+data.caronas$id <- sapply( data.caronas$id, as.numeric )
 
-data$comportamento="cooperativo"
-data[data$id<=40,]$comportamento <- "cooperativo"
-data[data$id>40,]$comportamento <- "carona"
+data.caronas$comportamento="cooperativo"
+data.caronas[data.caronas$id<=40,]$comportamento <- "cooperativo"
+data.caronas[data.caronas$id>40,]$comportamento <- "carona"
 
-data$nof = factor(data$nof, levels=c('sd','fd'))
+data.caronas$nof = factor(data.caronas$nof, levels=c('sd','fd'))
+
+head(data.caronas)
 
 library(ggplot2)
 path$cycle <- paste(paste(path$exp,10,sep=""),"/",sep="")
-png(paste(path$cycle,"satisfaction-lambda10e30-ciclo10e30-demand30-wfr-line-24h.png",sep=""), width=800, height=400)
-ggplot(data[data$t<tempo_final,], aes(t, satisfaction)) + 
+png(paste(path$cycle,"satisfaction-lambda10e30-demand30-wfr-line-24h.png",sep=""), width=800, height=400)
+ggplot(data.caronas[data.caronas$t<tempo_final,], aes(t, satisfaction)) + 
   geom_line(aes(colour=comportamento, group=interaction(comportamento,id))) + facet_wrap(nof ~ cycle, ncol=3) +
   theme_bw(base_size=15) + theme(legend.position = "right") + #scale_x_continuous(breaks = seq(0, tempo_final, by = 1200)) +
-  scale_y_continuous(breaks = seq(0,1.4, by = 0.25), limits=c(0,1.4)) +
+  scale_y_continuous(breaks = seq(0,1, by = 0.25), limits=c(0,1)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
   ylab("satisfação") + theme(legend.position = "top")
 dev.off()

@@ -101,8 +101,14 @@ public class MainExperiments {
 		
 		
 		List<Properties> propertiesList = new ArrayList<Properties>();		
-		for(int id = 1; id <= numberOfPeers; id++)
-			propertiesList.add(SimpleManagerFactory.adjustPropertiesManager(id, fdnof, properties));
+		for(int id = 1; id <= numberOfPeers; id++){
+			boolean freeRider = false;
+			if(id>40){
+				freeRider = true;
+			}
+			Properties propFM = SimpleManagerFactory.adjustPropertiesManager(id, fdnof, properties, freeRider);
+			propertiesList.add(propFM);
+		}
 		
 		List<ManagerControllerXP> fms = new ArrayList<ManagerControllerXP>();
 		for(Properties prop : propertiesList) {
@@ -110,6 +116,8 @@ public class MainExperiments {
 			((ManagerDataStoreXP)manager.getManagerDataStoreController().getManagerDatabase()).setWorkloadMonitorAssync(new WorkloadMonitorAssync(manager));
 			fms.add(manager);
 		}	
+		
+		Thread.sleep((int)ManagerControllerHelper.getBootstrappingPeriod(properties));
 			
 		MonitorPeerStateSingleton.getInstance().init(fms, false); 		//starting peer state monitoring
 		for(ManagerController fm : fms)			

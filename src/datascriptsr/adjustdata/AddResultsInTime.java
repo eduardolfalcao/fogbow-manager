@@ -15,14 +15,14 @@ public class AddResultsInTime {
 	
 	public static void main(String[] args) {
 		
-		String [] nofVars = {"sdnof-10minutes-1kappa","fdnof-10minutes-1kappa"};
+		String [] nofVars = {"sdnof-05kappa-comCaronas","fdnof-05kappa-comCaronas"};
 		int [] cycleVars = {10};
 		int time = 60;
 		
 		for(String nof : nofVars){
 			for(int cycle : cycleVars){
-//				String path = "/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/weightedNof/cycle"+cycle+"/"+nof+"/";
-				String path = "/home/eduardo/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/weightedNof/cycle"+cycle+"/"+nof+"/";
+				String path = "/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/weightedNof/cycle"+cycle+"/"+nof+"/";
+//				String path = "/home/eduardo/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/weightedNof/cycle"+cycle+"/"+nof+"/";
 				readFileAndAddLine(path, time);
 			}			
 		}

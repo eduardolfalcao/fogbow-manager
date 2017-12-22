@@ -60,7 +60,7 @@ public class SimpleManagerFactory {
 			PATH_DATASTORES = PATH_FOGBOW_MANAGER+"/datastores/";
 	}
 	
-	public static Properties adjustPropertiesManager(int id, boolean fdnof, Properties properties){
+	public static Properties adjustPropertiesManager(int id, boolean fdnof, Properties properties, boolean freeRider){
 		
 		Properties prop = (Properties) properties.clone();		
 		
@@ -71,6 +71,11 @@ public class SimpleManagerFactory {
 			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.fairnessdriven.TwoFoldCapacityController";
 		else
 			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin";
+		
+		if(freeRider){
+			prop.put(FakeCloudComputePlugin.COMPUTE_FAKE_QUOTA, "0");	//free rider have 0 capacity
+			capacityControllerPlugin = BASE_PLUGINS+"capacitycontroller.freerider.FreeRiderCapacityControllerPlugin";
+		}
 		
 		String prioritizationPlugin = BASE_PLUGINS+"prioritization.nof.NoFPrioritizationPlugin";		
 		

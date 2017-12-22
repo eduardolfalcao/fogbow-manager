@@ -2,6 +2,7 @@ package org.fogbowcloud.manager.core.plugins.prioritization.nof;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -62,8 +63,7 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		}
 		
 		List<String> servedMemberIds = getServedMemberIds(ordersWithInstance, newOrder);
-		LOGGER.info("<"+managerId+">: "+"Current servedMemberIds=" + servedMemberIds);
-		
+				
 		List<AccountingInfo> accounting = accountingPlugin.getAccountingInfo();
 		Map<String, ResourceUsage> membersUsage = NoFHelper.calculateMembersUsage(localMemberId, accounting);
 		LOGGER.info("<"+managerId+">: "+"Current membersUsage=" + membersUsage);		
@@ -85,7 +85,14 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 		if (memberWithLowestCredit.getCredit() < requestingMemberCredit) {
 			String memberId = memberWithLowestCredit.getMember().getResourcesInfo().getId();
 			List<Order> memberRequests = filterByRequestingMember(memberId, ordersWithInstance);
-			return getMostRecentOrder(memberRequests);
+			Order mostRecentOrder = getMostRecentOrder(memberRequests);
+			
+			if(mostRecentOrder!=null){
+				LOGGER.info("EXP-DEBUG-LOG <"+managerId+">: <Order("+newOrder.getId()+")> Requesting member("+newOrder.getRequestingMemberId()+") credit: " + requestingMemberCredit+"; "
+					+ "Member("+memberWithLowestCredit.getMember().getId()+") with lowest credit: " + memberWithLowestCredit.getCredit());
+			}
+			
+			return mostRecentOrder;
 		}
 		return null;
 	}
@@ -104,12 +111,21 @@ public class NoFPrioritizationPlugin implements PrioritizationPlugin {
 	}
 
 	private List<String> getServedMemberIds(List<Order> orders, Order o) {
+		Map<String, Integer> amountOfOrdersPerMember = new HashMap<String, Integer>();
 		List<String> servedMemberIds = new LinkedList<String>();
 		for (Order currentOrder : orders) {
 			if (!servedMemberIds.contains(currentOrder.getRequestingMemberId())) {
 				servedMemberIds.add(currentOrder.getRequestingMemberId());
 			}
-		}
+			if(!amountOfOrdersPerMember.containsKey(currentOrder.getRequestingMemberId())){
+				amountOfOrdersPerMember.put(currentOrder.getRequestingMemberId(), 0);
+			}else{
+				amountOfOrdersPerMember.put(currentOrder.getRequestingMemberId(), amountOfOrdersPerMember.get(currentOrder.getRequestingMemberId())+1);
+			}
+		}		
+		
+		LOGGER.info("EXP-DEBUG-LOG <"+managerId+">: Current servedMemberIds and amount of orders=" + amountOfOrdersPerMember);
+		
 		return servedMemberIds;
 	}
 

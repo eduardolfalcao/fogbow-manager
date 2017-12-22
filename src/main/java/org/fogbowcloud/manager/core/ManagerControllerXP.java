@@ -19,6 +19,7 @@ import org.apache.log4j.Logger;
 import org.fogbowcloud.manager.core.model.FederationMember;
 import org.fogbowcloud.manager.core.plugins.CapacityControllerPlugin;
 import org.fogbowcloud.manager.core.plugins.ComputePlugin;
+import org.fogbowcloud.manager.core.plugins.capacitycontroller.satisfactiondriven.SatisfactionDrivenCapacityControllerPlugin;
 import org.fogbowcloud.manager.core.plugins.compute.fake.FakeCloudComputePlugin;
 import org.fogbowcloud.manager.experiments.monitor.MonitorPeerStateSingleton.MonitorPeerStateAssync;
 import org.fogbowcloud.manager.occi.instance.Instance;
@@ -141,7 +142,8 @@ public class ManagerControllerXP extends ManagerController{
 			}
 		} 	
 		
-		LOGGER.info("<"+managerId+">: Just changed order("+order.getId()+") state: " + order);
+		LOGGER.info("EXP-DEBUG-LOG2 <"+managerId+">: Order(" + order.getId() + ") currentElapsedTime=" + order.getCurrentElapsedTime()+", previousElapsedTime="+order.getPreviousElapsedTime());
+		
 		
 		this.managerDataStoreController.updateOrder(order);
 		if (instanceId != null) {
@@ -154,16 +156,15 @@ public class ManagerControllerXP extends ManagerController{
 	public void queueServedOrder(String requestingMemberId, List<Category> categories, Map<String, String> xOCCIAtt,
 			String orderId, Token requestingUserToken) {		
 		
-		normalizeBatchId(requestingMemberId, xOCCIAtt);
-
-		LOGGER.info("<"+managerId+">: "+"Queueing order("+orderId+") for requesting member: " + requestingMemberId + " with requestingToken " + requestingUserToken);
-		Order order = new OrderXP(orderId, requestingUserToken, categories, xOCCIAtt, false, requestingMemberId, managerId);
-		
+		normalizeBatchId(requestingMemberId, xOCCIAtt);		
+		Order order = new OrderXP(orderId, requestingUserToken, categories, xOCCIAtt, false, requestingMemberId, managerId);		
 		if(!isThereEnoughQuota(requestingMemberId)){
-			LOGGER.info("<"+managerId+"> i am not donating to "+requestingMemberId);
+			LOGGER.info("EXP-DEBUG-LOG <"+managerId+"> i am not donating to "+requestingMemberId);
 			ManagerPacketHelper.replyToServedOrder(order, packetSender);
 			return;
 		}
+		
+		LOGGER.info("<"+managerId+">: Queueing order("+orderId+") for requesting member: " + requestingMemberId + " with requestingToken " + requestingUserToken);
 		
 		managerDataStoreController.addOrder(order);
 
@@ -417,7 +418,7 @@ public class ManagerControllerXP extends ManagerController{
 					public void success(String instanceId) {
 						LOGGER.info("<"+managerId+">: "+"The order(" + order.getId() + ")  with runtime("+order.getRuntime()
 								+ ") forwarded to " + memberAddress + " gets instance "+ instanceId);
-						LOGGER.info(memberAddress+" providing to "+managerId);
+						
 						if (managerDataStoreController.isOrderSyncronous(order.getId()) == false) {
 							return;
 						}
@@ -433,7 +434,9 @@ public class ManagerControllerXP extends ManagerController{
 							return;
 						}
 						
-						//it just might had already been fulfilled locally, int his very moment, then, just ignore it
+						LOGGER.info("EXP-DEBUG-LOG2 <"+managerId+">: "+memberAddress+" providing to "+managerId);
+						
+						//it just might had already been fulfilled locally, in this very moment, then, just ignore it
 						//after benchmarking, the local peer will notify the other peers to cancel the requests
 						if (order.getState() == OrderState.FULFILLED){	
 							return;
@@ -639,7 +642,11 @@ public class ManagerControllerXP extends ManagerController{
 					ArrayList<Order> ordersWithInstances = new ArrayList<Order>(
 							managerDataStoreController.getOrdersIn(OrderState.FULFILLED, OrderState.DELETED));
 					Order orderToPreempt = prioritizationPlugin.takeFrom(order, ordersWithInstances);
-					LOGGER.info("<"+managerId+">: Order to be preempted: "+orderToPreempt);
+					if(orderToPreempt!=null){
+						LOGGER.info("EXP-DEBUG-LOG <"+managerId+">: Preempting order("+ orderToPreempt.getId() +") from "+orderToPreempt.getRequestingMemberId()+
+								" to serve "+order.getRequestingMemberId());
+					}
+					
 					if (orderToPreempt == null && !((OrderXP)order).isQuotaExceededMsgSent()) {
 						if(!order.getRequestingMemberId().equals(managerId)){
 							quotaExceeded(order);	//send a message telling the quota is exceeded
@@ -672,46 +679,5 @@ public class ManagerControllerXP extends ManagerController{
 			return false;
 		}
 	}	
-	
-//	@Override
-//	public boolean instanceHasOrderRelatedTo(String orderId, String instanceId) {
-//		LOGGER.info("<"+managerId+">: "+"Checking if instance " + instanceId + " is related to order " + orderId);
-//		// checking federation local user instances for local users
-//		if (orderId == null) {
-//			for (Order order : managerDataStoreController.getAllOrders()) {
-//				if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
-//					String reqInstanceId = generateGlobalId(order.getInstanceId(), order.getProvidingMemberId());
-//					if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
-//						LOGGER.info("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
-//						return true;
-//					}
-//				}
-//			}
-//		} else {
-//			// checking federation local users instances for remote members
-//			Order order = managerDataStoreController.getOrder(orderId);
-//			LOGGER.debug("<"+managerId+">: The order with id " + orderId + " is " + order);
-//			if (order == null) {
-//				return false;
-//			}
-//			if (instanceId == null) {
-//				return true;
-//			}
-//
-//			// it is possible that the asynchronous order has not received instanceId yet
-//			if ((order.getState().in(OrderState.OPEN) || order.getState().in(OrderState.PENDING)) 
-//						&& managerDataStoreController.isOrderSyncronous(orderId)) {
-//				LOGGER.info("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
-//				return true;
-//			} else if (order.getState().in(OrderState.FULFILLED, OrderState.DELETED, OrderState.SPAWNING)) {
-//				String reqInstanceId = generateGlobalId(order.getInstanceId(), order.getProvidingMemberId());
-//				if (reqInstanceId != null && reqInstanceId.equals(instanceId)) {
-//					LOGGER.info("<"+managerId+">: "+"The instance " + instanceId + " is related to order " + order.getId());
-//					return true;
-//				}
-//			}
-//		}
-//		return false;
-//	}
 }
 

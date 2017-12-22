@@ -20,7 +20,7 @@ public class ContentionCalculator {
 		ContentionCalculator cc = new ContentionCalculator();
 		
 //		String [] nofVars = {"sdnof", "fdnof"};
-		String [] nofVars = {"sdnof-10minutes-0.5kappa","fdnof-10minutes-0.5kappa"};
+		String [] nofVars = {"sdnof-05kappa-semCaronas"};
 //		int [] cycleVars = {10,30,60};
 		int [] cycleVars = {10};
 		
