@@ -215,42 +215,42 @@ public class TestMonitorPeerStateSingleton {
 		Mockito.when(mc.getMaxCapacityDefaultUser()).thenReturn(2);		
 		
 		monitor.monitorOrder(createOrder("o1", true, OrderState.OPEN, true));
-		PeerState state = new PeerState("", 0, 1, 0, 0, 2, 0);
+		PeerState state = new PeerState("", 0, 1, 0, 0, 2, 0, 0, 0, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		
 		monitor.monitorOrder(createOrder("o2", true, OrderState.OPEN, true));
-		state = new PeerState("", 0, 2, 0, 0, 2, 0);
+		state = new PeerState("", 0, 2, 0, 0, 2, 0, 0, 0, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		
 		monitor.monitorOrder(createOrder("o3", true, OrderState.OPEN, true));
-		state = new PeerState("", 0, 3, 1, 0, 2, 0);
+		state = new PeerState("", 0, 3, 1, 0, 2, 0, 0, 0, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		
 		Assert.assertEquals(3, monitor.getCurrentOrders().size());		
 		Assert.assertNotNull(monitor.getCurrentOrders().get("o3"));
 		
 		monitor.monitorOrder(createOrder("o3", true, OrderState.OPEN, true));
-		state = new PeerState("", 0, 3, 1, 0, 2, 0);
+		state = new PeerState("", 0, 3, 1, 0, 2, 0, 0, 0, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(3, monitor.getCurrentOrders().size());
 		
 		monitor.monitorOrder(createOrder("o3", true, OrderState.FULFILLED, true));
-		state = new PeerState("", 0, 3, 1, 0, 1, 0);
+		state = new PeerState("", 0, 3, 1, 0, 1, 0, 0, 0, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(3, monitor.getCurrentOrders().size());
 		
 		monitor.monitorOrder(createOrder("o3", true, OrderState.CLOSED, true));
-		state = new PeerState("", 0, 2, 0, 0, 2, 0);
+		state = new PeerState("", 0, 2, 0, 0, 2, 0, 0, 0, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(2, monitor.getCurrentOrders().size());
 		
 		monitor.monitorOrder(createOrder("o2", true, OrderState.DELETED, true));
-		state = new PeerState("", 0, 1, 0, 0, 2, 0);
+		state = new PeerState("", 0, 1, 0, 0, 2, 0, 0, 0, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(1, monitor.getCurrentOrders().size());
 		
 		monitor.monitorOrder(createOrder("o1", true, OrderState.FAILED, true));
-		state = new PeerState("", 0, 0, 0, 0, 2, 0);
+		state = new PeerState("", 0, 0, 0, 0, 2, 0, 0, 0, 0);
 		Assert.assertTrue(areTheseStatesEqual(state, monitor.getLastState()));
 		Assert.assertEquals(0, monitor.getCurrentOrders().size());
 	}

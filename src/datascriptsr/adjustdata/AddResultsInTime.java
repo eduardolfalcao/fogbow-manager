@@ -21,7 +21,7 @@ public class AddResultsInTime {
 		
 		for(String nof : nofVars){
 			for(int cycle : cycleVars){
-				String path = "/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/weightedNof/cycle"+cycle+"/"+nof+"/";
+				String path = "/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle"+cycle+"/"+nof+"/";
 //				String path = "/home/eduardo/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/weightedNof/cycle"+cycle+"/"+nof+"/";
 				readFileAndAddLine(path, time);
 			}			
@@ -65,14 +65,27 @@ public class AddResultsInTime {
 									+ lastValue.getdFed()+","
 									+ lastValue.getrFed()+","
 									+ lastValue.getoFed()+","
-									+ lastValue.getsFed()+"\n";
+									+ lastValue.getsFed()+","
+									+ lastValue.getrLoc()+","
+									+ lastValue.getUnat()+","
+									+ lastValue.getUnatP()+"\n";
+//							output += lastKey.getId()+","
+//									+ (turn*time)+","
+//									+ lastValue.getdTot()+","
+//									+ lastValue.getdFed()+","
+//									+ lastValue.getrFed()+","
+//									+ lastValue.getoFed()+","
+//									+ lastValue.getsFed()+","
+//									+ lastValue.getUnat()+"\n";
 							turn++;		
 						}
 						if(key.getT()==turn*time){
 							turn++;
 						}
-						output+=line+"\n";
-						write(outputFile,output);
+//						if(key.getT()%time==0){
+							output+=line+"\n";
+							write(outputFile,output);
+//						}
 						lastKey = key;
 						lastValue = value;
 					}
@@ -105,7 +118,16 @@ public class AddResultsInTime {
 //		p1,0,0,0,0,20,0
 		String[] values = line.split(",");
 		return new Status(Integer.parseInt(values[2]), Integer.parseInt(values[3]), Integer.parseInt(values[4]),
-				Integer.parseInt(values[5]), Integer.parseInt(values[6]));
+				Integer.parseInt(values[5]), Integer.parseInt(values[6]), Integer.parseInt(values[7]), 
+				Integer.parseInt(values[8]), Integer.parseInt(values[9]));
 	}
+	
+//	private static Status readValues(String line){
+////		id,t,dTot,dFed,rFed,oFed,sFed
+////		p1,0,0,0,0,20,0
+//		String[] values = line.split(",");
+//		return new Status(Integer.parseInt(values[2]), Integer.parseInt(values[3]), Integer.parseInt(values[4]),
+//				Integer.parseInt(values[5]), Integer.parseInt(values[6]), Integer.parseInt(values[7]));
+//	}
 
 }

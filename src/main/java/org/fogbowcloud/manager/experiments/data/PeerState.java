@@ -4,13 +4,13 @@ public class PeerState{
 	
 	private String id;
 	private int time;
-	private int dTot, dFed, rFed, oFed, sFed;
+	private int dTot, dFed, rFed, oFed, sFed, rLoc, unat, unatP;
 	//d: demand
 	//r: received
 	//o: offered
 	//s: supplied or donated
 	
-	public PeerState(String id, int time, int dTot, int dFed, int rFed, int oFed, int sFed) {
+	public PeerState(String id, int time, int dTot, int dFed, int rFed, int oFed, int sFed, int rLoc, int unat, int unatP) {
 		super();
 		this.id = id;
 		this.time = time;
@@ -19,6 +19,21 @@ public class PeerState{
 		this.rFed = rFed;
 		this.oFed = oFed;
 		this.sFed = sFed;
+		this.rLoc = rLoc;
+		this.unat = unat;
+		this.unatP = unatP;
+	}
+	
+	public int getrLoc() {
+		return rLoc;
+	}
+	
+	public int getUnat() {
+		return unat;
+	}
+	
+	public int getUnatP() {
+		return unatP;
 	}
 	
 	public String getId() {
@@ -100,7 +115,8 @@ public class PeerState{
 	@Override
 	public String toString() {
 		return "id:"+id+", time:"+time+", demand(tot):"+dTot+", demand(fed):"+dFed+", "
-				+ "received(fed):"+rFed+", offered(fed):"+oFed+", supplied(fed):"+sFed;
+				+ "received(fed):"+rFed+", offered(fed):"+oFed+", supplied(fed):"+sFed+", "
+				+ "rLoc:"+rLoc+", unat(fed):"+unat+", unatP(fed):"+unatP;
 	}
 	
 }

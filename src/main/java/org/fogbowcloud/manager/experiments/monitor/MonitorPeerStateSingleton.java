@@ -87,7 +87,7 @@ public class MonitorPeerStateSingleton{
 			currentOrders = new HashMap<String,OrderStatus>();
 			states = new LinkedHashMap<Integer,PeerState>();
 			int capacity = Integer.parseInt(fm.getProperties().getProperty(FakeCloudComputePlugin.COMPUTE_FAKE_QUOTA));
-			lastState = new PeerState(fm.getManagerId(), 0, 0, 0, 0, capacity, 0);
+			lastState = new PeerState(fm.getManagerId(), 0, 0, 0, 0, capacity, 0, 0, 0, 0);
 			states.put(0, lastState);
 			
 			initialTime = date.currentTimeMillis();		
@@ -103,7 +103,7 @@ public class MonitorPeerStateSingleton{
 					LOGGER.info("<"+fm.getManagerId()+">: writing on file, now="+now+", endingTime="+endingTime);
 			}
 			if((now >= endingTime) && !finished){
-				states.put((int)now, new PeerState(fm.getManagerId(), (int)now, 0, 0, 0, 0, 0));
+				states.put((int)now, new PeerState(fm.getManagerId(), (int)now, 0, 0, 0, 0, 0, 0, 0, 0));
 				LOGGER.info("<"+fm.getManagerId()+">: finishing, now="+now+", endingTime="+endingTime);
 				writeStates(endingTime);
 				finished = true;
@@ -138,28 +138,30 @@ public class MonitorPeerStateSingleton{
 					lastState.getdFed() != currentState.getdFed() ||
 					lastState.getrFed() != currentState.getrFed() ||
 					lastState.getoFed() != currentState.getoFed() ||
-					lastState.getsFed() != currentState.getsFed()){
-				LOGGER.info("<"+fm.getManagerId()+">: time("+currentState.getTime()+") currentState is different from last state ==> currentState("+currentState+"), lastState("+lastState+")");
+					lastState.getsFed() != currentState.getsFed() ||
+					lastState.getUnat() != currentState.getUnat() ||
+					lastState.getUnatP() != currentState.getUnatP()){
+				LOGGER.info("<"+fm.getManagerId()+">: time("+currentState.getTime()+") currentState is different from last state ==> currentState("+currentState+"), lastState("+lastState+") (rLoc is not considered)");
 				synchronized(states){
 					states.put(currentState.getTime(),currentState);
 				}
 				lastState = currentState;
 			}else{
-				LOGGER.info("<"+fm.getManagerId()+">: time("+currentState.getTime()+") currentState is still the same of last state ==> currentState("+currentState+"), lastState("+lastState+")");
+				LOGGER.info("<"+fm.getManagerId()+">: time("+currentState.getTime()+") currentState is still the same of last state ==> currentState("+currentState+"), lastState("+lastState+") (rLoc is not considered)");
 			}
 			
 		}
 			
-		protected PeerState getPeerState() {
-			
-			//need: state, requesting, providing
-			
+		protected PeerState getPeerState() {			
 			
 			int dTot = 0;	//O_r=i + P_r=i + F_r=i&&p=i + F_r=i&&p!=i 
 			int dFed = 0;	//1 - max(0,dTot - maxCapacity) ou 2 - max(max(0,dTot - maxCapacity), rFed)
 			int rFed = 0;	//F_r=i&&p!=i
 			int oFed = 0;	//maxCapacity - F_r=i&&p=i
 			int sFed = 0;	//F_r!=i&&p=i
+			int rLoc = 0;	//F_r=i&&p=i
+			int unat = 0;	//dTot - rLoc - rFed
+			int unatP = 0;	//P_r==i
 			
 			Map<String,OrderStatus> currentOrdersClone = null;
 			synchronized(currentOrders){
@@ -181,6 +183,7 @@ public class MonitorPeerStateSingleton{
 						dTot++;
 						if(orderStatus.getProvidingMemberId().equals(fm.getManagerId())){	//F_r=i&&p=i	
 							oFed--;
+							rLoc++;
 						}
 						else{														//F_r=i&&p!=i
 							rFed++;
@@ -191,19 +194,25 @@ public class MonitorPeerStateSingleton{
 							sFed++;					
 					}
 				}
-				else if((state.equals(OrderState.OPEN)||state.equals(OrderState.PENDING)) && 			
-						orderStatus.getRequestingMemberId().equals(fm.getManagerId()))	//O_r=i || P_r=i
+				else if(state.equals(OrderState.OPEN) && 			
+						orderStatus.getRequestingMemberId().equals(fm.getManagerId()))	//O_r=i
 					dTot++;	
+				else if(state.equals(OrderState.PENDING) && orderStatus.getRequestingMemberId().equals(fm.getManagerId())){	//P_r=i
+					dTot++;
+					unatP++;
+				}
 			}
 			
 			int maxCapacity = fm.getMaxCapacityDefaultUser();
 			oFed += maxCapacity;
 			oFed = Math.max(oFed, 0);
-			dFed = Math.max(0, dTot - maxCapacity);			
+			dFed = Math.max(0, dTot - maxCapacity);	
+			
+			unat = dTot - rLoc - rFed;
 			
 			int now = (int)(TimeUnit.MILLISECONDS.toSeconds(date.currentTimeMillis()-initialTime));
 			
-			return new PeerState(fm.getManagerId(),now, dTot, dFed, rFed, oFed, sFed);		
+			return new PeerState(fm.getManagerId(),now, dTot, dFed, rFed, oFed, sFed, rLoc, unat, unatP);		
 		}
 		
 		private void writeStates(long now){
@@ -212,7 +221,7 @@ public class MonitorPeerStateSingleton{
 			boolean skipFirst = false;
 			synchronized(states){
 				if(firstWrite){			//first write
-					w = CsvGenerator.createHeader(filePath, "id", "t", "dTot", "dFed", "rFed", "oFed", "sFed");
+					w = CsvGenerator.createHeader(filePath, "id", "t", "dTot", "dFed", "rFed", "oFed", "sFed", "rLoc", "unat", "unatP");
 					firstWrite = false;
 				}
 				else if(states.size()>1){	//remove first state (already written), and write the rest
@@ -231,7 +240,8 @@ public class MonitorPeerStateSingleton{
 					}
 					CsvGenerator.outputValues(w, s.getId(), String.valueOf(s.getTime()),String.valueOf(s.getdTot()),
 							String.valueOf(s.getdFed()),String.valueOf(s.getrFed()), String.valueOf(s.getoFed()), 
-							String.valueOf(s.getsFed()));
+							String.valueOf(s.getsFed()), String.valueOf(s.getrLoc()), String.valueOf(s.getUnat()),
+							String.valueOf(s.getUnatP()));
 					
 					if(it.hasNext())	//we just need to keep the last state
 						it.remove();			

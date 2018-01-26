@@ -20,13 +20,13 @@ public class ContentionCalculator {
 		ContentionCalculator cc = new ContentionCalculator();
 		
 //		String [] nofVars = {"sdnof", "fdnof"};
-		String [] nofVars = {"sdnof-05kappa-semCaronas"};
+		String [] nofVars = {"sdnof-05kappa-comCaronas","fdnof-05kappa-comCaronas"};
 //		int [] cycleVars = {10,30,60};
 		int [] cycleVars = {10};
 		
 		for(String nof : nofVars){
 			for(int cycle : cycleVars){
-				String path = PATH_BASE_LSD+"fogbow-manager/experiments/data scripts r/done/40peers-20capacity/weightedNof/cycle"+cycle+"/"+nof+"/";
+				String path = PATH_BASE_LSD+"fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle"+cycle+"/"+nof+"/";
 				Map<PeerAndTime, Status> results = cc.readFiles(path);
 				Map<Integer, ContentionCalculator.Triple> contention = cc.computeContention(results);
 				cc.output(contention, path+"contention/contention.csv", nof, String.valueOf(cycle));
