@@ -7,7 +7,7 @@ load_data <- function(path) {
 library(foreach)
 library(doMC)
 library(dplyr)
-registerDoMC(cores = 8)
+registerDoMC(cores = 6)
 
 create_columns <- function(x, controller, capacity, cycle, contention){
   if(controller==TRUE){
@@ -26,6 +26,7 @@ create_columns <- function(x, controller, capacity, cycle, contention){
   x["contention"] <- contention
   x["cycle"] <- cycle
   x["unattended"] <- 0
+  x["dFedAcumulado"] <- 0
   x["tDFed"] <- 0
   x["dTotAcumulado"] <- 0
   x["tDTot"] <- 0
@@ -46,6 +47,7 @@ compute_results <- function(df_data,tempo_final){
     req <- 0
     offered <- 0
     unattended <- 0
+    dFedAcumulado <- 0
     tDFed <- 0
     dTotAcumulado <- 0
     tDTot <- 0
@@ -64,6 +66,7 @@ compute_results <- function(df_data,tempo_final){
       
       if(x[j-1,]$dFed>0){
         req <- req + (x[j-1,]$dFed * (x[j,]$t - x[j-1,]$t))
+        dFedAcumulado <- dFedAcumulado + (x[j-1,]$dFed * (x[j,]$t - x[j-1,]$t))
 	      tDFed <- tDFed + (x[j,]$t - x[j-1,]$t)
       }
       
@@ -86,6 +89,7 @@ compute_results <- function(df_data,tempo_final){
       x[j-1,]$req <- req
       x[j-1,]$offered <- offered
       x[j-1,]$unattended <- unattended
+      x[j-1,]$dFedAcumulado <- dFedAcumulado
       x[j-1,]$tDFed <- tDFed
       x[j-1,]$dTotAcumulado <- dTotAcumulado
       x[j-1,]$tDTot <- tDTot
@@ -135,18 +139,18 @@ adjust_data <- function(tempo_final, orderTime, cycle){
   contention <- 0.5
 
   path$sdnof <- paste(path$orderTime,"sdnof",sep="")
-  path$sdnof <- paste(path$sdnof,"-05kappa-semCaronas18-01/with60sBreaks/",sep="")
+  path$sdnof <- paste(path$sdnof,"-05kappa-semCaronas/with60sBreaks/",sep="")
   print(path$sdnof)
   data.sdnof.05 <- load_data(path$sdnof)
   data.sdnof.05 <- create_columns(data.sdnof.05, FALSE, 20, cycle, contention)
   data.sdnof.05 <- compute_results(data.sdnof.05, tempo_final)
 
-  # path$fdnof <- paste(path$orderTime,"fdnof-",sep="")
-  # path$fdnof <- paste(path$fdnof,"05kappa-semCaronas18-01/with60sBreaks/",sep="")
-  # print(path$fdnof)
-  # data.fdnof.05 <- load_data(path$fdnof)
-  # data.fdnof.05 <- create_columns(data.fdnof.05, TRUE, 20, cycle, contention)
-  # data.fdnof.05 <- compute_results(data.fdnof.05, tempo_final)
+  path$fdnof <- paste(path$orderTime,"fdnof-",sep="")
+  path$fdnof <- paste(path$fdnof,"05kappa-semCaronas/with60sBreaks/",sep="")
+  print(path$fdnof)
+  data.fdnof.05 <- load_data(path$fdnof)
+  data.fdnof.05 <- create_columns(data.fdnof.05, TRUE, 20, cycle, contention)
+  data.fdnof.05 <- compute_results(data.fdnof.05, tempo_final)
 
   # contention <- 1
   # 
@@ -165,9 +169,9 @@ adjust_data <- function(tempo_final, orderTime, cycle){
   # data.fdnof.1 <- compute_results(data.fdnof.1, tempo_final)
   # 
   # data <- rbind(data.sdnof.05, data.fdnof.05, data.sdnof.1, data.fdnof.1)
-  # data <- rbind(data.sdnof.05, data.fdnof.05)
+  data <- rbind(data.sdnof.05, data.fdnof.05)
 
-  data.sdnof.05
+  data
   
   # data
 }
@@ -178,11 +182,65 @@ tempo_final = 86400
 cycle = 10
 orderTime = 10
 
-data.semcaronas.kappa05.sdnof.satisfaction = adjust_data(tempo_final, orderTime, cycle)
+data.comcaronas.kappa05 = adjust_data(tempo_final, orderTime, cycle)
+path$orderTime <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+write.csv(data.comcaronas.kappa05, file = paste(paste(path$orderTime,"resultados-kappa05-comcaronas09-02-2018.csv",sep="")))
 
+#read.csv(file="/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle10/resultados-kappa05-semcaronas.csv", header=TRUE, sep=",")
+
+
+adjust_data <- function(tempo_final, orderTime, cycle){
+  
+  path$orderTime <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+  
+  # contention <- 0.5
+  # 
+  # path$sdnof <- paste(path$orderTime,"sdnof",sep="")
+  # path$sdnof <- paste(path$sdnof,"-05kappa-comCaronas/with60sBreaks/",sep="")
+  # print(path$sdnof)
+  # data.sdnof.05 <- load_data(path$sdnof)
+  # data.sdnof.05 <- create_columns(data.sdnof.05, FALSE, 20, cycle, contention)
+  # data.sdnof.05 <- compute_results(data.sdnof.05, tempo_final)
+  # 
+  # path$fdnof <- paste(path$orderTime,"fdnof-",sep="")
+  # path$fdnof <- paste(path$fdnof,"05kappa-comCaronas/with60sBreaks/",sep="")
+  # print(path$fdnof)
+  # data.fdnof.05 <- load_data(path$fdnof)
+  # data.fdnof.05 <- create_columns(data.fdnof.05, TRUE, 20, cycle, contention)
+  # data.fdnof.05 <- compute_results(data.fdnof.05, tempo_final)
+  
+  contention <- 1
+
+  path$sdnof <- paste(path$orderTime,"sdnof",sep="")
+  path$sdnof <- paste(path$sdnof,"-1kappa-semCaronas/with60sBreaks/",sep="")
+  print(path$sdnof)
+  data.sdnof.1 <- load_data(path$sdnof)
+  data.sdnof.1 <- create_columns(data.sdnof.1, FALSE, 20, cycle, contention)
+  data.sdnof.1 <- compute_results(data.sdnof.1, tempo_final)
+
+  path$fdnof <- paste(path$orderTime,"fdnof-",sep="")
+  path$fdnof <- paste(path$fdnof,"1kappa-semCaronas/with60sBreaks/",sep="")
+  print(path$fdnof)
+  data.fdnof.1 <- load_data(path$fdnof)
+  data.fdnof.1 <- create_columns(data.fdnof.1, TRUE, 20, cycle, contention)
+  data.fdnof.1 <- compute_results(data.fdnof.1, tempo_final)
+
+  data <- rbind(data.sdnof.1, data.fdnof.1)
+  # data <- rbind(data.sdnof.05, data.fdnof.05)
+  
+  data
+  
+  # data
+}
+
+data.semcaronas.kappa1 = adjust_data(tempo_final, orderTime, cycle)
+path$orderTime <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+write.csv(data.semcaronas.kappa1, file = paste(paste(path$orderTime,"resultados-kappa1-semcaronas10-02-2018.csv",sep="")))
+
+#####################
 data.semcaronas.kappa05 = adjust_data(tempo_final, orderTime, cycle)
 
-path$orderTime <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+
 write.csv(data.semcaronas.kappa05, file = paste(paste(path$orderTime,"resultados-kappa05-semcaronas.csv",sep="")))
 
 data.semcaronas.kappa1.sdnof = adjust_data(tempo_final, orderTime, cycle)
@@ -246,6 +304,15 @@ data = data.semcaronas
 library(plyr)
 library(reshape2)
 
+summary(data.semcaronas.kappa05[data.semcaronas.kappa05$nof=="fd" & data.semcaronas.kappa05$t==86400,])
+
+summary(data.semcaronas.kappa1.sdnof[data.semcaronas.kappa1.sdnof$t==85800,])
+summary(data.semcaronas.kappa1.fdnof[data.semcaronas.kappa1.fdnof$t==85800,])
+
+data.semcaronas.kapa05 = read.csv(file="/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle10/resultados-kappa05-semcaronas.csv", header=TRUE, sep=",")
+data.semcaronas.kappa1.sdnof = read.csv(file="/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle10/resultados-sdnof-kappa1-semcaronas.csv", header=TRUE, sep=",")
+data.semcaronas.kappa1.fdnof = read.csv(file="/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle10/resultados-fdnof-kappa1-semcaronas.csv", header=TRUE, sep=",")
+
 data = rbind(data.semcaronas.kappa05,data.semcaronas.kappa1.sdnof,data.semcaronas.kappa1.fdnof)
 
 dataQuartiles.sat.sd.05 <- ddply(data[data$t%%60==0 & data$nof=="sd" & data$contention==0.5,], "t", summarise, máximo = max(compSatisfaction), terceiro_quartil=quantile(compSatisfaction, probs=.75),
@@ -276,6 +343,7 @@ dataQuartiles.sat.melt = rbind(dataQuartiles.sat.melt.sd.05,dataQuartiles.sat.me
 # dataQuartiles.sat.melt = rbind(dataQuartiles.sat.melt.sd.05,dataQuartiles.sat.melt.fd.05)
 
 dataQuartiles.sat.melt$nof = factor(dataQuartiles.sat.melt$nof, levels=c('SD','FD'))
+library(dplyr)
 dataQuartiles.sat.melt = dataQuartiles.sat.melt %>% mutate(cont_label = paste("E[k]:", contenção),
                                                              nof_label = paste("NoF:", nof))
 
@@ -293,6 +361,21 @@ ggplot(dataQuartiles.sat.melt[dataQuartiles.sat.melt$t<tempo_final,], aes(x = t,
   facet_wrap(cont_label ~ nof_label, ncol=2) +
   #facet_grid(contenção ~ nof, labeller = label_both) + 
   ylab("satisfação") + theme(legend.title=element_blank()) + theme(legend.position = "right") +
+  geom_line() 
+dev.off()
+
+#SBRC - WCGA
+library(ggplot2)
+path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+png("/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle10/satisfacaoComplemento-lambda10-semcarona.png", 
+    width=800, height=350)
+ggplot(dataQuartiles.sat.melt[dataQuartiles.sat.melt$t<tempo_final,], aes(x = t, y = value, color = variable)) +
+  theme_bw(base_size=15) + #scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
+  scale_y_continuous(breaks = seq(0,1, by = 0.25), limits = c(0,1)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  facet_wrap(cont_label ~ nof_label, ncol=4) +
+  # facet_grid(contenção ~ nof, labeller = label_both) +
+  ylab("satisfação") + theme(legend.title=element_blank()) + theme(legend.position = "top") +
   geom_line() 
 dev.off()
 
@@ -358,6 +441,21 @@ ggplot(dataQuartiles.fair.melt[dataQuartiles.fair.melt$t<tempo_final,], aes(x = 
   facet_wrap(cont_label ~ nof_label, ncol=2) +
   #facet_grid(contenção ~ nof, labeller = label_both) + 
   ylab("paridade") + theme(legend.title=element_blank()) + theme(legend.position = "right") +
+  geom_line()
+dev.off()
+
+#SBRC 2018
+library(ggplot2)
+path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+png("/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle10/fairnessv2-lambda10-semcarona.png", 
+    width=800, height=300)
+ggplot(dataQuartiles.fair.melt[dataQuartiles.fair.melt$t<tempo_final,], aes(x = t, y = value, color = variable)) +
+  theme_bw(base_size=15) + #scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
+  scale_y_continuous(breaks = seq(0,5, by = 1), limits = c(0,5)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  facet_wrap(cont_label ~ nof_label, ncol=4) +
+  #facet_grid(contenção ~ nof, labeller = label_both) + 
+  ylab("paridade") + theme(legend.title=element_blank()) + theme(legend.position = "none") +
   geom_line()
 dev.off()
 

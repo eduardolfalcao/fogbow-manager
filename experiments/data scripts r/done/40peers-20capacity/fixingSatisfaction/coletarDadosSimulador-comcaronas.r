@@ -150,7 +150,12 @@ cycle = 10
 orderTime = 10
 
 data.comcaronas.kappa05.sdnof = adjust_data(tempo_final, orderTime, cycle)
+path$orderTime <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
 write.csv(data.comcaronas.kappa05.sdnof, file = paste(paste(path$orderTime,"resultados-sdnof-kappa05-comcaronas.csv",sep="")))
+
+
+data.comcaronas.kappa05.sdnof = read.csv(file="/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle10/resultados-sdnof-kappa05-comcaronas.csv", header=TRUE, sep=",")
+data.comcaronas.kappa05.sdnof$nof = "SD"
 
 adjust_data <- function(tempo_final, orderTime, cycle){
   
@@ -169,4 +174,84 @@ adjust_data <- function(tempo_final, orderTime, cycle){
 }
 
 data.comcaronas.kappa05.fdnof = adjust_data(tempo_final, orderTime, cycle)
+
 write.csv(data.comcaronas.kappa05.fdnof, file = paste(paste(path$orderTime,"resultados-fdnof-kappa05-comcaronas.csv",sep="")))
+
+data.comcaronas.kappa05.fdnof = read.csv(file="/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle10/resultados-fdnof-kappa05-comcaronas.csv", header=TRUE, sep=",")
+data.comcaronas.kappa05.fdnof$nof = "FD"
+
+data.caronas <- rbind(data.comcaronas.kappa05.sdnof,data.comcaronas.kappa05.fdnof)
+
+library(stringi)
+data.caronas$id <- stri_replace_all_regex(data.caronas$id, "p", "")
+data.caronas$id <- sapply( data.caronas$id, as.numeric )
+
+data.caronas$comportamento="cooperativo"
+data.caronas[data.caronas$id<=40,]$comportamento <- "cooperativo"
+data.caronas[data.caronas$id>40,]$comportamento <- "carona"
+
+data.caronas$nof = factor(data.caronas$nof, levels=c('NoF: SD','NoF: FD'))
+
+names(data.caronas)[names(data.caronas) == 'nof'] <- 'NoF'
+
+head(data.caronas)
+
+library(ggplot2)
+library(dplyr)
+data.caronas = data.caronas %>% mutate(nof_label = paste("NoF:", NoF))
+
+path$cycle <- paste(paste(path$exp,10,sep=""),"/",sep="")
+png(paste(path$cycle,"satisfactionComp-withfreeriders-sbrc.png",sep=""), width=400, height=350)
+ggplot(data.caronas[data.caronas$t<tempo_final,], aes(t, compSatisfaction)) + 
+  geom_line(aes(colour=comportamento, group=interaction(comportamento,id))) + facet_grid(. ~ nof) +
+  theme_bw(base_size=15) + theme(legend.position = "right") + #scale_x_continuous(breaks = seq(0, tempo_final, by = 1200)) +
+  scale_y_continuous(breaks = seq(0,1, by = 0.25), limits=c(0,1)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
+  ylab("satisfação") + theme(legend.position = "top")
+dev.off()
+
+
+library(plyr)
+library(reshape2)
+
+datalambda <- data.caronas
+
+datalambdaQuartiles.fair.sd <- ddply(datalambda[datalambda$t%%60==0 & datalambda$NoF=="SD" & datalambda$cycle==10 & datalambda$t<=tempo_final & datalambda$id<=40,], "t", summarise, máximo=max(fairness), terceiro_quartil=quantile(fairness, probs=.75),
+                                     média=mean(fairness), mediana=median(fairness), primeiro_quartil=quantile(fairness, probs=.25), mínimo = min(fairness))
+datalambdaQuartiles.fair.melt.sd <- melt(datalambdaQuartiles.fair.sd, id.vars = "t")
+datalambdaQuartiles.fair.melt.sd$NoF <- "SD"
+datalambdaQuartiles.fair.melt.sd$cycle <- 10
+
+datalambdaQuartiles.fair.fd <- ddply(datalambda[datalambda$t%%60==0 & datalambda$NoF=="FD" & datalambda$cycle==10 & datalambda$t<=tempo_final & datalambda$id<=40,], "t", summarise, máximo=max(fairness), terceiro_quartil=quantile(fairness, probs=.75),
+                                     média=mean(fairness), mediana=median(fairness), primeiro_quartil=quantile(fairness, probs=.25), mínimo = min(fairness))
+datalambdaQuartiles.fair.melt.fd <- melt(datalambdaQuartiles.fair.fd, id.vars = "t")
+datalambdaQuartiles.fair.melt.fd$NoF <- "FD"
+datalambdaQuartiles.fair.melt.fd$cycle <- 10
+
+# datalambdaQuartiles.fair.fdlambda <- ddply(datalambda[datalambda$t%%60==0 & datalambda$NoF=="fd" & datalambda$cycle==30 & datalambda$t<=tempo_final & datalambda$id<=40,], "t", summarise, máximo=max(fairness), terceiro_quartil=quantile(fairness, probs=.75),
+#                                            média=mean(fairness), mediana=median(fairness), primeiro_quartil=quantile(fairness, probs=.25), mínimo = min(fairness))
+# datalambdaQuartiles.fair.melt.fdlambda <- melt(datalambdaQuartiles.fair.fdlambda, id.vars = "t")
+# datalambdaQuartiles.fair.melt.fdlambda$NoF <- "fd"
+# datalambdaQuartiles.fair.melt.fdlambda$cycle <- 30
+
+datalambdaQuartiles.fair.melt = rbind(datalambdaQuartiles.fair.melt.sd,datalambdaQuartiles.fair.melt.fd)
+
+datalambdaQuartiles.fair.melt$NoF = factor(datalambdaQuartiles.fair.melt$NoF, levels=c('SD','FD'))
+
+datalambdaQuartiles.fair.melt = datalambdaQuartiles.fair.melt %>% mutate(nof_label = paste("NoF:", NoF))
+
+datalambdaQuartiles.fair.melt$nof = factor(datalambdaQuartiles.fair.melt$nof, levels=c('NoF: SD','NoF: FD'))
+#data.caronas$nof = factor(data.caronas$nof, levels=c('NoF: SD','NoF: FD'))
+
+library(ggplot2)
+path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+#png(paste(path$cycle,"fairness-withfreeriders.png",sep=""), width=700, height=400)
+png(paste(path$cycle,"fairness-withfreeriders-sbrc2018.png",sep=""), width=400, height=350)
+ggplot(datalambdaQuartiles.fair.melt, aes(x = t, y = value, color = variable)) +
+  theme_bw(base_size=15) + #scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
+  scale_y_continuous(breaks = seq(0,3.5, by = 0.5), limits = c(0,3.5)) +
+  xlim(0,86399) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + theme(legend.position = "top") +
+  facet_grid(. ~ nof) + ylab("paridade") + theme(legend.title=element_blank()) +
+  geom_line()
+dev.off()

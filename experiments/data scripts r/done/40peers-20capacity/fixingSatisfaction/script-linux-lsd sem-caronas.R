@@ -224,6 +224,19 @@ ggplot(dataQuartiles.sat.melt[dataQuartiles.sat.melt$t<tempo_final,], aes(x = t,
   geom_line() 
 dev.off()
 
+#SBRC - WCGA
+path$cycle <- paste(paste(path$exp,cycle,sep=""),"/",sep="")
+png(paste(path$cycle,"satisfacao-lambda10-semcarona.png",sep=""), width=800, height=600)
+ggplot(dataQuartiles.sat.melt[dataQuartiles.sat.melt$t<tempo_final,], aes(x = t, y = value, color = variable)) +
+  theme_bw(base_size=15) + #scale_x_continuous(breaks = seq(0, tempo_final, by = 600)) +
+  scale_y_continuous(breaks = seq(0,1, by = 0.25), limits = c(0,1)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  facet_wrap(contenção ~ nof, ncol=4, labeller = label_both) +
+  # facet_grid(contenção ~ nof, labeller = label_both) +
+  ylab("satisfação") + theme(legend.title=element_blank()) + theme(legend.position = "top") +
+  geom_line() 
+dev.off()
+
 library(scales)
 show_col(hue_pal()(6))
 

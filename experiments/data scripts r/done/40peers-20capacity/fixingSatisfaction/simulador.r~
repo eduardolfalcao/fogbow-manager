@@ -1,0 +1,55 @@
+#sem caronas
+
+k1semcaronas.sdnof <- read.csv(file="/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle10/resultados-sdnof-kappa1-semcaronas.csv", header=TRUE, sep=",")
+k1semcaronas.fdnof <- read.csv(file="/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle10/resultados-fdnof-kappa1-semcaronas.csv", header=TRUE, sep=",")
+
+
+k1semcaronas.fdnof[k1semcaronas.fdnof$id=="p20" & k1semcaronas.fdnof$t==60000,]$fairness
+summary(k1semcaronas.fdnof[k1semcaronas.fdnof$t==60000,]$fairness)
+
+quantile(k1semcaronas.fdnof$fairness, probs=.9)
+
+
+k1semcaronas.fdnof[k1semcaronas.fdnof$id=="p20" & k1semcaronas.fdnof$t>60000,]$compSatisfaction
+
+
+k05comcaronas.sdnof <- read.csv(file="/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle10/resultados-sdnof-kappa05-comcaronas.csv", header=TRUE, sep=",")
+k05comcaronas.fdnof <- read.csv(file="/home/eduardolfalcao/git/fogbow-manager/experiments/data scripts r/done/40peers-20capacity/fixingSatisfaction/cycle10/resultados-fdnof-kappa05-comcaronas.csv", header=TRUE, sep=",")
+
+# install.packages("stringi")
+library(stringi)
+k05comcaronas.sdnof$id <- stri_replace_all_regex(k05comcaronas.sdnof$id, "p", "")
+k05comcaronas.sdnof$id <- sapply( k05comcaronas.sdnof$id, as.numeric )
+
+k05comcaronas.fdnof$id <- stri_replace_all_regex(k05comcaronas.fdnof$id, "p", "")
+k05comcaronas.fdnof$id <- sapply( k05comcaronas.fdnof$id, as.numeric )
+
+summary(k05comcaronas.sdnof[k05comcaronas.sdnof$t==86400 & k05comcaronas.sdnof$id>40,]$compSatisfaction)
+
+k05comcaronas.fdnof[k05comcaronas.fdnof$t==86400 & k05comcaronas.fdnof$compSatisfaction<0.5 & k05comcaronas.fdnof$id==16,]
+
+
+#k05comcaronas.fdnof[k05comcaronas.fdnof$t==86400 & k05comcaronas.fdnof$id==20,]
+
+#6,16,20
+library(ggplot2)
+ggplot(k05comcaronas.fdnof[k05comcaronas.fdnof$t<=86400 & (k05comcaronas.fdnof$id==6 | k05comcaronas.fdnof$id==16 | k05comcaronas.fdnof$id==20),], aes(t, fairness)) + 
+  geom_line(aes(colour=id, group=factor(interaction(nof,id)))) +
+  theme_bw(base_size=15) + theme(legend.position = "right") + #scale_x_continuous(breaks = seq(0, tempo_final, by = 1200)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
+  ylab("justiça") + ylim(0,2) + theme(legend.position = "top") 
+#ggtitle("order time = 6.6min, lambda = 10, 50 peers")
+dev.off()
+
+
+
+ggplot(k05comcaronas.fdnof[k05comcaronas.fdnof$t<=86400 & (k05comcaronas.fdnof$id<=40),], aes(t, fairness)) + 
+  geom_line(aes(colour=id, group=factor(interaction(nof,id)))) +
+  theme_bw(base_size=15) + theme(legend.position = "right") + #scale_x_continuous(breaks = seq(0, tempo_final, by = 1200)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), plot.title = element_text(hjust = 0.5)) +
+  ylab("justiça") + ylim(0,7) + theme(legend.position = "top") 
+
+
+
+summary(k05comcaronas.fdnof[k05comcaronas.fdnof$t==86400 & k05comcaronas.fdnof$id>40,]$compSatisfaction)
+
